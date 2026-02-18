@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Librarian Dashboard - Library Management System</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-content">
+            <h1 class="splash-title">ENTITY</h1>
+            <p class="splash-subtitle">Library Management System</p>
+        </div>
+    </div>
+
+    <div id="dashboardContent" class="dashboard-content-wrapper">
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="../assets/images/logo.png" alt="Logo" class="sidebar-logo">
+                <h2>Librarian Portal</h2>
+            </div>
+            <nav class="sidebar-menu">
+                <ul>
+                    <li><a href="#dashboard" class="menu-item active" data-section="dashboard">📊 Dashboard</a></li>
+                    <li><a href="#books" class="menu-item" data-section="books">📚 View Books</a></li>
+                    <li><a href="#members" class="menu-item" data-section="members">👥 View Members</a></li>
+                    <li><a href="#issue-return" class="menu-item" data-section="issue-return">🔄 Issue & Return</a></li>
+                    <li><a href="#reports" class="menu-item" data-section="reports">📈 Limited Reports</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn btn-logout" id="logoutBtn">Logout</button>
+            </div>
+        </aside>
+
+        <main class="dashboard-main">
+            <header class="dashboard-header">
+                <h1>Welcome, Librarian</h1>
+                <div class="user-profile">
+                    <span id="userName">Librarian Name</span>
+                    <img src="../assets/images/logo.png" alt="Profile" class="profile-avatar">
+                </div>
+            </header>
+
+            <section class="dashboard-content">
+                <!-- Dashboard Overview -->
+                <div id="section-dashboard" class="content-section active">
+                    <h2>Dashboard Overview</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Books Issued Today</h3>
+                            <p class="stat-number" id="statIssuedToday">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Returns Due Today</h3>
+                            <p class="stat-number" id="statDueToday">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Currently Issued</h3>
+                            <p class="stat-number" id="statCurrentIssued">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Overdue Books</h3>
+                            <p class="stat-number" id="statOverdue">0</p>
+                        </div>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Recent Activity</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Member</th>
+                                    <th>Action</th>
+                                    <th>Book</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>10:30 AM</td>
+                                    <td>John Doe</td>
+                                    <td>Book Issued</td>
+                                    <td>Introduction to Algorithms</td>
+                                </tr>
+                                <tr>
+                                    <td>10:15 AM</td>
+                                    <td>Jane Smith</td>
+                                    <td>Book Returned</td>
+                                    <td>Clean Code</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- View Books Section -->
+                <div id="section-books" class="content-section" style="display:none;">
+                    <h2>📚 View Books</h2>
+                    <div class="search-bar">
+                        <input type="text" id="bookSearch" placeholder="Search books by title, author, or ISBN..." class="search-input">
+                        <button class="btn btn-primary" onclick="searchBooks()">🔍 Search</button>
+                    </div>
+                    
+                    <div class="content-section">
+                        <h3>All Books</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Author</th>
+                                    <th>Category</th>
+                                    <th>Total Copies</th>
+                                    <th>Available</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="librarianBooksBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- View Members Section -->
+                <div id="section-members" class="content-section" style="display:none;">
+                    <h2>👥 View Members</h2>
+                    <div class="search-bar">
+                        <input type="text" id="memberSearch" placeholder="Search members by name, ID, or email..." class="search-input">
+                        <button class="btn btn-primary" onclick="searchMembers()">🔍 Search</button>
+                    </div>
+                    
+                    <div class="content-section">
+                        <h3>All Members</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Type</th>
+                                    <th>Books Issued</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="librarianMembersBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Issue & Return Section (Main Job) -->
+                <div id="section-issue-return" class="content-section" style="display:none;">
+                    <h2>🔄 Issue & Return Books (Main Job)</h2>
+                    <div class="alert alert-info">
+                        <strong>Librarian Main Task:</strong> Issue and return books for library members.
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="showIssueBookForm()">📤 Issue Book</button>
+                        <button class="btn btn-secondary" onclick="showReturnBookForm()">📥 Accept Return</button>
+                    </div>
+                    
+                    <div class="content-section">
+                        <h3>Currently Issued Books</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Issue ID</th>
+                                    <th>Book Title</th>
+                                    <th>Member Name</th>
+                                    <th>Issue Date</th>
+                                    <th>Due Date</th>
+                                    <th>Days Left</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="librarianIssuesBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Books Due Today</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Issue ID</th>
+                                    <th>Book Title</th>
+                                    <th>Member Name</th>
+                                    <th>Member Contact</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="librarianDueBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Limited Reports Section -->
+                <div id="section-reports" class="content-section" style="display:none;">
+                    <h2>📈 Limited Reports</h2>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Issued This Week</h3>
+                            <p class="stat-number">67</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Returned This Week</h3>
+                            <p class="stat-number">54</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Currently Overdue</h3>
+                            <p class="stat-number">24</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Due This Week</h3>
+                            <p class="stat-number">32</p>
+                        </div>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Issued Books Report</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Issue ID</th>
+                                    <th>Book Title</th>
+                                    <th>Member</th>
+                                    <th>Issue Date</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="librarianIssuedReport"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Overdue Books</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Member</th>
+                                    <th>Book</th>
+                                    <th>Due Date</th>
+                                    <th>Days Overdue</th>
+                                    <th>Contact</th>
+                                </tr>
+                            </thead>
+                            <tbody id="librarianOverdueReport"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    </div>
+
+    <div id="appModal" class="app-modal" aria-hidden="true">
+        <div id="appModalBackdrop" class="app-modal-backdrop"></div>
+        <div class="app-modal-dialog" role="dialog" aria-modal="true">
+            <div class="app-modal-header">
+                <h3 id="appModalTitle">Dialog</h3>
+                <button type="button" class="app-modal-close" id="appModalClose">×</button>
+            </div>
+            <div id="appModalBody" class="app-modal-body"></div>
+            <div class="app-modal-actions">
+                <button type="button" class="btn btn-secondary" id="appModalCancel">Cancel</button>
+                <button type="button" class="btn btn-primary" id="appModalSubmit">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/ui-modal.js?v=20260218"></script>
+    <script src="../assets/js/library-store.js?v=20260218"></script>
+    <script src="../assets/js/librarian-dashboard.js?v=20260218"></script>
+    <script src="../assets/js/redirect.js"></script>
+    <script>
+        // Splash Screen Handler for Dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            const splashScreen = document.getElementById('splashScreen');
+            const dashboardContent = document.getElementById('dashboardContent');
+            
+            if (splashScreen && dashboardContent) {
+                console.log('Dashboard splash initialized');
+                
+                // Show splash screen for 3 seconds
+                setTimeout(function() {
+                    console.log('Fading out splash');
+                    splashScreen.classList.add('fade-out');
+                    
+                    // Show dashboard content immediately
+                    setTimeout(function() {
+                        console.log('Showing dashboard content');
+                        dashboardContent.classList.add('show');
+                        splashScreen.remove(); // Remove splash from DOM
+                    }, 100);
+                }, 3000);
+            }
+            
+            // Navigation between sections
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all menu items
+                    menuItems.forEach(mi => mi.classList.remove('active'));
+                    
+                    // Add active class to clicked item
+                    this.classList.add('active');
+                    
+                    // Hide all sections
+                    const sections = document.querySelectorAll('.content-section');
+                    sections.forEach(section => {
+                        if(section.id && section.id.startsWith('section-')) {
+                            section.style.display = 'none';
+                        }
+                    });
+                    
+                    // Show selected section
+                    const sectionName = this.getAttribute('data-section');
+                    const sectionToShow = document.getElementById('section-' + sectionName);
+                    if(sectionToShow) {
+                        sectionToShow.style.display = 'block';
+                    }
+                });
+            });
+            
+            // Logout functionality
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                if (window.ModalUI) {
+                    window.ModalUI.openConfirm('Logout', 'Are you sure you want to logout?', function() {
+                        localStorage.clear();
+                        window.location.href = '../index.html';
+                    }, 'Logout');
+                } else {
+                    localStorage.clear();
+                    window.location.href = '../index.html';
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>

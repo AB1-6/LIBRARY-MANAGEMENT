@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - ENTITY</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/auth.css">
+    <style>
+        /* Splash Screen Styles */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #6F4E37 0%, #3E2723 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: splashFadeIn 0.5s ease-in-out;
+        }
+
+        .splash-screen.fade-out {
+            animation: splashFadeOut 0.8s ease-in-out forwards;
+        }
+
+        @keyframes splashFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes splashFadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
+        .splash-content {
+            text-align: center;
+            color: #FFFFFF;
+            animation: splashContentZoom 1.5s ease-in-out;
+        }
+
+        @keyframes splashContentZoom {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .splash-title {
+            font-size: 4rem;
+            font-weight: 800;
+            letter-spacing: 8px;
+            margin: 0;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            animation: titlePulse 1.5s ease-in-out;
+            color: #FFFFFF;
+        }
+
+        @keyframes titlePulse {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .splash-subtitle {
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            margin-top: 1rem;
+            opacity: 0.9;
+            animation: subtitlePulse 1.5s ease-in-out 0.3s both;
+            color: #FFFFFF;
+        }
+
+        @keyframes subtitlePulse {
+            0% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            100% {
+                opacity: 0.9;
+                transform: translateY(0);
+            }
+        }
+
+        .page-content-wrapper {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.8s ease-in-out;
+        }
+
+        .page-content-wrapper.show {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-content">
+            <h1 class="splash-title">ENTITY</h1>
+            <p class="splash-subtitle">Library Management System</p>
+        </div>
+    </div>
+
+    <div id="pageContent" class="page-content-wrapper">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Register to ENTITY</h1>
+            </div>
+
+            <form id="registerForm" class="auth-form" action="#" method="post">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input type="text" id="firstName" name="firstName" required placeholder="First name">
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" id="lastName" name="lastName" required placeholder="Last name">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required placeholder="Enter your email">
+                </div>
+
+                <div class="form-group">
+                    <label for="role">Role</label>
+                    <select id="role" name="role" required disabled>
+                        <option value="student" selected>Student</option>
+                    </select>
+                    <input type="hidden" name="roleValue" value="student">
+                    <p style="color: #666; font-size: 0.875rem; margin-top: 0.5rem;">
+                        <strong>Note:</strong> Only students can register here. Admin and Librarian accounts are created by administrators.
+                    </p>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" required placeholder="Create a strong password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('password')" aria-label="Toggle password visibility">
+                            <span id="password-icon">👁️</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="Confirm your password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')" aria-label="Toggle password visibility">
+                            <span id="confirmPassword-icon">👁️</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <label class="checkbox">
+                        <input type="checkbox" name="terms" required>
+                        I agree to the Terms and Conditions
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-register">Create Account</button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Already have an account? <a href="login.html">Login here</a></p>
+                <a href="index.html" class="back-home">Back to Home</a>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <script src="assets/js/auth.js?v=20260218"></script>
+    <script>
+        // Splash Screen Handler for Register Page
+        document.addEventListener('DOMContentLoaded', function() {
+            const splashScreen = document.getElementById('splashScreen');
+            const pageContent = document.getElementById('pageContent');
+            
+            if (splashScreen && pageContent) {
+                console.log('Register page splash initialized');
+                
+                // Show splash screen for 3 seconds
+                setTimeout(function() {
+                    console.log('Fading out splash');
+                    splashScreen.classList.add('fade-out');
+                    
+                    // Show page content immediately
+                    setTimeout(function() {
+                        console.log('Showing page content');
+                        pageContent.classList.add('show');
+                        splashScreen.remove(); // Remove splash from DOM
+                    }, 100);
+                }, 3000);
+            }
+        });
+        
+        // Toggle password visibility
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = document.getElementById(fieldId + '-icon');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.textContent = '👀'; // Open eye
+            } else {
+                field.type = 'password';
+                icon.textContent = '👁️'; // Closed eye
+            }
+        }
+    </script>
+</body>
+</html>

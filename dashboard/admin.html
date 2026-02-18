@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Library Management System</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-content">
+            <h1 class="splash-title">ENTITY</h1>
+            <p class="splash-subtitle">Library Management System</p>
+        </div>
+    </div>
+
+    <div id="dashboardContent" class="dashboard-content-wrapper">
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="../assets/images/logo.png" alt="Logo" class="sidebar-logo">
+                <h2>Admin Panel</h2>
+            </div>
+            <nav class="sidebar-menu">
+                <ul>
+                    <li><a href="#dashboard" class="menu-item active" data-section="dashboard">📊 Dashboard</a></li>
+                    <li><a href="#books" class="menu-item" data-section="books">📚 Book Management</a></li>
+                    <li><a href="#members" class="menu-item" data-section="members">👥 Member Management</a></li>
+                    <li><a href="#issue-return" class="menu-item" data-section="issue-return">🔄 Issue & Return</a></li>
+                    <li><a href="#user-management" class="menu-item" data-section="user-management">🔐 User Management</a></li>
+                    <li><a href="#reports" class="menu-item" data-section="reports">📈 Reports</a></li>
+                    <li><a href="#database" class="menu-item" data-section="database">💾 Database Control</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn btn-logout" id="logoutBtn">Logout</button>
+            </div>
+        </aside>
+
+        <main class="dashboard-main">
+            <header class="dashboard-header">
+                <h1>Welcome, Admin</h1>
+                <div class="user-profile">
+                    <span id="userName">Admin User</span>
+                    <img src="../assets/images/logo.png" alt="Profile" class="profile-avatar">
+                </div>
+            </header>
+
+            <section class="dashboard-content">
+                <!-- Dashboard Overview -->
+                <div id="section-dashboard" class="content-section active">
+                    <h2>Dashboard Overview</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Total Books</h3>
+                            <p class="stat-number" id="statTotalBooks">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Total Members</h3>
+                            <p class="stat-number" id="statTotalMembers">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Books Issued</h3>
+                            <p class="stat-number" id="statBooksIssued">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Overdue Books</h3>
+                            <p class="stat-number" id="statOverdueBooks">0</p>
+                        </div>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Recent Activity</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Member</th>
+                                    <th>Action</th>
+                                    <th>Book</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>John Doe</td>
+                                    <td>Book Issued</td>
+                                    <td>Introduction to Algorithms</td>
+                                    <td>Feb 18, 2026</td>
+                                </tr>
+                                <tr>
+                                    <td>Jane Smith</td>
+                                    <td>Book Returned</td>
+                                    <td>Clean Code</td>
+                                    <td>Feb 18, 2026</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Book Management Section -->
+                <div id="section-books" class="content-section" style="display:none;">
+                    <h2>📚 Book Management</h2>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="showAddBookForm()">➕ Add New Book</button>
+                        <button class="btn btn-secondary" onclick="showAddCategoryForm()">🏷️ Add Category</button>
+                    </div>
+                    
+                    <div class="content-section">
+                        <h3>All Books</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Author</th>
+                                    <th>Category</th>
+                                    <th>Copies</th>
+                                    <th>Available</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="booksTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Member Management Section -->
+                <div id="section-members" class="content-section" style="display:none;">
+                    <h2>👥 Member Management</h2>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="showAddMemberForm()">➕ Add Member</button>
+                    </div>
+                    
+                    <div class="content-section">
+                        <h3>All Members</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Type</th>
+                                    <th>Books Issued</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="membersTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Issue & Return Section -->
+                <div id="section-issue-return" class="content-section" style="display:none;">
+                    <h2>🔄 Issue & Return</h2>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="showIssueBookForm()">📤 Issue Book</button>
+                        <button class="btn btn-secondary" onclick="showReturnBookForm()">📥 Accept Return</button>
+                    </div>
+                    
+                    <div class="content-section">
+                        <h3>Currently Issued Books</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Issue ID</th>
+                                    <th>Book Title</th>
+                                    <th>Member Name</th>
+                                    <th>Issue Date</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="issueTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Issue History</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Issue ID</th>
+                                    <th>Book</th>
+                                    <th>Member</th>
+                                    <th>Issue Date</th>
+                                    <th>Return Date</th>
+                                    <th>Fine</th>
+                                </tr>
+                            </thead>
+                            <tbody id="issueHistoryBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- User Management Section -->
+                <div id="section-user-management" class="content-section" style="display:none;">
+                    <h2>🔐 User Management</h2>
+                    <div class="alert alert-info">
+                        <strong>Admin Power:</strong> Create Admin and Librarian accounts here. Students register themselves.
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="showCreateUserForm()">➕ Create User (Admin/Librarian)</button>
+                    </div>
+                    
+                    <div class="content-section">
+                        <h3>System Users</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Reports Section -->
+                <div id="section-reports" class="content-section" style="display:none;">
+                    <h2>📈 Reports</h2>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="exportAllReports()">📊 Export All Reports</button>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Total Fines Collected</h3>
+                            <p class="stat-number">$1,240</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Books Issued This Month</h3>
+                            <p class="stat-number">156</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>New Members This Month</h3>
+                            <p class="stat-number">28</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Most Borrowed Category</h3>
+                            <p class="stat-number">Computer Science</p>
+                        </div>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Overdue Books List</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Member</th>
+                                    <th>Book</th>
+                                    <th>Due Date</th>
+                                    <th>Days Overdue</th>
+                                    <th>Fine Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="overdueTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Fines Collected</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Member</th>
+                                    <th>Book</th>
+                                    <th>Days Overdue</th>
+                                    <th>Amount Collected</th>
+                                </tr>
+                            </thead>
+                            <tbody id="finesTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Database Control Section -->
+                <div id="section-database" class="content-section" style="display:none;">
+                    <h2>💾 Database Control</h2>
+                    <div class="alert alert-warning">
+                        <strong>Warning:</strong> These operations affect the entire database. Use with caution.
+                    </div>
+                    
+                    <div class="content-section">
+                        <h3>Database Operations</h3>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="backupDatabase()">💾 Backup Database</button>
+                            <button class="btn btn-secondary" onclick="restoreDatabase()">📥 Restore Database</button>
+                            <button class="btn btn-info" onclick="viewTriggers()">⚙️ View Trigger Details</button>
+                        </div>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Database Triggers</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Trigger Name</th>
+                                    <th>Table</th>
+                                    <th>Event</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>check_book_availability</td>
+                                    <td>book_issues</td>
+                                    <td>BEFORE INSERT</td>
+                                    <td><span class="badge badge-success">Active</span></td>
+                                    <td>
+                                        <button class="btn-icon" onclick="viewTriggerDetails('check_book_availability')">👁️ View</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>update_book_count</td>
+                                    <td>book_returns</td>
+                                    <td>AFTER INSERT</td>
+                                    <td><span class="badge badge-success">Active</span></td>
+                                    <td>
+                                        <button class="btn-icon" onclick="viewTriggerDetails('update_book_count')">👁️ View</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Recent Backups</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Backup File</th>
+                                    <th>Date Created</th>
+                                    <th>Size</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>library_backup_2026_02_18.sql</td>
+                                    <td>Feb 18, 2026 10:00 AM</td>
+                                    <td>2.4 MB</td>
+                                    <td>
+                                        <button class="btn-icon" onclick="downloadBackup('library_backup_2026_02_18.sql')">⬇️ Download</button>
+                                        <button class="btn-icon" onclick="restoreFromBackup('library_backup_2026_02_18.sql')">📥 Restore</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    </div>
+
+    <div id="appModal" class="app-modal" aria-hidden="true">
+        <div id="appModalBackdrop" class="app-modal-backdrop"></div>
+        <div class="app-modal-dialog" role="dialog" aria-modal="true">
+            <div class="app-modal-header">
+                <h3 id="appModalTitle">Dialog</h3>
+                <button type="button" class="app-modal-close" id="appModalClose">×</button>
+            </div>
+            <div id="appModalBody" class="app-modal-body"></div>
+            <div class="app-modal-actions">
+                <button type="button" class="btn btn-secondary" id="appModalCancel">Cancel</button>
+                <button type="button" class="btn btn-primary" id="appModalSubmit">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/ui-modal.v2.js"></script>
+    <script src="../assets/js/library-store.js?v=20260218a"></script>
+    <script src="../assets/js/admin-dashboard.v2.js"></script>
+    <script src="../assets/js/redirect.js"></script>
+    <script src="../assets/js/popup.js"></script>
+    <script>
+        // Splash Screen Handler for Dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            const splashScreen = document.getElementById('splashScreen');
+            const dashboardContent = document.getElementById('dashboardContent');
+            
+            if (splashScreen && dashboardContent) {
+                console.log('Dashboard splash initialized');
+                
+                // Show splash screen for 3 seconds
+                setTimeout(function() {
+                    console.log('Fading out splash');
+                    splashScreen.classList.add('fade-out');
+                    
+                    // Show dashboard content immediately
+                    setTimeout(function() {
+                        console.log('Showing dashboard content');
+                        dashboardContent.classList.add('show');
+                        splashScreen.remove(); // Remove splash from DOM
+                    }, 100);
+                }, 3000);
+            }
+            
+            // Navigation between sections
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all menu items
+                    menuItems.forEach(mi => mi.classList.remove('active'));
+                    
+                    // Add active class to clicked item
+                    this.classList.add('active');
+                    
+                    // Hide all sections
+                    const sections = document.querySelectorAll('.content-section');
+                    sections.forEach(section => {
+                        if(section.id && section.id.startsWith('section-')) {
+                            section.style.display = 'none';
+                        }
+                    });
+                    
+                    // Show selected section
+                    const sectionName = this.getAttribute('data-section');
+                    const sectionToShow = document.getElementById('section-' + sectionName);
+                    if(sectionToShow) {
+                        sectionToShow.style.display = 'block';
+                    }
+                });
+            });
+            
+            // Logout functionality
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                if (window.ModalUI) {
+                    window.ModalUI.openConfirm('Logout', 'Are you sure you want to logout?', function() {
+                        localStorage.clear();
+                        window.location.href = '../index.html';
+                    }, 'Logout');
+                } else {
+                    localStorage.clear();
+                    window.location.href = '../index.html';
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>

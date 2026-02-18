@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Library Management System</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-content">
+            <h1 class="splash-title">ENTITY</h1>
+            <p class="splash-subtitle">Library Management System</p>
+        </div>
+    </div>
+
+    <div id="dashboardContent" class="dashboard-content-wrapper">
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="../assets/images/logo.png" alt="Logo" class="sidebar-logo">
+                <h2>Student Portal</h2>
+            </div>
+            <nav class="sidebar-menu">
+                <ul>
+                    <li><a href="#dashboard" class="menu-item active" data-section="dashboard">📊 Dashboard</a></li>
+                    <li><a href="#books" class="menu-item" data-section="books">📚 Browse Books</a></li>
+                    <li><a href="#issue-request" class="menu-item" data-section="issue-request">📤 Issue Request</a></li>
+                    <li><a href="#my-books" class="menu-item" data-section="my-books">📖 My Borrowed Books</a></li>
+                    <li><a href="#history" class="menu-item" data-section="history">📜 My History</a></li>
+                    <li><a href="#profile" class="menu-item" data-section="profile">👤 My Profile</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn btn-logout" id="logoutBtn">Logout</button>
+            </div>
+        </aside>
+
+        <main class="dashboard-main">
+            <header class="dashboard-header">
+                <h1>Welcome, Student</h1>
+                <div class="user-profile">
+                    <span id="userName">Student Name</span>
+                    <img src="../assets/images/logo.png" alt="Profile" class="profile-avatar">
+                </div>
+            </header>
+
+            <section class="dashboard-content">
+                <!-- Dashboard Overview -->
+                <div id="section-dashboard" class="content-section active">
+                    <h2>Dashboard Overview</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Books Borrowed</h3>
+                            <p class="stat-number" id="statBorrowed">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Pending Requests</h3>
+                            <p class="stat-number" id="statPending">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Due This Week</h3>
+                            <p class="stat-number" id="statDueSoon">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Total Fines</h3>
+                            <p class="stat-number" id="statFines">$0</p>
+                        </div>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Quick Actions</h3>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="browseBooks()">📚 Browse Books</button>
+                            <button class="btn btn-secondary" onclick="requestBook()">📤 Request Book</button>
+                            <button class="btn btn-info" onclick="viewMyBooks()">📖 My Books</button>
+                        </div>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Books Due Soon</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Book Title</th>
+                                    <th>Issue Date</th>
+                                    <th>Due Date</th>
+                                    <th>Days Left</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Introduction to Algorithms</td>
+                                    <td>Feb 5, 2026</td>
+                                    <td>Feb 19, 2026</td>
+                                    <td>1 day</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Browse Books Section -->
+                <div id="section-books" class="content-section" style="display:none;">
+                    <h2>📚 Browse Books</h2>
+                    <div class="search-bar">
+                        <input type="text" id="bookSearch" placeholder="Search by title, author, or category..." class="search-input">
+                        <button class="btn btn-primary" onclick="searchBooks()">🔍 Search</button>
+                    </div>
+                    
+                    <div class="filter-bar">
+                        <label>Filter by Category:</label>
+                        <select id="categoryFilter" onchange="filterByCategory()">
+                            <option value="">All Categories</option>
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Programming">Programming</option>
+                            <option value="Software Engineering">Software Engineering</option>
+                            <option value="Mathematics">Mathematics</option>
+                        </select>
+                    </div>
+                    
+                    <div class="content-section">
+                        <h3>Available Books</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Author</th>
+                                    <th>Category</th>
+                                    <th>Available Copies</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentBooksBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Issue Request Section -->
+                <div id="section-issue-request" class="content-section" style="display:none;">
+                    <h2>📤 Issue Request</h2>
+                    <div class="alert alert-info">
+                        <strong>Note:</strong> Students cannot directly issue books. Send a request and wait for librarian approval.
+                    </div>
+                    
+                    <div class="content-section">
+                        <h3>Send New Request</h3>
+                        <form class="request-form">
+                            <div class="form-group">
+                                <label>Book ID or Title</label>
+                                <input type="text" id="requestBookInput" placeholder="Enter Book ID or search by title">
+                            </div>
+                            <div class="form-group">
+                                <label>Reason for Request (Optional)</label>
+                                <textarea id="requestReason" placeholder="Why do you need this book?"></textarea>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="submitRequest()">📤 Submit Request</button>
+                        </form>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>My Pending Requests</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Book Title</th>
+                                    <th>Request Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentRequestsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- My Borrowed Books Section -->
+                <div id="section-my-books" class="content-section" style="display:none;">
+                    <h2>📖 My Borrowed Books</h2>
+                    
+                    <div class="content-section">
+                        <h3>Currently Borrowed</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Book Title</th>
+                                    <th>Author</th>
+                                    <th>Issue Date</th>
+                                    <th>Due Date</th>
+                                    <th>Fine</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentBorrowedBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <strong>Reminder:</strong> Please return books on or before the due date to avoid fines. Fine rate: $1 per day.
+                    </div>
+                </div>
+
+                <!-- Issue History Section -->
+                <div id="section-history" class="content-section" style="display:none;">
+                    <h2>📜 My Issue History</h2>
+                    
+                    <div class="content-section">
+                        <h3>Past Borrowed Books</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Book Title</th>
+                                    <th>Issue Date</th>
+                                    <th>Return Date</th>
+                                    <th>Days Kept</th>
+                                    <th>Fine Paid</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentHistoryBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Total Books Borrowed</h3>
+                            <p class="stat-number">15</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Total Fines Paid</h3>
+                            <p class="stat-number">$8</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>On-Time Returns</h3>
+                            <p class="stat-number">87%</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Member Since</h3>
+                            <p class="stat-number">Sept 2025</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Management Section -->
+                <div id="section-profile" class="content-section" style="display:none;">
+                    <h2>👤 My Profile</h2>
+                    
+                    <div class="content-section">
+                        <h3>Personal Information</h3>
+                        <form class="profile-form">
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" id="profileName" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label>Student ID</label>
+                                <input type="text" id="profileId" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" id="profileEmail">
+                            </div>
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input type="tel" id="profilePhone">
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="updateProfile()">💾 Update Profile</button>
+                        </form>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Change Password</h3>
+                        <form class="password-form">
+                            <div class="form-group">
+                                <label>Current Password</label>
+                                <div class="password-wrapper">
+                                    <input type="password" id="currentPassword">
+                                    <button type="button" class="password-toggle" onclick="togglePassword('currentPassword')" aria-label="Toggle password visibility">
+                                        <span id="currentPassword-icon">👁️</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>New Password</label>
+                                <div class="password-wrapper">
+                                    <input type="password" id="newPassword">
+                                    <button type="button" class="password-toggle" onclick="togglePassword('newPassword')" aria-label="Toggle password visibility">
+                                        <span id="newPassword-icon">👁️</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Confirm New Password</label>
+                                <div class="password-wrapper">
+                                    <input type="password" id="confirmPassword">
+                                    <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')" aria-label="Toggle password visibility">
+                                        <span id="confirmPassword-icon">👁️</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="changePassword()">🔑 Change Password</button>
+                        </form>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Account Statistics</h3>
+                        <table class="data-table">
+                            <tbody>
+                                <tr>
+                                    <td><strong>Member Since</strong></td>
+                                    <td>September 1, 2025</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Books Borrowed</strong></td>
+                                    <td>15 books</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Current Books</strong></td>
+                                    <td>2 books</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Fines Paid</strong></td>
+                                    <td>$8.00</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Outstanding Fines</strong></td>
+                                    <td>$0.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    </div>
+
+    <div id="appModal" class="app-modal" aria-hidden="true">
+        <div id="appModalBackdrop" class="app-modal-backdrop"></div>
+        <div class="app-modal-dialog" role="dialog" aria-modal="true">
+            <div class="app-modal-header">
+                <h3 id="appModalTitle">Dialog</h3>
+                <button type="button" class="app-modal-close" id="appModalClose">×</button>
+            </div>
+            <div id="appModalBody" class="app-modal-body"></div>
+            <div class="app-modal-actions">
+                <button type="button" class="btn btn-secondary" id="appModalCancel">Cancel</button>
+                <button type="button" class="btn btn-primary" id="appModalSubmit">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/ui-modal.js?v=20260218"></script>
+    <script src="../assets/js/library-store.js?v=20260218"></script>
+    <script src="../assets/js/student-dashboard.js?v=20260218"></script>
+    <script src="../assets/js/redirect.js"></script>
+    <script>
+        // Splash Screen Handler for Dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            const splashScreen = document.getElementById('splashScreen');
+            const dashboardContent = document.getElementById('dashboardContent');
+            
+            if (splashScreen && dashboardContent) {
+                console.log('Dashboard splash initialized');
+                
+                // Show splash screen for 3 seconds
+                setTimeout(function() {
+                    console.log('Fading out splash');
+                    splashScreen.classList.add('fade-out');
+                    
+                    // Show dashboard content immediately
+                    setTimeout(function() {
+                        console.log('Showing dashboard content');
+                        dashboardContent.classList.add('show');
+                        splashScreen.remove(); // Remove splash from DOM
+                    }, 100);
+                }, 3000);
+            }
+            
+            // Navigation between sections
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all menu items
+                    menuItems.forEach(mi => mi.classList.remove('active'));
+                    
+                    // Add active class to clicked item
+                    this.classList.add('active');
+                    
+                    // Hide all sections
+                    const sections = document.querySelectorAll('.content-section');
+                    sections.forEach(section => {
+                        if(section.id && section.id.startsWith('section-')) {
+                            section.style.display = 'none';
+                        }
+                    });
+                    
+                    // Show selected section
+                    const sectionName = this.getAttribute('data-section');
+                    const sectionToShow = document.getElementById('section-' + sectionName);
+                    if(sectionToShow) {
+                        sectionToShow.style.display = 'block';
+                    }
+                });
+            });
+            
+            // Logout functionality
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                if(confirm('Are you sure you want to logout?')) {
+                    localStorage.clear();
+                    window.location.href = '../index.html';
+                }
+            });
+        });
+
+        // Toggle password visibility
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = document.getElementById(fieldId + '-icon');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.textContent = '👀'; // Open eye
+            } else {
+                field.type = 'password';
+                icon.textContent = '👁️'; // Closed eye
+            }
+        }
+    </script>
+</body>
+</html>

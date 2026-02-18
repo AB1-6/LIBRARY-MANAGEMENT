@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ENTITY - Landing Page</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/popup.css">
+    <style>
+        /* Splash Screen Styles */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #6F4E37 0%, #3E2723 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: splashFadeIn 0.5s ease-in-out;
+        }
+
+        .splash-screen.fade-out {
+            animation: splashFadeOut 0.8s ease-in-out forwards;
+        }
+
+        @keyframes splashFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes splashFadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
+        .splash-content {
+            text-align: center;
+            color: #FFFFFF;
+            animation: splashContentZoom 1.5s ease-in-out;
+        }
+
+        @keyframes splashContentZoom {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .splash-title {
+            font-size: 4rem;
+            font-weight: 800;
+            letter-spacing: 8px;
+            margin: 0;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            animation: titlePulse 1.5s ease-in-out;
+            color: #FFFFFF;
+        }
+
+        @keyframes titlePulse {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .splash-subtitle {
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            margin-top: 1rem;
+            opacity: 0.9;
+            animation: subtitlePulse 1.5s ease-in-out 0.3s both;
+            color: #FFFFFF;
+        }
+
+        @keyframes subtitlePulse {
+            0% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            100% {
+                opacity: 0.9;
+                transform: translateY(0);
+            }
+        }
+
+        .page-content-wrapper {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.8s ease-in-out;
+        }
+
+        .page-content-wrapper.show {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-content">
+            <h1 class="splash-title">ENTITY</h1>
+            <p class="splash-subtitle">Library Management System</p>
+        </div>
+    </div>
+
+    <div id="pageContent" class="page-content-wrapper">
+    <div id="welcomeScreen" class="welcome-screen" style="display: none;">
+        <h1 class="welcome-title">Welcome to ENTITY</h1>
+        <p class="welcome-subtitle">Login Role Wise</p>
+    </div>
+    <div class="landing-container">
+        <div class="content">
+            <h1 class="welcome-main-title">Welcome to ENTITY</h1>
+            <div class="popup-trigger">
+                <button class="btn btn-primary" id="getStartedBtn">Get Started</button>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Welcome Popup Modal -->
+    <div id="popupModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="modal-header">
+                <h2>ENTITY</h2>
+            </div>
+            <div class="popup-buttons">
+                <div class="button-group">
+                    <a href="login.html?role=admin" class="btn btn-admin">
+                        <span class="role-icon">⚙️</span>
+                        <span class="role-text">
+                            <strong>Admin Login</strong>
+                            <small>System Administration</small>
+                        </span>
+                    </a>
+                </div>
+                <div class="button-group">
+                    <a href="login.html?role=librarian" class="btn btn-faculty">
+                        <span class="role-icon">📚</span>
+                        <span class="role-text">
+                            <strong>Librarian Login</strong>
+                            <small>Library Management</small>
+                        </span>
+                    </a>
+                </div>
+                <div class="button-group">
+                    <a href="login.html?role=student" class="btn btn-student">
+                        <span class="role-icon">👨‍🎓</span>
+                        <span class="role-text">
+                            <strong>Student Login</strong>
+                            <small>Browse & Request Books</small>
+                        </span>
+                    </a>
+                </div>
+            </div>
+            <div class="popup-footer">
+                <p>New to ENTITY? <a href="register.html" class="register-link">Create Account</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/popup.js"></script>
+    <script>
+        // Override splash screen handler for landing page
+        document.addEventListener('DOMContentLoaded', function() {
+            const splashScreen = document.getElementById('splashScreen');
+            const pageContent = document.getElementById('pageContent');
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            
+            if (splashScreen && pageContent) {
+                console.log('Landing page splash initialized');
+                
+                // Show splash screen for 3 seconds
+                setTimeout(function() {
+                    console.log('Fading out splash');
+                    splashScreen.classList.add('fade-out');
+                    
+                    // Show page content immediately
+                    setTimeout(function() {
+                        console.log('Showing page content');
+                        pageContent.classList.add('show');
+                        splashScreen.remove(); // Remove splash from DOM
+                    }, 100);
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>

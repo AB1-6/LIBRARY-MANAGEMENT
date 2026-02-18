@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - ENTITY</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/auth.css">
+    <style>
+        /* Splash Screen Styles */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #6F4E37 0%, #3E2723 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: splashFadeIn 0.5s ease-in-out;
+        }
+
+        .splash-screen.fade-out {
+            animation: splashFadeOut 0.8s ease-in-out forwards;
+        }
+
+        @keyframes splashFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes splashFadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
+        .splash-content {
+            text-align: center;
+            color: #FFFFFF;
+            animation: splashContentZoom 1.5s ease-in-out;
+        }
+
+        @keyframes splashContentZoom {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .splash-title {
+            font-size: 4rem;
+            font-weight: 800;
+            letter-spacing: 8px;
+            margin: 0;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            animation: titlePulse 1.5s ease-in-out;
+            color: #FFFFFF;
+        }
+
+        @keyframes titlePulse {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .splash-subtitle {
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            margin-top: 1rem;
+            opacity: 0.9;
+            animation: subtitlePulse 1.5s ease-in-out 0.3s both;
+            color: #FFFFFF;
+        }
+
+        @keyframes subtitlePulse {
+            0% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            100% {
+                opacity: 0.9;
+                transform: translateY(0);
+            }
+        }
+
+        .page-content-wrapper {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.8s ease-in-out;
+        }
+
+        .page-content-wrapper.show {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-content">
+            <h1 class="splash-title">ENTITY</h1>
+            <p class="splash-subtitle">Library Management System</p>
+        </div>
+    </div>
+
+    <div id="pageContent" class="page-content-wrapper">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Login to ENTITY</h1>
+                <p id="roleDisplay" class="role-display"></p>
+            </div>
+
+            <form id="loginForm" class="auth-form" action="#" method="post">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required placeholder="Enter your email">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" required placeholder="Enter your password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('password')" aria-label="Toggle password visibility">
+                            <span id="password-icon">👁️</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <label class="checkbox">
+                        <input type="checkbox" name="remember">
+                        Remember me
+                    </label>
+                    <a href="#" class="forgot-password">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-login">Login</button>
+            </form>
+
+            <div class="auth-footer">
+                <p id="registerLink">Don't have an account? <a href="register.html">Register here</a></p>
+                <a href="index.html" class="back-home">Back to Home</a>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <script src="assets/js/auth.js?v=20260218"></script>
+    <script src="assets/js/redirect.js?v=20260218"></script>
+    <script>
+        // Splash Screen Handler for Login Page
+        document.addEventListener('DOMContentLoaded', function() {
+            const splashScreen = document.getElementById('splashScreen');
+            const pageContent = document.getElementById('pageContent');
+            
+            // Check if admin login and hide register link
+            const urlParams = new URLSearchParams(window.location.search);
+            const role = urlParams.get('role');
+            const registerLink = document.getElementById('registerLink');
+            
+            if (role === 'admin' && registerLink) {
+                registerLink.style.display = 'none';
+            }
+            
+            if (splashScreen && pageContent) {
+                console.log('Login page splash initialized');
+                
+                // Show splash screen for 3 seconds
+                setTimeout(function() {
+                    console.log('Fading out splash');
+                    splashScreen.classList.add('fade-out');
+                    
+                    // Show page content immediately
+                    setTimeout(function() {
+                        console.log('Showing page content');
+                        pageContent.classList.add('show');
+                        splashScreen.remove(); // Remove splash from DOM
+                    }, 100);
+                }, 3000);
+            }
+        });
+        
+        // Toggle password visibility
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = document.getElementById(fieldId + '-icon');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.textContent = '👀'; // Open eye
+            } else {
+                field.type = 'password';
+                icon.textContent = '👁️'; // Closed eye
+            }
+        }
+    </script>
+</body>
+</html>
