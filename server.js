@@ -274,17 +274,36 @@ app.use(express.json());
 app.use(express.static(__dirname));
 
 const startupPromise = (async () => {
-  await store.init();
-  await ensureSeeded();
+  try {
+    await store.init();
+    await ensureSeeded();
+  } catch (error) {
+    console.error('STARTUP ERROR:', error);
+    throw error;
+  }
 })();
 
-app.get('/api/debug', (req, res) => {
-  res.json({ 
-    hasSupabaseUrl: Boolean(process.env.SUPABASE_URL),
-    hasSupabaseKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
-    isSupabaseEnabled,
-    nodeEnv: process.env.NODE_ENV
-  });
+app.get('/api/debug', async (req, res) => {
+  try {
+    // Test store init
+    await store.init();
+    res.json({ 
+      hasSupabaseUrl: Boolean(process.env.SUPABASE_URL),
+      hasSupabaseKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+      isSupabaseEnabled,
+      storeInitSuccess: true,
+      nodeEnv: process.env.NODE_ENV
+    });
+  } catch (error) {
+    res.json({ 
+      hasSupabaseUrl: Boolean(process.env.SUPABASE_URL),
+      hasSupabaseKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+      isSupabaseEnabled,
+      storeInitSuccess: false,
+      error: error.message,
+      nodeEnv: process.env.NODE_ENV
+    });
+  }
 });
 
 app.use(async (req, res, next) => {
