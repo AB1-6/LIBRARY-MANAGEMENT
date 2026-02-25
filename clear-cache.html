@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Cache</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        button {
+            background: #dc3545;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover { background: #c82333; }
+        .success { color: #28a745; font-weight: bold; }
+        .info { background: #e7f3ff; padding: 15px; border-radius: 4px; margin: 15px 0; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Cache Cleaner</h1>
+        <div class="info">
+            <strong>Current localStorage contents:</strong>
+            <pre id="storage-content"></pre>
+        </div>
+        
+        <button onclick="clearAllCache()">Clear All Cache & Data</button>
+        <button onclick="location.reload()">Refresh Page</button>
+        <button onclick="location.href='dashboard/admin.html'">Go to Admin Dashboard</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function displayStorage() {
+            const content = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                try {
+                    content[key] = JSON.parse(value);
+                } catch {
+                    content[key] = value;
+                }
+            }
+            document.getElementById('storage-content').textContent = 
+                JSON.stringify(content, null, 2) || '(empty)';
+        }
+
+        function clearAllCache() {
+            const keysToKeep = ['isLoggedIn', 'userEmail', 'userRole', 'userName', 'rememberMe', 'userMemberId'];
+            const tempData = {};
+            
+            keysToKeep.forEach(key => {
+                const val = localStorage.getItem(key);
+                if (val) tempData[key] = val;
+            });
+            
+            localStorage.clear();
+            
+            Object.keys(tempData).forEach(key => {
+                localStorage.setItem(key, tempData[key]);
+            });
+            
+            localStorage.setItem('lib_data_version', '2.0.1-clean');
+            
+            document.getElementById('result').innerHTML = 
+                '<p class="success">✓ Cache cleared successfully! Session data preserved.</p>';
+            
+            setTimeout(() => {
+                displayStorage();
+            }, 100);
+        }
+
+        displayStorage();
+    </script>
+</body>
+</html>

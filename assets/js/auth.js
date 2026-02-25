@@ -4,6 +4,35 @@
 const DEFAULT_ADMIN_EMAIL = 'anlinpunneli@gmail.com';
 const DEFAULT_ADMIN_PASSWORD = 'Anlin20#69';
 
+async function requestJson(url, options) {
+    const response = await fetch(url, options);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        throw new Error(data.error || 'Request failed');
+    }
+    return data;
+}
+
+async function loginWithApi(email, password, role) {
+    return requestJson('/api/auth/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password, role })
+    });
+}
+
+async function registerWithApi(firstName, lastName, email, password) {
+    return requestJson('/api/auth/register', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ firstName, lastName, email, password })
+    });
+}
+
 function ensureDefaultUsers() {
     const usersRaw = localStorage.getItem('lib_users');
     const users = usersRaw ? JSON.parse(usersRaw) : [];
@@ -43,7 +72,7 @@ function setupLoginForm() {
         return;
     }
 
-    loginForm.addEventListener('submit', function(e) {
+    loginForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
         const email = document.getElementById('email').value;
@@ -77,44 +106,45 @@ function setupLoginForm() {
             return;
         }
 
-        if (role === 'admin') {
-            alert('Invalid email or password');
-            return;
-        }
+        let finalRole = role;
+        let memberId = '';
 
-        // Validate registered user (in production, verify against database)
-        const usersRaw = localStorage.getItem('lib_users');
-        const users = usersRaw ? JSON.parse(usersRaw) : [];
-        const matchedUser = users.find((user) => user.email === email && user.password === password);
+        try {
+            const payload = await loginWithApi(email, password, role);
+            finalRole = payload.role || role;
+            memberId = payload.memberId || '';
+            if (payload.firstName || payload.lastName) {
+                const fullName = [payload.firstName || '', payload.lastName || ''].join(' ').trim();
+                if (fullName) {
+                    localStorage.setItem('userName', fullName);
+                }
+            }
+            if (window.LibraryStore && window.LibraryStore.hydrateFromApi) {
+                window.LibraryStore.hydrateFromApi();
+            }
+        } catch (apiError) {
+            const usersRaw = localStorage.getItem('lib_users');
+            const users = usersRaw ? JSON.parse(usersRaw) : [];
+            const matchedUser = users.find((user) => user.email === email && user.password === password);
 
-        if (!matchedUser) {
-            // Fallback to legacy single-user storage
-            const storedUserRaw = localStorage.getItem('userData');
-            const storedUser = storedUserRaw ? JSON.parse(storedUserRaw) : null;
-
-            if (!storedUser || storedUser.email !== email || storedUser.password !== password) {
-                alert('Invalid email or password');
-                return;
+            if (!matchedUser) {
+                const storedUserRaw = localStorage.getItem('userData');
+                const storedUser = storedUserRaw ? JSON.parse(storedUserRaw) : null;
+                if (!storedUser || storedUser.email !== email || storedUser.password !== password) {
+                    alert('Invalid email or password');
+                    return;
+                }
+            } else {
+                finalRole = matchedUser.role;
+                memberId = matchedUser.memberId || '';
             }
         }
 
-        // Store user info in localStorage
-        const finalRole = matchedUser ? matchedUser.role : role;
         localStorage.setItem('userEmail', email);
         localStorage.setItem('userRole', finalRole);
         localStorage.setItem('isLoggedIn', 'true');
-
-        if (matchedUser) {
-            if (matchedUser.memberId) {
-                localStorage.setItem('userMemberId', matchedUser.memberId);
-            } else {
-                const membersRaw = localStorage.getItem('lib_members');
-                const members = membersRaw ? JSON.parse(membersRaw) : [];
-                const found = members.find((member) => member.email === email);
-                if (found) {
-                    localStorage.setItem('userMemberId', found.id);
-                }
-            }
+        if (memberId) {
+            localStorage.setItem('userMemberId', memberId);
         }
 
         if (remember && remember.checked) {
@@ -122,7 +152,7 @@ function setupLoginForm() {
         }
 
         // Redirect to appropriate dashboard
-        redirectToDashboard(role);
+        redirectToDashboard(finalRole);
     });
 
     // Display role in the page
@@ -145,7 +175,7 @@ function setupRegisterForm() {
         return;
     }
 
-    registerForm.addEventListener('submit', function(e) {
+    registerForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
         const firstName = document.getElementById('firstName').value;
@@ -180,49 +210,60 @@ function setupRegisterForm() {
             return;
         }
 
-        // Store user registration data
-        const userData = {
-            firstName: firstName,
-            lastName: lastName,
-            email: email,
-            password: password,
-            role: role, // Always 'student' from public registration
-            registeredDate: new Date().toISOString()
-        };
+        let newMemberId = '';
 
-        localStorage.setItem('userData', JSON.stringify(userData));
+        try {
+            const payload = await registerWithApi(firstName, lastName, email, password);
+            newMemberId = payload.memberId || '';
+            if (window.LibraryStore && window.LibraryStore.hydrateFromApi) {
+                window.LibraryStore.hydrateFromApi();
+            }
+        } catch (apiError) {
+            const userData = {
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                password: password,
+                role: role,
+                registeredDate: new Date().toISOString()
+            };
 
-        const usersRaw = localStorage.getItem('lib_users');
-        const users = usersRaw ? JSON.parse(usersRaw) : [];
-        const membersRaw = localStorage.getItem('lib_members');
-        const members = membersRaw ? JSON.parse(membersRaw) : [];
+            localStorage.setItem('userData', JSON.stringify(userData));
 
-        const newMemberId = 'M' + String(members.length + 1).padStart(3, '0');
-        members.push({
-            id: newMemberId,
-            name: firstName + ' ' + lastName,
-            email: email,
-            phone: '',
-            type: 'Student'
-        });
+            const usersRaw = localStorage.getItem('lib_users');
+            const users = usersRaw ? JSON.parse(usersRaw) : [];
+            const membersRaw = localStorage.getItem('lib_members');
+            const members = membersRaw ? JSON.parse(membersRaw) : [];
 
-        users.push({
-            id: 'U' + String(users.length + 1).padStart(3, '0'),
-            email: email,
-            password: password,
-            role: role,
-            firstName: firstName,
-            lastName: lastName,
-            memberId: newMemberId,
-            createdDate: new Date().toISOString()
-        });
+            newMemberId = 'M' + String(members.length + 1).padStart(3, '0');
+            members.push({
+                id: newMemberId,
+                name: firstName + ' ' + lastName,
+                email: email,
+                phone: '',
+                type: 'Student'
+            });
 
-        localStorage.setItem('lib_members', JSON.stringify(members));
-        localStorage.setItem('lib_users', JSON.stringify(users));
+            users.push({
+                id: 'U' + String(users.length + 1).padStart(3, '0'),
+                email: email,
+                password: password,
+                role: role,
+                firstName: firstName,
+                lastName: lastName,
+                memberId: newMemberId,
+                createdDate: new Date().toISOString()
+            });
+
+            localStorage.setItem('lib_members', JSON.stringify(members));
+            localStorage.setItem('lib_users', JSON.stringify(users));
+        }
 
         localStorage.setItem('userEmail', email);
         localStorage.setItem('userRole', role);
-        localStorage.setItem('userMemberId', newMemberId);
+        if (newMemberId) {
+            localStorage.setItem('userMemberId', newMemberId);
+        }
 
         // Show success message
         alert('Registration successful! You are registered as a Student. Redirecting to login...');

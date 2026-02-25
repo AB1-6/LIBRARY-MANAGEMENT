@@ -1,0 +1,70 @@
+📋 EXCEL/CSV IMPORT INSTRUCTIONS
+================================
+
+The system accepts CSV files (you can save Excel files as CSV).
+
+REQUIRED FORMATS:
+-----------------
+
+FOR BOOKS:
+----------
+Required columns: title, author
+Optional columns: category, copies
+
+Example CSV:
+title,author,category,copies
+Introduction to Algorithms,Cormen,Computer Science,3
+Clean Code,Robert Martin,Programming,2
+
+Use sample-books.csv as a template!
+
+
+FOR MEMBERS:
+------------
+Required columns: name, email
+Optional columns: phone, type
+
+Example CSV:
+name,email,phone,type
+John Doe,john@example.com,1234567890,Student
+Jane Smith,jane@example.com,0987654321,Faculty
+
+Use sample-members.csv as a template!
+
+
+FOR CATEGORIES:
+---------------
+Required column: category (or name)
+
+Example CSV:
+category
+Computer Science
+Programming
+Fiction
+
+
+HOW TO IMPORT:
+--------------
+1. Prepare your data in Excel
+2. Save as CSV (File → Save As → CSV)
+3. In Admin Dashboard, click "Import from Excel"
+4. Select your CSV file
+5. System will auto-detect the type based on column names
+
+
+IMPORTANT NOTES:
+----------------
+- Column names are case-insensitive (Title = title = TITLE)
+- All column names must match exactly (including spelling)
+- Empty rows will be skipped automatically
+- First row must be the header row with column names
+- Use sample files in the project folder as templates!
+
+
+TROUBLESHOOTING:
+----------------
+If you get "Unrecognized format" error:
+1. Check F12 Console tab to see what columns were found
+2. Make sure you have the required columns spelled correctly
+3. Try using the sample CSV files provided (sample-books.csv, sample-members.csv)
+4. Make sure you saved as CSV, not XLSX

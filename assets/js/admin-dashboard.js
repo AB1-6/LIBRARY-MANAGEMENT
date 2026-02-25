@@ -812,6 +812,144 @@
         showMessage('Restore', 'Use the Restore Database button to upload ' + fileName + '.');
     };
 
+    window.showImportExcelDialog = function () {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.csv,.xlsx,.xls,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        input.addEventListener('change', function () {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const text = e.target.result;
+                    const rows = parseCSV(text);
+                    
+                    if (rows.length < 2) {
+                        showMessage('Error', 'Excel file must have headers and at least one data row.');
+                        return;
+                    }
+                    
+                    const headers = rows[0].map(h => h.toLowerCase().trim());
+                    const dataRows = rows.slice(1);
+                    
+                    // Detect data type from headers
+                    if (headers.includes('title') && headers.includes('author')) {
+                        importBooks(headers, dataRows);
+                    } else if (headers.includes('name') && headers.includes('email')) {
+                        importMembers(headers, dataRows);
+                    } else if (headers.includes('category') || headers.includes('name')) {
+                        importCategories(headers, dataRows);
+                    } else {
+                        showMessage('Error', 'Unrecognized Excel format. Include columns like Title/Author for books or Name/Email for members.');
+                    }
+                } catch (err) {
+                    showMessage('Error', 'Failed to parse Excel file: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        });
+        input.click();
+    };
+
+    function parseCSV(text) {
+        const lines = text.split(/\r?\n/);
+        const result = [];
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            const row = line.split(/,|\t/).map(cell => cell.trim().replace(/^"|"$/g, ''));
+            result.push(row);
+        }
+        return result;
+    }
+
+    function importBooks(headers, dataRows) {
+        const books = getBooks();
+        const titleIdx = headers.indexOf('title');
+        const authorIdx = headers.indexOf('author');
+        const categoryIdx = Math.max(headers.indexOf('category'), headers.indexOf('subject'));
+        const copiesIdx = Math.max(headers.indexOf('copies'), headers.indexOf('totalcopies'), headers.indexOf('total'));
+        
+        let imported = 0;
+        dataRows.forEach((row) => {
+            const title = row[titleIdx];
+            const author = row[authorIdx];
+            if (!title || !author) return;
+            
+            const totalCopies = parseInt(row[copiesIdx]) || 1;
+            const newBook = {
+                id: LibraryStore.nextId('B', books),
+                title: title,
+                author: author,
+                category: categoryIdx >= 0 ? row[categoryIdx] : 'General',
+                totalCopies: totalCopies,
+                availableCopies: totalCopies
+            };
+            books.push(newBook);
+            imported++;
+        });
+        
+        saveBooks(books);
+        refreshAll();
+        showMessage('Success', 'Imported ' + imported + ' books from Excel.');
+    }
+
+    function importMembers(headers, dataRows) {
+        const members = getMembers();
+        const nameIdx = headers.indexOf('name');
+        const emailIdx = headers.indexOf('email');
+        const phoneIdx = headers.indexOf('phone');
+        const typeIdx = Math.max(headers.indexOf('type'), headers.indexOf('membertype'));
+        
+        let imported = 0;
+        dataRows.forEach((row) => {
+            const name = row[nameIdx];
+            const email = row[emailIdx];
+            if (!name || !email) return;
+            
+            const newMember = {
+                id: LibraryStore.nextId('M', members),
+                name: name,
+                email: email,
+                phone: phoneIdx >= 0 ? row[phoneIdx] : '',
+                type: typeIdx >= 0 ? row[typeIdx] : 'Student'
+            };
+            members.push(newMember);
+            imported++;
+        });
+        
+        saveMembers(members);
+        refreshAll();
+        showMessage('Success', 'Imported ' + imported + ' members from Excel.');
+    }
+
+    function importCategories(headers, dataRows) {
+        const categories = getCategories();
+        const nameIdx = Math.max(headers.indexOf('name'), headers.indexOf('category'));
+        
+        let imported = 0;
+        dataRows.forEach((row) => {
+            const name = row[nameIdx];
+            if (!name) return;
+            
+            const exists = categories.some(c => c.name.toLowerCase() === name.toLowerCase());
+            if (exists) return;
+            
+            const newCategory = {
+                id: LibraryStore.nextId('C', categories),
+                name: name
+            };
+            categories.push(newCategory);
+            imported++;
+        });
+        
+        saveCategories(categories);
+        refreshAll();
+        showMessage('Success', 'Imported ' + imported + ' categories from Excel.');
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         if (!window.LibraryStore) {
             return;

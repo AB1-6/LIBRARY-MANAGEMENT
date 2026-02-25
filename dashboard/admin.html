@@ -236,19 +236,19 @@
                     <div class="stats-grid">
                         <div class="stat-card">
                             <h3>Total Fines Collected</h3>
-                            <p class="stat-number">$1,240</p>
+                            <p class="stat-number" id="reportTotalFines">$0</p>
                         </div>
                         <div class="stat-card">
                             <h3>Books Issued This Month</h3>
-                            <p class="stat-number">156</p>
+                            <p class="stat-number" id="reportBooksIssued">0</p>
                         </div>
                         <div class="stat-card">
                             <h3>New Members This Month</h3>
-                            <p class="stat-number">28</p>
+                            <p class="stat-number" id="reportNewMembers">0</p>
                         </div>
                         <div class="stat-card">
                             <h3>Most Borrowed Category</h3>
-                            <p class="stat-number">Computer Science</p>
+                            <p class="stat-number" id="reportTopCategory">-</p>
                         </div>
                     </div>
 
@@ -297,7 +297,23 @@
                         <div class="action-buttons">
                             <button class="btn btn-primary" onclick="backupDatabase()">💾 Backup Database</button>
                             <button class="btn btn-secondary" onclick="restoreDatabase()">📥 Restore Database</button>
+                            <button class="btn btn-success" onclick="showImportExcelDialog()">📊 Import from Excel</button>
+                            <button class="btn btn-danger" onclick="clearAllData()">🗑️ Clear All Data</button>
                             <button class="btn btn-info" onclick="viewTriggers()">⚙️ View Trigger Details</button>
+                        </div>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Excel Import Instructions</h3>
+                        <div class="alert alert-info">
+                            <strong>📋 How to use Excel Import:</strong>
+                            <ul style="margin: 10px 0 0 20px;">
+                                <li>Create an Excel file (.xlsx or .xls) with sheets named: <code>Books</code>, <code>Members</code>, <code>Categories</code></li>
+                                <li><strong>Books sheet columns:</strong> Title, Author, Category, TotalCopies, AvailableCopies</li>
+                                <li><strong>Members sheet columns:</strong> Name, Email, Phone, Type</li>
+                                <li><strong>Categories sheet columns:</strong> Name</li>
+                                <li>Click "Import from Excel" and select your file</li>
+                            </ul>
                         </div>
                     </div>
 
@@ -382,8 +398,8 @@
     </div>
 
     <script src="../assets/js/ui-modal.v2.js"></script>
-    <script src="../assets/js/library-store.js?v=20260218a"></script>
-    <script src="../assets/js/admin-dashboard.v2.js"></script>
+    <script src="../assets/js/library-store.js?v=20260226a"></script>
+    <script src="../assets/js/admin-dashboard.v2.js?v=20260226a"></script>
     <script src="../assets/js/redirect.js"></script>
     <script src="../assets/js/popup.js"></script>
     <script>

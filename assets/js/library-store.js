@@ -1,5 +1,41 @@
 // Shared localStorage helpers for dashboard data
 (function () {
+    const DATA_VERSION = '3.1.0-supabase-sync';
+    const VERSION_KEY = 'lib_data_version';
+    
+    // FORCE CLEAR ALL OLD DATA - aggressive cache clearing
+    const currentVersion = localStorage.getItem(VERSION_KEY);
+    if (currentVersion !== DATA_VERSION) {
+        console.log('🧹 CLEARING ALL OLD CACHED DATA...');
+        
+        // Save login info only
+        const keysToKeep = ['isLoggedIn', 'userEmail', 'userRole', 'userName', 'rememberMe', 'userMemberId'];
+        const tempData = {};
+        keysToKeep.forEach(key => {
+            const val = localStorage.getItem(key);
+            if (val) tempData[key] = val;
+        });
+        
+        // Clear everything
+        localStorage.clear();
+        
+        // Restore login info
+        Object.keys(tempData).forEach(key => {
+            localStorage.setItem(key, tempData[key]);
+        });
+        
+        // Set new version
+        localStorage.setItem(VERSION_KEY, DATA_VERSION);
+        
+        console.log('✓ Cache cleared! All old books, members, issues, and activity removed.');
+        console.log('✓ Reloading dashboard data from server...');
+        
+        // Show visual confirmation
+        if (window.location.pathname.includes('dashboard')) {
+            alert('✓ Old cached data cleared!\n\nDashboard will now show current data from server.');
+        }
+    }
+
     const KEYS = {
         books: 'lib_books',
         categories: 'lib_categories',
@@ -8,6 +44,19 @@
         users: 'lib_users',
         requests: 'lib_requests'
     };
+
+    const RESOURCE_BY_KEY = {
+        lib_books: 'books',
+        lib_categories: 'categories',
+        lib_members: 'members',
+        lib_issues: 'issues',
+        lib_users: 'users',
+        lib_requests: 'requests'
+    };
+
+    let initPromise = null;
+    let syncTimer = null;
+    const pendingResources = new Set();
 
     function load(key, fallback) {
         const raw = localStorage.getItem(key);
@@ -23,6 +72,54 @@
 
     function save(key, value) {
         localStorage.setItem(key, JSON.stringify(value));
+        queueSyncForKey(key);
+    }
+
+    async function fetchJson(url, options) {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            throw new Error('Request failed');
+        }
+        return response.json();
+    }
+
+    function queueSyncForKey(key) {
+        const resource = RESOURCE_BY_KEY[key];
+        if (!resource) {
+            return;
+        }
+        pendingResources.add(resource);
+        if (syncTimer) {
+            clearTimeout(syncTimer);
+        }
+        syncTimer = setTimeout(function () {
+            const resources = Array.from(pendingResources);
+            pendingResources.clear();
+            syncTimer = null;
+            resources.forEach(function (name) {
+                syncResource(name);
+            });
+        }, 250);
+    }
+
+    async function syncResource(resource) {
+        const key = KEYS[resource];
+        if (!key) {
+            return;
+        }
+
+        try {
+            const items = load(key, []);
+            await fetchJson('/api/' + resource, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ items: items })
+            });
+        } catch (err) {
+            // Keep local data if API is unavailable.
+        }
     }
 
     function nextId(prefix, items) {
@@ -41,66 +138,6 @@
     }
 
     function ensureSeeded() {
-        const categories = load(KEYS.categories, []);
-        if (categories.length === 0) {
-            save(KEYS.categories, [
-                { id: 'C001', name: 'Computer Science' },
-                { id: 'C002', name: 'Programming' },
-                { id: 'C003', name: 'Software Engineering' },
-                { id: 'C004', name: 'Mathematics' }
-            ]);
-        }
-
-        const books = load(KEYS.books, []);
-        if (books.length === 0) {
-            save(KEYS.books, [
-                {
-                    id: 'B001',
-                    title: 'Introduction to Algorithms',
-                    author: 'Thomas H. Cormen',
-                    category: 'Computer Science',
-                    totalCopies: 10,
-                    availableCopies: 7
-                },
-                {
-                    id: 'B002',
-                    title: 'Clean Code',
-                    author: 'Robert C. Martin',
-                    category: 'Programming',
-                    totalCopies: 8,
-                    availableCopies: 5
-                },
-                {
-                    id: 'B003',
-                    title: 'Design Patterns',
-                    author: 'Gang of Four',
-                    category: 'Software Engineering',
-                    totalCopies: 6,
-                    availableCopies: 4
-                }
-            ]);
-        }
-
-        const members = load(KEYS.members, []);
-        if (members.length === 0) {
-            save(KEYS.members, [
-                {
-                    id: 'M001',
-                    name: 'John Doe',
-                    email: 'john@example.com',
-                    phone: '555-0101',
-                    type: 'Student'
-                },
-                {
-                    id: 'M002',
-                    name: 'Jane Smith',
-                    email: 'jane@example.com',
-                    phone: '555-0102',
-                    type: 'Student'
-                }
-            ]);
-        }
-
         const users = load(KEYS.users, []);
         if (users.length === 0) {
             save(KEYS.users, [
@@ -125,42 +162,23 @@
             ]);
         }
 
-        const issues = load(KEYS.issues, []);
-        if (issues.length === 0) {
-            save(KEYS.issues, [
-                {
-                    id: 'I001',
-                    bookId: 'B001',
-                    memberId: 'M001',
-                    issueDate: '2026-02-05',
-                    dueDate: '2026-02-19',
-                    returnDate: '',
-                    status: 'active'
-                },
-                {
-                    id: 'I002',
-                    bookId: 'B003',
-                    memberId: 'M002',
-                    issueDate: '2026-01-30',
-                    dueDate: '2026-02-13',
-                    returnDate: '',
-                    status: 'overdue'
-                }
-            ]);
+        if (!initPromise) {
+            initPromise = hydrateFromApi();
         }
+    }
 
-        const requests = load(KEYS.requests, []);
-        if (requests.length === 0) {
-            save(KEYS.requests, [
-                {
-                    id: 'R001',
-                    bookId: 'B002',
-                    memberId: 'M001',
-                    reason: 'Course assignment',
-                    requestDate: '2026-02-18',
-                    status: 'pending'
-                }
-            ]);
+    async function hydrateFromApi() {
+        try {
+            const snapshot = await fetchJson('/api/init');
+            if (snapshot.books) localStorage.setItem(KEYS.books, JSON.stringify(snapshot.books));
+            if (snapshot.categories) localStorage.setItem(KEYS.categories, JSON.stringify(snapshot.categories));
+            if (snapshot.members) localStorage.setItem(KEYS.members, JSON.stringify(snapshot.members));
+            if (snapshot.issues) localStorage.setItem(KEYS.issues, JSON.stringify(snapshot.issues));
+            if (snapshot.users) localStorage.setItem(KEYS.users, JSON.stringify(snapshot.users));
+            if (snapshot.requests) localStorage.setItem(KEYS.requests, JSON.stringify(snapshot.requests));
+            return true;
+        } catch (err) {
+            return false;
         }
     }
 
@@ -177,6 +195,7 @@
         load: get,
         save: set,
         nextId: nextId,
-        ensureSeeded: ensureSeeded
+        ensureSeeded: ensureSeeded,
+        hydrateFromApi: hydrateFromApi
     };
 })();

@@ -398,12 +398,65 @@
         overdueBody.innerHTML = '';
         finesBody.innerHTML = '';
 
+        // Calculate report statistics
+        let totalFines = 0;
+        let booksIssuedThisMonth = 0;
+        let newMembersThisMonth = 0;
+        const categoryCounts = {};
+        
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        // Count books issued this month
+        issues.forEach((issue) => {
+            const issueDate = new Date(issue.issueDate);
+            if (issueDate.getMonth() === currentMonth && issueDate.getFullYear() === currentYear) {
+                booksIssuedThisMonth++;
+                
+                // Count by category
+                const book = books.find((b) => b.id === issue.bookId);
+                if (book && book.category) {
+                    categoryCounts[book.category] = (categoryCounts[book.category] || 0) + 1;
+                }
+            }
+        });
+        
+        // Count new members this month
+        members.forEach((member) => {
+            if (member.createdDate) {
+                const createdDate = new Date(member.createdDate);
+                if (createdDate.getMonth() === currentMonth && createdDate.getFullYear() === currentYear) {
+                    newMembersThisMonth++;
+                }
+            }
+        });
+        
+        // Find most borrowed category
+        let topCategory = '-';
+        let maxCount = 0;
+        Object.keys(categoryCounts).forEach((category) => {
+            if (categoryCounts[category] > maxCount) {
+                maxCount = categoryCounts[category];
+                topCategory = category;
+            }
+        });
+        
+        // Update stat cards
+        const totalFinesEl = document.getElementById('reportTotalFines');
+        const booksIssuedEl = document.getElementById('reportBooksIssued');
+        const newMembersEl = document.getElementById('reportNewMembers');
+        const topCategoryEl = document.getElementById('reportTopCategory');
+        
+        // Populate overdue books and calculate fines
         issues.forEach((issue) => {
             if (issue.status === 'returned') {
                 return;
             }
             const days = daysBetween(issue.dueDate);
             if (days < 0) {
+                const fine = Math.abs(days);
+                totalFines += fine;
                 const book = books.find((b) => b.id === issue.bookId);
                 const member = members.find((m) => m.id === issue.memberId);
                 const row = document.createElement('tr');
@@ -412,11 +465,12 @@
                     '<td>' + (book ? book.title : issue.bookId) + '</td>' +
                     '<td>' + formatDate(issue.dueDate) + '</td>' +
                     '<td>' + Math.abs(days) + ' days</td>' +
-                    '<td>$' + Math.abs(days) + '.00</td>';
+                    '<td>$' + fine + '.00</td>';
                 overdueBody.appendChild(row);
             }
         });
 
+        // Populate fines collected (returned books)
         issues
             .filter((issue) => issue.status === 'returned')
             .forEach((issue) => {
@@ -431,6 +485,12 @@
                     '<td>$0.00</td>';
                 finesBody.appendChild(row);
             });
+        
+        // Update stat cards with calculated values
+        if (totalFinesEl) totalFinesEl.textContent = '$' + totalFines;
+        if (booksIssuedEl) booksIssuedEl.textContent = booksIssuedThisMonth;
+        if (newMembersEl) newMembersEl.textContent = newMembersThisMonth;
+        if (topCategoryEl) topCategoryEl.textContent = topCategory;
     }
 
     function countMemberIssues(memberId) {
@@ -796,6 +856,25 @@
         input.click();
     };
 
+    window.clearAllData = function () {
+        confirmAction('Clear All Data', 
+            '⚠️ WARNING: This will delete ALL books, members, categories, issues, and requests!\n\nAdmin and librarian users will be preserved.\n\nAre you absolutely sure?', 
+            function () {
+                // Clear all data except users
+                saveBooks([]);
+                saveMembers([]);
+                saveCategories([]);
+                saveIssues([]);
+                LibraryStore.save(LibraryStore.KEYS.requests, []);
+                
+                // Refresh the dashboard
+                refreshAll();
+                
+                showMessage('Success', 'All data cleared! Books, members, categories, and issues have been deleted. Admin users preserved.');
+            }
+        );
+    };
+
     window.viewTriggers = function () {
         showMessage('Trigger Details', 'Trigger details are shown in the table below.');
     };
@@ -811,6 +890,165 @@
     window.restoreFromBackup = function (fileName) {
         showMessage('Restore', 'Use the Restore Database button to upload ' + fileName + '.');
     };
+
+    window.showImportExcelDialog = function () {
+        console.log('showImportExcelDialog called');
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.csv,.xlsx,.xls,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        input.addEventListener('change', function () {
+            console.log('File selected:', input.files[0]);
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    console.log('File read successfully');
+                    const text = e.target.result;
+                    const rows = parseCSV(text);
+                    console.log('Parsed rows:', rows);
+                    
+                    if (rows.length < 2) {
+                        showMessage('Error', 'Excel file must have headers and at least one data row.');
+                        return;
+                    }
+                    
+                    const headers = rows[0].map(h => h.toLowerCase().trim());
+                    const dataRows = rows.slice(1).filter(row => row.some(cell => cell && cell.trim()));
+                    console.log('Headers:', headers);
+                    console.log('Data rows:', dataRows.length);
+                    
+                    if (dataRows.length === 0) {
+                        showMessage('Error', 'No data rows found in file.');
+                        return;
+                    }
+                    
+                    // Detect data type from headers
+                    if (headers.includes('title') && headers.includes('author')) {
+                        console.log('Importing as books');
+                        importBooks(headers, dataRows);
+                    } else if (headers.includes('name') && headers.includes('email')) {
+                        console.log('Importing as members');
+                        importMembers(headers, dataRows);
+                    } else if (headers.includes('category') || headers.includes('category_name') || (headers.includes('name') && headers.length === 1)) {
+                        console.log('Importing as categories');
+                        importCategories(headers, dataRows);
+                    } else {
+                        console.log('Unrecognized format. Headers found:', headers);
+                        showMessage('Error', 
+                            'Unrecognized Excel format. Found columns: ' + headers.join(', ') + 
+                            '\n\nFor BOOKS use: title, author, category, copies' +
+                            '\nFor MEMBERS use: name, email, phone, type' +
+                            '\nFor CATEGORIES use: category (or name or category_name)');
+                    }
+                } catch (err) {
+                    console.error('Import error:', err);
+                    showMessage('Error', 'Failed to parse Excel file: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        });
+        input.click();
+        console.log('File input created and clicked');
+    };
+
+    function parseCSV(text) {
+        const lines = text.split(/\r?\n/);
+        const result = [];
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            const row = line.split(/,|\t/).map(cell => cell.trim().replace(/^"|"$/g, ''));
+            result.push(row);
+        }
+        return result;
+    }
+
+    function importBooks(headers, dataRows) {
+        const books = getBooks();
+        const titleIdx = headers.indexOf('title');
+        const authorIdx = headers.indexOf('author');
+        const categoryIdx = Math.max(headers.indexOf('category'), headers.indexOf('subject'));
+        const copiesIdx = Math.max(headers.indexOf('copies'), headers.indexOf('totalcopies'), headers.indexOf('total'));
+        
+        let imported = 0;
+        dataRows.forEach((row) => {
+            const title = row[titleIdx];
+            const author = row[authorIdx];
+            if (!title || !author) return;
+            
+            const totalCopies = parseInt(row[copiesIdx]) || 1;
+            const newBook = {
+                id: LibraryStore.nextId('B', books),
+                title: title,
+                author: author,
+                category: categoryIdx >= 0 ? row[categoryIdx] : 'General',
+                totalCopies: totalCopies,
+                availableCopies: totalCopies
+            };
+            books.push(newBook);
+            imported++;
+        });
+        
+        saveBooks(books);
+        refreshAll();
+        showMessage('Success', 'Imported ' + imported + ' books from Excel.');
+    }
+
+    function importMembers(headers, dataRows) {
+        const members = getMembers();
+        const nameIdx = headers.indexOf('name');
+        const emailIdx = headers.indexOf('email');
+        const phoneIdx = headers.indexOf('phone');
+        const typeIdx = Math.max(headers.indexOf('type'), headers.indexOf('membertype'));
+        
+        let imported = 0;
+        dataRows.forEach((row) => {
+            const name = row[nameIdx];
+            const email = row[emailIdx];
+            if (!name || !email) return;
+            
+            const newMember = {
+                id: LibraryStore.nextId('M', members),
+                name: name,
+                email: email,
+                phone: phoneIdx >= 0 ? row[phoneIdx] : '',
+                type: typeIdx >= 0 ? row[typeIdx] : 'Student'
+            };
+            members.push(newMember);
+            imported++;
+        });
+        
+        saveMembers(members);
+        refreshAll();
+        showMessage('Success', 'Imported ' + imported + ' members from Excel.');
+    }
+
+    function importCategories(headers, dataRows) {
+        const categories = getCategories();
+        const nameIdx = Math.max(headers.indexOf('name'), headers.indexOf('category'), headers.indexOf('category_name'));
+        
+        let imported = 0;
+        dataRows.forEach((row) => {
+            const name = row[nameIdx];
+            if (!name) return;
+            
+            const exists = categories.some(c => c.name.toLowerCase() === name.toLowerCase());
+            if (exists) return;
+            
+            const newCategory = {
+                id: LibraryStore.nextId('C', categories),
+                name: name
+            };
+            categories.push(newCategory);
+            imported++;
+        });
+        
+        saveCategories(categories);
+        refreshAll();
+        showMessage('Success', 'Imported ' + imported + ' categories from Excel.');
+    }
 
     document.addEventListener('DOMContentLoaded', function () {
         if (!window.LibraryStore) {

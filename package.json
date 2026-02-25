@@ -1,0 +1,15 @@
+{
+  "name": "edu-entity",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ENTITY library management with Express + SQLite backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
+    "express": "^4.21.2",
+    "sqlite3": "^5.1.7"
+  }
+}

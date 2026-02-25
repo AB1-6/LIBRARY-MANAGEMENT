@@ -258,6 +258,58 @@ The application uses browser's localStorage to store:
 ### Redirects not working?
 - Check that all HTML files are in correct directories
 - Verify relative paths in links
+
+## Supabase + Vercel Setup
+
+This project now supports two backend modes:
+- **Local mode (default):** SQLite (`data/entity.db`)
+- **Cloud mode:** Supabase (recommended for Vercel)
+
+The backend auto-switches to Supabase when both environment variables are present:
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+### 1) Create Supabase table
+
+1. Open your Supabase project dashboard.
+2. Go to **SQL Editor**.
+3. Run the SQL from `supabase/schema.sql`.
+
+### 2) Add environment variables
+
+For local testing, create a `.env` file in project root:
+
+```bash
+SUPABASE_URL=https://<your-project-ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+```
+
+Or copy from the template first:
+
+```bash
+copy .env.example .env
+```
+
+> Keep the service role key secret. Never expose it in frontend code.
+
+### 3) Deploy to Vercel
+
+1. Push this project to GitHub.
+2. Import repo in Vercel.
+3. In Vercel project settings, add:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+4. Deploy.
+
+`vercel.json` already rewrites all `/api/*` routes to `api/index.js`.
+
+### 4) Verify
+
+After deployment, test:
+- `https://<your-vercel-domain>/api/health`
+- `https://<your-vercel-domain>/api/init`
+
+If Supabase is configured correctly, data is persisted in `entity_resources` table.
 - Check browser console for 404 errors
 
 ## License
