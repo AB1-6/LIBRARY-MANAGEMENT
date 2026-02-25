@@ -413,8 +413,8 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.post('/api/auth/register', async (req, res) => {
-  const { firstName, lastName, email, password } = req.body || {};
-  if (!firstName || !lastName || !email || !password) {
+  const { firstName, lastName, email, password, studentId } = req.body || {};
+  if (!firstName || !lastName || !email || !password || !studentId) {
     res.status(400).json({ error: 'All fields are required.' });
     return;
   }
@@ -429,8 +429,15 @@ app.post('/api/auth/register', async (req, res) => {
       return;
     }
 
+    // Check if student ID already exists
+    const existingMember = members.find((entry) => entry.id === studentId);
+    if (existingMember) {
+      res.status(409).json({ error: 'Student ID already exists.' });
+      return;
+    }
+
     const newMember = {
-      id: nextId('M', members),
+      id: studentId,
       name: `${firstName} ${lastName}`,
       email,
       phone: '',

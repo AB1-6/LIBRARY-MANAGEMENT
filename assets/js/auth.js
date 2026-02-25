@@ -23,13 +23,13 @@ async function loginWithApi(email, password, role) {
     });
 }
 
-async function registerWithApi(firstName, lastName, email, password) {
+async function registerWithApi(firstName, lastName, email, password, studentId) {
     return requestJson('/api/auth/register', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ firstName, lastName, email, password })
+        body: JSON.stringify({ firstName, lastName, email, password, studentId })
     });
 }
 
@@ -180,6 +180,7 @@ function setupRegisterForm() {
 
         const firstName = document.getElementById('firstName').value;
         const lastName = document.getElementById('lastName').value;
+        const studentId = document.getElementById('studentId').value;
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
@@ -190,7 +191,7 @@ function setupRegisterForm() {
         const role = 'student';
 
         // Validation
-        if (!firstName || !lastName || !email || !password || !confirmPassword) {
+        if (!firstName || !lastName || !studentId || !email || !password || !confirmPassword) {
             alert('Please fill in all fields');
             return;
         }
@@ -213,7 +214,7 @@ function setupRegisterForm() {
         let newMemberId = '';
 
         try {
-            const payload = await registerWithApi(firstName, lastName, email, password);
+            const payload = await registerWithApi(firstName, lastName, email, password, studentId);
             newMemberId = payload.memberId || '';
             if (window.LibraryStore && window.LibraryStore.hydrateFromApi) {
                 window.LibraryStore.hydrateFromApi();
@@ -237,7 +238,7 @@ function setupRegisterForm() {
 
             newMemberId = 'M' + String(members.length + 1).padStart(3, '0');
             members.push({
-                id: newMemberId,
+                id: studentId || newMemberId,
                 name: firstName + ' ' + lastName,
                 email: email,
                 phone: '',

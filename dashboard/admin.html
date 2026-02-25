@@ -27,7 +27,7 @@
                 <ul>
                     <li><a href="#dashboard" class="menu-item active" data-section="dashboard">📊 Dashboard</a></li>
                     <li><a href="#books" class="menu-item" data-section="books">📚 Book Management</a></li>
-                    <li><a href="#members" class="menu-item" data-section="members">👥 Member Management</a></li>
+                    <li><a href="#members" class="menu-item" data-section="members">�‍💼 Librarian Management</a></li>
                     <li><a href="#issue-return" class="menu-item" data-section="issue-return">🔄 Issue & Return</a></li>
                     <li><a href="#user-management" class="menu-item" data-section="user-management">🔐 User Management</a></li>
                     <li><a href="#reports" class="menu-item" data-section="reports">📈 Reports</a></li>
@@ -127,28 +127,30 @@
                     </div>
                 </div>
 
-                <!-- Member Management Section -->
+                <!-- Librarian Management Section -->
                 <div id="section-members" class="content-section" style="display:none;">
-                    <h2>👥 Member Management</h2>
+                    <h2>👨‍💼 Librarian Management</h2>
+                    <div class="alert alert-info">
+                        <strong>Admin Power:</strong> Create librarian accounts here. Librarians can manage books and issue/return operations.
+                    </div>
                     <div class="action-buttons">
-                        <button class="btn btn-primary" onclick="showAddMemberForm()">➕ Add Member</button>
+                        <button class="btn btn-primary" onclick="showAddLibrarianForm()">➕ Create New Librarian</button>
                     </div>
                     
                     <div class="content-section">
-                        <h3>All Members</h3>
+                        <h3>All Librarians</h3>
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    <th>Librarian ID</th>
                                     <th>Name</th>
                                     <th>Email</th>
-                                    <th>Phone</th>
-                                    <th>Type</th>
-                                    <th>Books Issued</th>
+                                    <th>Status</th>
+                                    <th>Created Date</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="membersTableBody"></tbody>
+                            <tbody id="librariansTableBody"></tbody>
                         </table>
                     </div>
                 </div>

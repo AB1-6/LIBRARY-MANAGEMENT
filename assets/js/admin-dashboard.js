@@ -289,26 +289,28 @@
         });
     }
 
-    function renderMembersTable() {
-        const tbody = document.getElementById('membersTableBody');
+    function renderLibrariansTable() {
+        const tbody = document.getElementById('librariansTableBody');
         if (!tbody) {
             return;
         }
-        const members = getMembers();
+        const users = getUsers();
+        const librarians = users.filter(u => u.role === 'librarian');
         tbody.innerHTML = '';
 
-        members.forEach((member) => {
+        librarians.forEach((librarian) => {
+            const fullName = (librarian.firstName || '') + ' ' + (librarian.lastName || '');
+            const createdDate = librarian.createdDate ? new Date(librarian.createdDate).toLocaleDateString() : '-';
             const row = document.createElement('tr');
             row.innerHTML =
-                '<td>' + member.id + '</td>' +
-                '<td>' + member.name + '</td>' +
-                '<td>' + member.email + '</td>' +
-                '<td>' + member.phone + '</td>' +
-                '<td>' + member.type + '</td>' +
-                '<td>' + countMemberIssues(member.id) + '</td>' +
+                '<td>' + librarian.id + '</td>' +
+                '<td>' + fullName.trim() + '</td>' +
+                '<td>' + librarian.email + '</td>' +
+                '<td><span class="badge badge-success">Active</span></td>' +
+                '<td>' + createdDate + '</td>' +
                 '<td>' +
-                '<button class="btn-icon" onclick="editMember(\'' + member.id + '\')">Edit</button>' +
-                '<button class="btn-icon" onclick="deleteMember(\'' + member.id + '\')">Delete</button>' +
+                '<button class="btn-icon" onclick="resetLibrarianPassword(\'' + librarian.id + '\')">🔑 Reset Password</button>' +
+                '<button class="btn-icon" onclick="deleteLibrarian(\'' + librarian.id + '\')">🗑️ Delete</button>' +
                 '</td>';
             tbody.appendChild(row);
         });
@@ -452,7 +454,7 @@
     function refreshAll() {
         updateStats();
         renderBooksTable();
-        renderMembersTable();
+        renderLibrariansTable();
         renderIssuesTables();
         renderUsersTable();
         renderReports();
@@ -554,28 +556,73 @@
         });
     };
 
-    window.showAddMemberForm = function () {
+    window.showAddLibrarianForm = function () {
         openFormModal({
-            title: 'Add Member',
-            submitLabel: 'Add',
+            title: 'Create New Librarian',
+            submitLabel: 'Create Librarian',
             fields: [
-                { id: 'memberName', label: 'Member full name', required: true },
-                { id: 'memberEmail', label: 'Email', required: true, type: 'email' },
-                { id: 'memberPhone', label: 'Phone', required: true },
-                { id: 'memberType', label: 'Type (Student/Faculty)', required: true, value: 'Student' }
+                { id: 'librarianId', label: 'Librarian ID', required: true, placeholder: 'e.g., LIB001' },
+                { id: 'librarianFirstName', label: 'First Name', required: true },
+                { id: 'librarianLastName', label: 'Last Name', required: true },
+                { id: 'librarianEmail', label: 'Email', required: true, type: 'email' },
+                { id: 'librarianPassword', label: 'Password', required: true, type: 'password' }
             ],
             onSubmit: function (values) {
-                const members = getMembers();
-                members.push({
-                    id: LibraryStore.nextId('M', members),
-                    name: values.memberName,
-                    email: values.memberEmail,
-                    phone: values.memberPhone,
-                    type: values.memberType
+                const users = getUsers();
+                
+                // Check if librarian ID already exists
+                if (users.some((u) => u.id === values.librarianId)) {
+                    showMessage('Duplicate ID', 'Librarian ID already exists.');
+                    return false;
+                }
+                
+                // Check if email already exists
+                if (users.some((u) => u.email === values.librarianEmail)) {
+                    showMessage('Duplicate Email', 'Email already exists.');
+                    return false;
+                }
+                
+                users.push({
+                    id: values.librarianId,
+                    email: values.librarianEmail,
+                    password: values.librarianPassword,
+                    role: 'librarian',
+                    firstName: values.librarianFirstName,
+                    lastName: values.librarianLastName,
+                    memberId: '',
+                    createdDate: new Date().toISOString()
                 });
-                saveMembers(members);
+                
+                saveUsers(users);
                 refreshAll();
+                showMessage('Success', 'Librarian account created successfully!');
             }
+        });
+    };
+
+    window.resetLibrarianPassword = function (librarianId) {
+        const users = getUsers();
+        const librarian = users.find((u) => u.id === librarianId);
+        if (!librarian) return;
+        openFormModal({
+            title: 'Reset Librarian Password',
+            submitLabel: 'Reset',
+            fields: [{ id: 'resetPassword', label: 'New password', required: true, type: 'password' }],
+            onSubmit: function (values) {
+                librarian.password = values.resetPassword;
+                saveUsers(users);
+                showMessage('Updated', 'Librarian password updated successfully.');
+            }
+        });
+    };
+
+    window.deleteLibrarian = function (librarianId) {
+        confirmAction('Delete Librarian', 'Delete this librarian account? This action cannot be undone.', function () {
+            let users = getUsers();
+            users = users.filter((u) => u.id !== librarianId);
+            saveUsers(users);
+            refreshAll();
+            showMessage('Deleted', 'Librarian account deleted.');
         });
     };
 
