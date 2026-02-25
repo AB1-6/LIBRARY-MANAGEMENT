@@ -273,15 +273,22 @@ function nextId(prefix, items) {
 app.use(express.json());
 app.use(express.static(__dirname));
 
-const startupPromise = (async () => {
-  try {
-    await store.init();
-    await ensureSeeded();
-  } catch (error) {
-    console.error('STARTUP ERROR:', error);
-    throw error;
+let startupPromise = null;
+
+async function ensureStartup() {
+  if (!startupPromise) {
+    startupPromise = (async () => {
+      try {
+        await store.init();
+        await ensureSeeded();
+      } catch (error) {
+        console.error('STARTUP ERROR:', error);
+        throw error;
+      }
+    })();
   }
-})();
+  return startupPromise;
+}
 
 app.get('/api/debug', async (req, res) => {
   try {
@@ -308,7 +315,7 @@ app.get('/api/debug', async (req, res) => {
 
 app.use(async (req, res, next) => {
   try {
-    await startupPromise;
+    await ensureStartup();
     next();
   } catch (error) {
     console.error('Startup failed', error);
@@ -457,7 +464,7 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 async function start() {
-  await startupPromise;
+  await ensureStartup();
 
   app.listen(PORT, () => {
     const mode = isSupabaseEnabled ? 'Supabase' : 'SQLite';
