@@ -278,6 +278,15 @@ const startupPromise = (async () => {
   await ensureSeeded();
 })();
 
+app.get('/api/debug', (req, res) => {
+  res.json({ 
+    hasSupabaseUrl: Boolean(process.env.SUPABASE_URL),
+    hasSupabaseKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+    isSupabaseEnabled,
+    nodeEnv: process.env.NODE_ENV
+  });
+});
+
 app.use(async (req, res, next) => {
   try {
     await startupPromise;
@@ -290,15 +299,6 @@ app.use(async (req, res, next) => {
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true });
-});
-
-app.get('/api/debug', (req, res) => {
-  res.json({ 
-    hasSupabaseUrl: Boolean(process.env.SUPABASE_URL),
-    hasSupabaseKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
-    isSupabaseEnabled,
-    nodeEnv: process.env.NODE_ENV
-  });
 });
 
 app.get('/api/init', async (req, res) => {
