@@ -323,6 +323,10 @@ app.use(async (req, res, next) => {
   }
 });
 
+app.get('/', (req, res) => {
+  res.redirect('/login.html');
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ ok: true });
 });
