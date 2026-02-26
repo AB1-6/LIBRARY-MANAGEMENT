@@ -387,7 +387,26 @@ const ChatUI = {
         const allMessages = ChatHelper.getAllMessages();
         console.log('📨 Chat: All messages in storage:', allMessages);
         
-        const messages = ChatHelper.getMessages(currentUser.id, 'librarian');
+        let messages;
+        if (currentUser.role === 'student') {
+            // Student sees conversation with librarian
+            messages = ChatHelper.getMessages(currentUser.id, 'librarian');
+        } else if (currentUser.role === 'librarian') {
+            // Librarian sees conversation with last active student
+            const lastStudentMessage = allMessages
+                .filter(msg => (msg.receiverId === 'librarian' || msg.senderId === 'librarian') && 
+                              (msg.senderRole === 'student' || msg.receiverRole === 'student'))
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+            
+            if (lastStudentMessage) {
+                const studentId = lastStudentMessage.senderRole === 'student' ? 
+                                lastStudentMessage.senderId : lastStudentMessage.receiverId;
+                messages = ChatHelper.getMessages('librarian', studentId);
+            } else {
+                messages = [];
+            }
+        }
+        
         console.log('💬 Chat: Filtered messages for user:', messages);
 
         if (messages.length === 0) {
@@ -442,11 +461,33 @@ const ChatUI = {
 
         console.log('📤 Chat: Sending message from user:', currentUser);
 
+        // Determine receiver based on sender role
+        let receiverId, receiverRole;
+        if (currentUser.role === 'student') {
+            // Student sends to librarian
+            receiverId = 'librarian';
+            receiverRole = 'librarian';
+        } else if (currentUser.role === 'librarian') {
+            // Librarian replies to the last student who messaged
+            const allMessages = ChatHelper.getAllMessages();
+            const lastStudentMessage = allMessages
+                .filter(msg => msg.receiverId === 'librarian' && msg.senderRole === 'student')
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+            
+            if (lastStudentMessage) {
+                receiverId = lastStudentMessage.senderId;
+                receiverRole = 'student';
+            } else {
+                console.error('❌ Chat: No student conversation found');
+                return;
+            }
+        }
+
         const result = ChatHelper.sendMessage(
             currentUser.id,
             currentUser.role,
-            'librarian',
-            'librarian',
+            receiverId,
+            receiverRole,
             message
         );
 
