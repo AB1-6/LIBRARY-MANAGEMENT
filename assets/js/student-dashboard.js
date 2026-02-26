@@ -388,6 +388,48 @@
         if (phoneInput) phoneInput.value = member.phone;
     }
 
+    function renderBooksDueSoon() {
+        const tbody = document.getElementById('booksDueSoonBody');
+        if (!tbody) return;
+        
+        const member = getCurrentMember();
+        const issues = getIssues().filter((issue) => member && issue.memberId === member.id && issue.status !== 'returned');
+        const books = getBooks();
+        const today = new Date();
+        
+        tbody.innerHTML = '';
+        
+        // Filter books due within 2 days
+        const dueSoonIssues = issues.filter((issue) => {
+            const dueDate = new Date(issue.dueDate);
+            const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+            return daysUntilDue >= 0 && daysUntilDue <= 2;
+        });
+        
+        if (dueSoonIssues.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = '<td colspan="4" style="text-align: center; color: #999;">No books due soon</td>';
+            tbody.appendChild(row);
+            return;
+        }
+        
+        dueSoonIssues.forEach((issue) => {
+            const book = books.find((b) => b.id === issue.bookId);
+            const dueDate = new Date(issue.dueDate);
+            const daysLeft = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+            const daysLeftText = daysLeft === 0 ? 'Due today!' : daysLeft === 1 ? '1 day' : daysLeft + ' days';
+            const daysLeftColor = daysLeft === 0 ? 'color: red; font-weight: bold;' : daysLeft === 1 ? 'color: orange; font-weight: bold;' : '';
+            
+            const row = document.createElement('tr');
+            row.innerHTML =
+                '<td>' + (book ? book.title : issue.bookId) + '</td>' +
+                '<td>' + formatDate(issue.issueDate) + '</td>' +
+                '<td>' + formatDate(issue.dueDate) + '</td>' +
+                '<td style="' + daysLeftColor + '">' + daysLeftText + '</td>';
+            tbody.appendChild(row);
+        });
+    }
+
     function refreshAll() {
         updateStats();
         renderBooksTable();
@@ -395,6 +437,7 @@
         renderBorrowedTable();
         renderHistoryTable();
         updateHistoryStats();
+        renderBooksDueSoon();
         fillProfile();
     }
 
