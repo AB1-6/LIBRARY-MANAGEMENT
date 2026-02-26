@@ -389,64 +389,6 @@
     <script src="../assets/js/library-store.js?v=20260226h"></script>
     <script src="../assets/js/image-helper.js"></script>
     <script src="../assets/js/wishlist-helper.js"></script>
-    <!-- QRCode library with proper loading -->
-    <script>
-        // Global promise to track QRCode library loading
-        window.qrcodeReady = new Promise((resolve, reject) => {
-            const cdns = [
-                'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
-                'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js',
-                'https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js'
-            ];
-            
-            let currentIndex = 0;
-            let loadTimeout;
-            
-            function loadScript() {
-                if (currentIndex >= cdns.length) {
-                    console.error('❌ Failed to load QRCode library from all CDNs');
-                    reject(new Error('Failed to load QRCode library from all CDN sources'));
-                    return;
-                }
-                
-                const script = document.createElement('script');
-                script.src = cdns[currentIndex];
-                
-                // Set timeout for each CDN attempt
-                loadTimeout = setTimeout(() => {
-                    console.warn('⏱️ Timeout loading from:', cdns[currentIndex]);
-                    script.remove();
-                    currentIndex++;
-                    loadScript();
-                }, 5000);
-                
-                script.onload = function() {
-                    clearTimeout(loadTimeout);
-                    console.log('✅ QRCode library loaded from:', cdns[currentIndex]);
-                    
-                    // Verify QRCode is available
-                    if (typeof QRCode !== 'undefined' || typeof window.QRCode !== 'undefined') {
-                        resolve(true);
-                    } else {
-                        console.warn('⚠️ Script loaded but QRCode not available');
-                        currentIndex++;
-                        loadScript();
-                    }
-                };
-                
-                script.onerror = function() {
-                    clearTimeout(loadTimeout);
-                    console.warn('❌ Failed to load from:', cdns[currentIndex]);
-                    currentIndex++;
-                    loadScript();
-                };
-                
-                document.head.appendChild(script);
-            }
-            
-            loadScript();
-        });
-    </script>
     <script src="../assets/js/qrcode-helper.js"></script>
     <script src="../assets/js/chat-helper.js"></script>
     <script src="../assets/js/student-dashboard.js?v=20260226h"></script>
