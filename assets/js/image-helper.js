@@ -62,16 +62,10 @@ const ImageHelper = {
 
     // Get placeholder image
     getPlaceholder: function() {
-        // SVG placeholder - book icon
-        return 'data:image/svg+xml;base64,' + btoa(`
-            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300">
-                <rect width="200" height="300" fill="#e0e0e0"/>
-                <g transform="translate(60, 100)">
-                    <path d="M10 0 L70 0 L70 100 L40 85 L10 100 Z" fill="#9e9e9e"/>
-                    <text x="40" y="50" font-size="40" fill="white" text-anchor="middle">📚</text>
-                </g>
-            </svg>
-        `.trim());
+        // SVG placeholder - book icon (safe encoding without Unicode)
+        const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300"><rect width="200" height="300" fill="#e0e0e0"/><g transform="translate(60, 100)"><path d="M10 0 L70 0 L70 100 L40 85 L10 100 Z" fill="#9e9e9e"/><rect x="15" y="10" width="50" height="5" fill="#757575"/><rect x="15" y="20" width="50" height="3" fill="#757575"/><rect x="15" y="27" width="40" height="3" fill="#757575"/></g></svg>';
+        // Use URL encoding instead of btoa to avoid Unicode issues
+        return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     },
 
     // Create image preview element
