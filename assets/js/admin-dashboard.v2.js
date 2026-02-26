@@ -368,24 +368,136 @@
             return;
         }
         const users = getUsers();
+        const members = getMembers();
         tbody.innerHTML = '';
 
+        // Create a map to track which members we've already shown
+        const shownMemberIds = new Set();
+
+        // First, show all users (admins, librarians, and students with accounts)
         users.forEach((user) => {
+            let displayName = '';
+            
+            // Build display name
+            if (user.firstName || user.lastName) {
+                displayName = [user.firstName || '', user.lastName || ''].join(' ').trim();
+            }
+            
+            // Fallback to email if no name
+            if (!displayName) {
+                displayName = user.email;
+            }
+            
+            let userId = user.id;
+            
+            // If this is a student, get their name from members table
+            if (user.role === 'student' && user.memberId) {
+                const member = members.find(m => m.id === user.memberId);
+                if (member) {
+                    if (member.name && member.name.trim()) {
+                        displayName = member.name;
+                    }
+                    userId = member.id; // Show student ID instead of user ID
+                    shownMemberIds.add(member.id);
+                }
+            }
+            
+            // Format last login time
+            let lastLoginText = 'Never';
+            if (user.lastLogin) {
+                const loginDate = new Date(user.lastLogin);
+                const now = new Date();
+                const diffMs = now - loginDate;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+                
+                if (diffMins < 1) {
+                    lastLoginText = 'Just now';
+                } else if (diffMins < 60) {
+                    lastLoginText = diffMins + ' min' + (diffMins !== 1 ? 's' : '') + ' ago';
+                } else if (diffHours < 24) {
+                    lastLoginText = diffHours + ' hour' + (diffHours !== 1 ? 's' : '') + ' ago';
+                } else if (diffDays < 7) {
+                    lastLoginText = diffDays + ' day' + (diffDays !== 1 ? 's' : '') + ' ago';
+                } else {
+                    lastLoginText = loginDate.toLocaleDateString();
+                }
+            }
+            
+            const statusBadge = user.lastLogin 
+                ? '<span class="badge badge-success">Active</span>' 
+                : '<span class="badge badge-warning">Never Logged In</span>';
+            
             const row = document.createElement('tr');
             row.innerHTML =
-                '<td>' + user.id + '</td>' +
-                '<td>' + (user.firstName ? user.firstName + ' ' + user.lastName : user.email) + '</td>' +
+                '<td>' + userId + '</td>' +
+                '<td><strong>' + displayName + '</strong></td>' +
                 '<td>' + user.email + '</td>' +
-                '<td>' + user.role + '</td>' +
-                '<td>Active</td>' +
+                '<td><span class="badge badge-info">' + user.role.toUpperCase() + '</span></td>' +
+                '<td>' + lastLoginText + '</td>' +
+                '<td>' + statusBadge + '</td>' +
                 '<td>' +
-                '<button class="btn-icon" onclick="resetPassword(\'' + user.id + '\')">Reset</button>' +
+                '<button class="btn-icon" onclick="editUser(\'' + user.id + '\')" title="Edit">✏️</button>' +
+                '<button class="btn-icon" onclick="resetPassword(\'' + user.id + '\')" title="Reset Password">🔑</button>' +
                 (user.role !== 'admin'
-                    ? '<button class="btn-icon" onclick="deleteUser(\'' + user.id + '\')">Delete</button>'
+                    ? '<button class="btn-icon" style="background:#dc3545;" onclick="deleteUser(\'' + user.id + '\')" title="Delete">🗑️</button>'
                     : '') +
                 '</td>';
             tbody.appendChild(row);
         });
+
+        // Then show any members who don't have user accounts yet
+        members.forEach((member) => {
+            if (!shownMemberIds.has(member.id)) {
+                const row = document.createElement('tr');
+                row.innerHTML =
+                    '<td>' + member.id + '</td>' +
+                    '<td><strong>' + (member.name || 'Unknown') + '</strong></td>' +
+                    '<td>' + (member.email || '-') + '</td>' +
+                    '<td><span class="badge badge-info">STUDENT</span></td>' +
+                    '<td>-</td>' +
+                    '<td><span class="badge badge-secondary">No Account</span></td>' +
+                    '<td>' +
+                    '<button class="btn-icon" onclick="editMember(\'' + member.id + '\')" title="Edit">✏️</button>' +
+                    '<button class="btn-icon" style="background:#dc3545;" onclick="deleteMember(\'' + member.id + '\')" title="Delete">🗑️</button>' +
+                    '</td>';
+                tbody.appendChild(row);
+            }
+        });
+    }
+
+    function filterUsersTable() {
+        const searchBox = document.getElementById('userSearchBox');
+        if (!searchBox) return;
+        
+        const searchTerm = searchBox.value.toLowerCase().trim();
+        const table = document.getElementById('usersDataTable');
+        if (!table) return;
+        
+        const tbody = table.getElementsByTagName('tbody')[0];
+        if (!tbody) return;
+        
+        const rows = tbody.getElementsByTagName('tr');
+        
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const cells = row.getElementsByTagName('td');
+            
+            if (cells.length === 0) continue;
+            
+            // Search in ID, Name, Email columns (indices 0, 1, 2)
+            const id = cells[0].textContent || '';
+            const name = cells[1].textContent || '';
+            const email = cells[2].textContent || '';
+            
+            const matchFound = 
+                id.toLowerCase().includes(searchTerm) ||
+                name.toLowerCase().includes(searchTerm) ||
+                email.toLowerCase().includes(searchTerm);
+            
+            row.style.display = matchFound ? '' : 'none';
+        }
     }
 
     function renderReports() {
@@ -686,39 +798,6 @@
         });
     };
 
-    window.editMember = function (memberId) {
-        const members = getMembers();
-        const member = members.find((m) => m.id === memberId);
-        if (!member) return;
-        openFormModal({
-            title: 'Edit Member ' + member.id,
-            submitLabel: 'Update',
-            fields: [
-                { id: 'memberName', label: 'Member name', required: true, value: member.name },
-                { id: 'memberEmail', label: 'Email', required: true, type: 'email', value: member.email },
-                { id: 'memberPhone', label: 'Phone', required: true, value: member.phone },
-                { id: 'memberType', label: 'Member type', required: true, value: member.type }
-            ],
-            onSubmit: function (values) {
-                member.name = values.memberName;
-                member.email = values.memberEmail;
-                member.phone = values.memberPhone;
-                member.type = values.memberType;
-                saveMembers(members);
-                refreshAll();
-            }
-        });
-    };
-
-    window.deleteMember = function (memberId) {
-        confirmAction('Delete Member', 'Delete this member?', function () {
-            let members = getMembers();
-            members = members.filter((m) => m.id !== memberId);
-            saveMembers(members);
-            refreshAll();
-        });
-    };
-
     window.showIssueBookForm = function () {
         openFormModal({
             title: 'Issue Book',
@@ -841,14 +920,105 @@
         });
     };
 
-    window.deleteUser = function (userId) {
-        confirmAction('Delete User', 'Delete this user?', function () {
-            let users = getUsers();
-            users = users.filter((u) => u.id !== userId);
-            saveUsers(users);
+    window.editUser = function (userId) {
+        const users = getUsers();
+        const user = users.find(u => u.id === userId);
+        if (!user) {
+            showMessage('Error', 'User not found.');
+            return;
+        }
+
+        openFormModal({
+            title: 'Edit User',
+            submitLabel: 'Update',
+            fields: [
+                { id: 'editFirstName', label: 'First Name', value: user.firstName || '', required: true },
+                { id: 'editLastName', label: 'Last Name', value: user.lastName || '', required: true },
+                { id: 'editEmail', label: 'Email', value: user.email, required: true, type: 'email' },
+                { id: 'editRole', label: 'Role', value: user.role, required: true, type: 'select', options: [
+                    { value: 'admin', label: 'Admin' },
+                    { value: 'librarian', label: 'Librarian' },
+                    { value: 'student', label: 'Student' }
+                ]}
+            ],
+            onSubmit: function (values) {
+                // Check if email is already used by another user
+                const existingUser = users.find(u => u.email === values.editEmail && u.id !== userId);
+                if (existingUser) {
+                    showMessage('Error', 'Email is already in use by another user.');
+                    return;
+                }
+
+                user.firstName = values.editFirstName;
+                user.lastName = values.editLastName;
+                user.email = values.editEmail;
+                user.role = values.editRole;
+
+                saveUsers(users);
+                showMessage('Success', 'User updated successfully!');
+                refreshAll();
+            }
+        });
+    };
+
+    window.editMember = function (memberId) {
+        const members = getMembers();
+        const member = members.find(m => m.id === memberId);
+        if (!member) {
+            showMessage('Error', 'Member not found.');
+            return;
+        }
+
+        openFormModal({
+            title: 'Edit Member',
+            submitLabel: 'Update',
+            fields: [
+                { id: 'editMemberId', label: 'Member ID', value: member.id, required: true, readonly: true },
+                { id: 'editMemberName', label: 'Full Name', value: member.name, required: true },
+                { id: 'editMemberEmail', label: 'Email', value: member.email || '', type: 'email' },
+                { id: 'editMemberPhone', label: 'Phone', value: member.phone || '' }
+            ],
+            onSubmit: function (values) {
+                member.name = values.editMemberName;
+                member.email = values.editMemberEmail;
+                member.phone = values.editMemberPhone;
+
+                saveMembers(members);
+                showMessage('Success', 'Member updated successfully!');
+                refreshAll();
+            }
+        });
+    };
+
+    window.deleteMember = function (memberId) {
+        confirmAction('Delete Member', 'Delete this member? This will also delete any associated issues.', function () {
+            let members = getMembers();
+            let issues = getIssues();
+            
+            // Remove member
+            members = members.filter((m) => m.id !== memberId);
+            
+            // Remove associated issues
+            issues = issues.filter((i) => i.memberId !== memberId);
+            
+            saveMembers(members);
+            saveIssues(issues);
+            showMessage('Deleted', 'Member and associated data deleted successfully.');
             refreshAll();
         });
     };
+
+    window.deleteUser = function (userId) {
+        confirmAction('Delete User', 'Delete this user account?', function () {
+            let users = getUsers();
+            users = users.filter((u) => u.id !== userId);
+            saveUsers(users);
+            showMessage('Deleted', 'User account deleted successfully.');
+            refreshAll();
+        });
+    };
+
+    window.filterUsersTable = filterUsersTable;
 
     window.exportAllReports = function () {
         downloadJson('library-reports.json', {

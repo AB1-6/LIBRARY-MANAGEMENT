@@ -20,6 +20,18 @@
         LibraryStore.save(LibraryStore.KEYS.issues, issues);
     }
 
+    function getRequests() {
+        return LibraryStore.load(LibraryStore.KEYS.requests, []);
+    }
+
+    function saveRequests(requests) {
+        LibraryStore.save(LibraryStore.KEYS.requests, requests);
+    }
+
+    function getUsers() {
+        return LibraryStore.load(LibraryStore.KEYS.users, []);
+    }
+
     function formatDate(value) {
         if (!value) return '-';
         const date = new Date(value);
@@ -332,6 +344,7 @@
         renderBooksTable();
         renderMembersTable();
         renderIssuesTable();
+        renderRequestsTable();
         renderDueTodayTable();
         renderReports();
     }
@@ -423,6 +436,148 @@
 
     window.sendReminder = function (issueId) {
         showMessage('Reminder', 'Reminder sent for issue ' + issueId + '.');
+    };
+
+    function renderRequestsTable() {
+        const pendingBody = document.getElementById('pendingRequestsBody');
+        const historyBody = document.getElementById('requestHistoryBody');
+        if (!pendingBody || !historyBody) return;
+
+        const requests = getRequests();
+        const books = getBooks();
+        const members = getMembers();
+        const users = getUsers();
+
+        // Render pending requests
+        pendingBody.innerHTML = '';
+        const pendingRequests = requests.filter(r => r.status === 'pending');
+        
+        pendingRequests.forEach((request) => {
+            const book = books.find(b => b.id === request.bookId);
+            const member = members.find(m => m.id === request.memberId);
+            const user = users.find(u => u.memberId === request.memberId);
+            
+            if (!book || !member) return;
+
+            const row = document.createElement('tr');
+            const availableCopies = book.availableCopies || 0;
+            const statusColor = availableCopies > 0 ? 'green' : 'red';
+            
+            row.innerHTML =
+                '<td>' + request.id + '</td>' +
+                '<td>' + member.id + '</td>' +
+                '<td>' + member.name + '</td>' +
+                '<td>' + (user ? user.email : member.email || '-') + '</td>' +
+                '<td>' + book.title + '</td>' +
+                '<td>' + book.id + '</td>' +
+                '<td>' + formatDate(request.requestDate) + '</td>' +
+                '<td style="color:' + statusColor + '; font-weight:bold;">' + availableCopies + '</td>' +
+                '<td>' +
+                (availableCopies > 0 
+                    ? '<button class="btn-icon" style="background:#28a745;" onclick="approveRequest(\'' + request.id + '\')">✓ Approve</button>'
+                    : '<button class="btn-icon" style="background:#666;" disabled>No Copies</button>') +
+                '<button class="btn-icon" style="background:#dc3545; margin-left:5px;" onclick="rejectRequest(\'' + request.id + '\')">✗ Reject</button>' +
+                '</td>';
+            pendingBody.appendChild(row);
+        });
+
+        // Render request history
+        historyBody.innerHTML = '';
+        const processedRequests = requests.filter(r => r.status !== 'pending').slice(-20);
+        
+        processedRequests.reverse().forEach((request) => {
+            const book = books.find(b => b.id === request.bookId);
+            const member = members.find(m => m.id === request.memberId);
+            
+            const statusBadge = request.status === 'approved' 
+                ? '<span class="badge badge-success">Approved</span>'
+                : '<span class="badge badge-danger">Rejected</span>';
+            
+            const row = document.createElement('tr');
+            row.innerHTML =
+                '<td>' + request.id + '</td>' +
+                '<td>' + (member ? member.name : request.memberId) + '</td>' +
+                '<td>' + (book ? book.title : request.bookId) + '</td>' +
+                '<td>' + formatDate(request.requestDate) + '</td>' +
+                '<td>' + statusBadge + '</td>' +
+                '<td>' + (request.processedBy || 'System') + '</td>';
+            historyBody.appendChild(row);
+        });
+    }
+
+    window.approveRequest = function (requestId) {
+        const requests = getRequests();
+        const request = requests.find(r => r.id === requestId);
+        
+        if (!request || request.status !== 'pending') {
+            showMessage('Error', 'Request not found or already processed.');
+            return;
+        }
+
+        const books = getBooks();
+        const book = books.find(b => b.id === request.bookId);
+        
+        if (!book) {
+            showMessage('Error', 'Book not found.');
+            return;
+        }
+
+        if (book.availableCopies <= 0) {
+            showMessage('Not Available', 'No copies of this book are currently available.');
+            return;
+        }
+
+        // Create new issue
+        const issues = getIssues();
+        const issueId = 'I' + String(issues.length + 1).padStart(3, '0');
+        const issueDate = new Date().toISOString().slice(0, 10);
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 14);
+        
+        const newIssue = {
+            id: issueId,
+            bookId: book.id,
+            memberId: request.memberId,
+            issueDate: issueDate,
+            dueDate: dueDate.toISOString().slice(0, 10),
+            status: 'active'
+        };
+
+        issues.push(newIssue);
+        saveIssues(issues);
+
+        // Decrease available copies
+        book.availableCopies -= 1;
+        saveBooks(books);
+
+        // Update request status
+        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        request.status = 'approved';
+        request.processedBy = currentUser.email || 'Librarian';
+        request.processedDate = new Date().toISOString().slice(0, 10);
+        saveRequests(requests);
+
+        showMessage('Success', 'Request approved and book issued successfully!');
+        refreshAll();
+    };
+
+    window.rejectRequest = function (requestId) {
+        const requests = getRequests();
+        const request = requests.find(r => r.id === requestId);
+        
+        if (!request || request.status !== 'pending') {
+            showMessage('Error', 'Request not found or already processed.');
+            return;
+        }
+
+        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        request.status = 'rejected';
+        request.processedBy = currentUser.email || 'Librarian';
+        request.processedDate = new Date().toISOString().slice(0, 10);
+        saveRequests(requests);
+
+        showMessage('Rejected', 'Request has been rejected.');
+        refreshAll();
     };
 
     document.addEventListener('DOMContentLoaded', function () {

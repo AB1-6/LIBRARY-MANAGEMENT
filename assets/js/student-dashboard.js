@@ -272,15 +272,67 @@
         tbody.innerHTML = '';
         issues.forEach((issue) => {
             const book = books.find((b) => b.id === issue.bookId);
+            const issueDate = new Date(issue.issueDate);
+            const returnDate = new Date(issue.returnDate);
+            const daysKept = returnDate && issueDate ? Math.ceil((returnDate - issueDate) / (1000 * 60 * 60 * 24)) : 0;
             const row = document.createElement('tr');
             row.innerHTML =
                 '<td>' + (book ? book.title : issue.bookId) + '</td>' +
                 '<td>' + formatDate(issue.issueDate) + '</td>' +
                 '<td>' + formatDate(issue.returnDate) + '</td>' +
-                '<td>-</td>' +
+                '<td>' + (daysKept > 0 ? daysKept + ' days' : '-') + '</td>' +
                 '<td>$0</td>';
             tbody.appendChild(row);
         });
+    }
+
+    function updateHistoryStats() {
+        const member = getCurrentMember();
+        if (!member) return;
+        
+        const allIssues = getIssues().filter((issue) => issue.memberId === member.id);
+        const returnedIssues = allIssues.filter((issue) => issue.status === 'returned');
+        
+        // Total Books Borrowed (all time)
+        const totalBorrowed = allIssues.length;
+        const totalBorrowedEl = document.getElementById('historyTotalBorrowed');
+        if (totalBorrowedEl) totalBorrowedEl.textContent = totalBorrowed;
+        
+        // Total Fines Paid (placeholder - always $0 for now)
+        const totalFinesEl = document.getElementById('historyTotalFines');
+        if (totalFinesEl) totalFinesEl.textContent = '$0';
+        
+        // On-Time Returns Percentage
+        let onTimeCount = 0;
+        returnedIssues.forEach((issue) => {
+            if (issue.returnDate && issue.dueDate) {
+                const returnDate = new Date(issue.returnDate);
+                const dueDate = new Date(issue.dueDate);
+                if (returnDate <= dueDate) {
+                    onTimeCount++;
+                }
+            }
+        });
+        const onTimePercent = returnedIssues.length > 0 
+            ? Math.round((onTimeCount / returnedIssues.length) * 100) + '%'
+            : '-';
+        const onTimeEl = document.getElementById('historyOnTimePercent');
+        if (onTimeEl) onTimeEl.textContent = onTimePercent;
+        
+        // Member Since
+        const users = getUsers();
+        const userEmail = localStorage.getItem('userEmail');
+        const user = users.find(u => u.email === userEmail);
+        let memberSince = '-';
+        if (user && user.createdDate) {
+            const createdDate = new Date(user.createdDate);
+            memberSince = createdDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        } else if (user && user.lastLogin) {
+            const loginDate = new Date(user.lastLogin);
+            memberSince = loginDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        }
+        const memberSinceEl = document.getElementById('historyMemberSince');
+        if (memberSinceEl) memberSinceEl.textContent = memberSince;
     }
 
     function updateStats() {
@@ -319,6 +371,7 @@
         renderRequestsTable();
         renderBorrowedTable();
         renderHistoryTable();
+        updateHistoryStats();
         fillProfile();
     }
 

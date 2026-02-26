@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Librarian Dashboard - Library Management System</title>
     <link rel="stylesheet" href="../assets/css/main.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
@@ -26,6 +29,7 @@
             <nav class="sidebar-menu">
                 <ul>
                     <li><a href="#dashboard" class="menu-item active" data-section="dashboard">📊 Dashboard</a></li>
+                    <li><a href="#requests" class="menu-item" data-section="requests">📬 Book Requests</a></li>
                     <li><a href="#books" class="menu-item" data-section="books">📚 View Books</a></li>
                     <li><a href="#members" class="menu-item" data-section="members">👥 View Members</a></li>
                     <li><a href="#issue-return" class="menu-item" data-section="issue-return">🔄 Issue & Return</a></li>
@@ -94,6 +98,51 @@
                                     <td>Clean Code</td>
                                 </tr>
                             </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Book Requests Section -->
+                <div id="section-requests" class="content-section" style="display:none;">
+                    <h2>📬 Book Requests</h2>
+                    <div class="alert alert-info">
+                        <strong>Pending Requests:</strong> Review and approve student book requests below.
+                    </div>
+                    
+                    <div class="content-section">
+                        <h3>Pending Requests</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Request ID</th>
+                                    <th>Student ID</th>
+                                    <th>Student Name</th>
+                                    <th>Email</th>
+                                    <th>Book Title</th>
+                                    <th>Book ID</th>
+                                    <th>Request Date</th>
+                                    <th>Available Copies</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingRequestsBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Request History</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Request ID</th>
+                                    <th>Student Name</th>
+                                    <th>Book Title</th>
+                                    <th>Request Date</th>
+                                    <th>Status</th>
+                                    <th>Processed By</th>
+                                </tr>
+                            </thead>
+                            <tbody id="requestHistoryBody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -275,10 +324,10 @@
         </div>
     </div>
 
-    <script src="../assets/js/ui-modal.js?v=20260226a"></script>
-    <script src="../assets/js/library-store.js?v=20260226a"></script>
-    <script src="../assets/js/librarian-dashboard.js?v=20260226a"></script>
-    <script src="../assets/js/redirect.js"></script>
+    <script src="../assets/js/ui-modal.js?v=20260226h"></script>
+    <script src="../assets/js/library-store.js?v=20260226h"></script>
+    <script src="../assets/js/librarian-dashboard.js?v=20260226h"></script>
+    <script src="../assets/js/redirect.js?v=20260226h"></script>
     <script>
         // Splash Screen Handler for Dashboard
         document.addEventListener('DOMContentLoaded', function() {

@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Admin Dashboard - Library Management System</title>
     <link rel="stylesheet" href="../assets/css/main.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
@@ -203,22 +206,24 @@
                 <div id="section-user-management" class="content-section" style="display:none;">
                     <h2>🔐 User Management</h2>
                     <div class="alert alert-info">
-                        <strong>Admin Power:</strong> Create Admin and Librarian accounts here. Students register themselves.
-                    </div>
-                    
-                    <div class="action-buttons">
-                        <button class="btn btn-primary" onclick="showCreateUserForm()">➕ Create User (Admin/Librarian)</button>
+                        <strong>Info:</strong> View all registered users in the system - Students, Librarians, and Admins.
                     </div>
                     
                     <div class="content-section">
-                        <h3>System Users</h3>
-                        <table class="data-table">
+                        <h3>All Registered Users</h3>
+                        <div style="margin-bottom: 15px;">
+                            <input type="text" id="userSearchBox" placeholder="🔍 Search by name, email, or ID..." 
+                                   style="padding: 10px; width: 100%; max-width: 400px; border: 1px solid #ddd; border-radius: 5px;"
+                                   onkeyup="filterUsersTable()">
+                        </div>
+                        <table class="data-table" id="usersDataTable">
                             <thead>
                                 <tr>
                                     <th>ID</th>
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Role</th>
+                                    <th>Last Login</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -399,9 +404,9 @@
         </div>
     </div>
 
-    <script src="../assets/js/ui-modal.v2.js"></script>
-    <script src="../assets/js/library-store.js?v=20260226a"></script>
-    <script src="../assets/js/admin-dashboard.v2.js?v=20260226a"></script>
+    <script src="../assets/js/ui-modal.v2.js?v=20260226h"></script>
+    <script src="../assets/js/library-store.js?v=20260226h"></script>
+    <script src="../assets/js/admin-dashboard.v2.js?v=20260226h"></script>
     <script src="../assets/js/redirect.js"></script>
     <script src="../assets/js/popup.js"></script>
     <script>

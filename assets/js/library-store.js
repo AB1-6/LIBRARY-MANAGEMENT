@@ -1,6 +1,6 @@
 // Shared localStorage helpers for dashboard data
 (function () {
-    const DATA_VERSION = '3.1.0-supabase-sync';
+    const DATA_VERSION = '3.2.0-user-data-preserved';
     const VERSION_KEY = 'lib_data_version';
     
     // FORCE CLEAR ALL OLD DATA - aggressive cache clearing
@@ -9,7 +9,7 @@
         console.log('🧹 CLEARING ALL OLD CACHED DATA...');
         
         // Save login info only
-        const keysToKeep = ['isLoggedIn', 'userEmail', 'userRole', 'userName', 'rememberMe', 'userMemberId'];
+        const keysToKeep = ['isLoggedIn', 'userEmail', 'userRole', 'userName', 'rememberMe', 'userMemberId', 'lib_users', 'userData'];
         const tempData = {};
         keysToKeep.forEach(key => {
             const val = localStorage.getItem(key);
