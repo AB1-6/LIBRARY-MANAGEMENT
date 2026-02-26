@@ -598,45 +598,76 @@
 
     function renderFilteredBooks(books, member) {
         const tbody = document.getElementById('studentBooksBody');
-        if (!tbody) return;
+        if (!tbody) {
+            console.error('❌ studentBooksBody element not found!');
+            return;
+        }
         
+        console.log('✅ Rendering', books.length, 'books');
         tbody.innerHTML = '';
-        books.forEach((book) => {
-            const coverImage = book.coverImage || (window.ImageHelper ? ImageHelper.getPlaceholder() : '');
-            const coverHtml = coverImage ? '<img src="' + coverImage + '" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin-right: 10px;" alt="' + book.title + '">' : '';
-            
-            // Check wishlist status
-            const inWishlist = member && window.WishlistHelper && WishlistHelper.isInWishlist(member.id, book.id);
-            const wishlistIcon = inWishlist ? '❤️' : '🤍';
-            const wishlistTitle = inWishlist ? 'Remove from wishlist' : 'Add to wishlist';
-            
-            // Check waitlist status
-            const inWaitlist = member && window.WishlistHelper && WishlistHelper.isInWaitlist(member.id, book.id);
-            const waitlistPosition = inWaitlist ? WishlistHelper.getWaitlistPosition(member.id, book.id) : null;
-            
+        
+        if (books.length === 0) {
             const row = document.createElement('tr');
-            const availableText = book.availableCopies > 0 ? book.availableCopies + ' available' : 'Out of Stock';
-            
-            let actionButtons = '';
-            if (book.availableCopies > 0) {
-                actionButtons = '<button class="btn-icon" onclick="requestIssue(\'' + book.id + '\')">Request</button>';
-            } else if (inWaitlist) {
-                actionButtons = '<button class="btn-icon" disabled>In Waitlist (#' + waitlistPosition + ')</button> ' +
-                               '<button class="btn-icon" onclick="leaveWaitlist(\'' + book.id + '\')">Leave</button>';
-            } else {
-                actionButtons = '<button class="btn-icon" onclick="joinWaitlist(\'' + book.id + '\')">Join Waitlist</button>';
-            }
-            
-            actionButtons += ' <button class="btn-icon" onclick="toggleWishlist(\'' + book.id + '\')" title="' + wishlistTitle + '">' + wishlistIcon + '</button>';
-            
-            row.innerHTML =
-                '<td><div style="display: flex; align-items: center;">' + coverHtml + '<span>' + book.title + '</span></div></td>' +
-                '<td>' + book.author + '</td>' +
-                '<td>' + book.category + '</td>' +
-                '<td>' + availableText + '</td>' +
-                '<td>' + actionButtons + '</td>';
+            row.innerHTML = '<td colspan="5" style="text-align: center; color: #999;">No books found</td>';
             tbody.appendChild(row);
+            return;
+        }
+        
+        books.forEach((book) => {
+            try {
+                const coverImage = book.coverImage || (window.ImageHelper ? ImageHelper.getPlaceholder() : '');
+                const coverHtml = coverImage ? '<img src="' + coverImage + '" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin-right: 10px;" alt="' + book.title + '">' : '';
+                
+                // Check wishlist status (with safety checks)
+                let inWishlist = false;
+                let wishlistIcon = '🤍';
+                let wishlistTitle = 'Add to wishlist';
+                
+                if (member && window.WishlistHelper && typeof WishlistHelper.isInWishlist === 'function') {
+                    inWishlist = WishlistHelper.isInWishlist(member.id, book.id);
+                    wishlistIcon = inWishlist ? '❤️' : '🤍';
+                    wishlistTitle = inWishlist ? 'Remove from wishlist' : 'Add to wishlist';
+                }
+                
+                // Check waitlist status (with safety checks)
+                let inWaitlist = false;
+                let waitlistPosition = null;
+                
+                if (member && window.WishlistHelper && typeof WishlistHelper.isInWaitlist === 'function') {
+                    inWaitlist = WishlistHelper.isInWaitlist(member.id, book.id);
+                    if (inWaitlist && typeof WishlistHelper.getWaitlistPosition === 'function') {
+                        waitlistPosition = WishlistHelper.getWaitlistPosition(member.id, book.id);
+                    }
+                }
+                
+                const row = document.createElement('tr');
+                const availableText = book.availableCopies > 0 ? book.availableCopies + ' available' : 'Out of Stock';
+                
+                let actionButtons = '';
+                if (book.availableCopies > 0) {
+                    actionButtons = '<button class="btn-icon" onclick="requestIssue(\'' + book.id + '\')">Request</button>';
+                } else if (inWaitlist) {
+                    actionButtons = '<button class="btn-icon" disabled>In Waitlist (#' + waitlistPosition + ')</button> ' +
+                                   '<button class="btn-icon" onclick="leaveWaitlist(\'' + book.id + '\')">Leave</button>';
+                } else {
+                    actionButtons = '<button class="btn-icon" onclick="joinWaitlist(\'' + book.id + '\')">Join Waitlist</button>';
+                }
+                
+                actionButtons += ' <button class="btn-icon" onclick="toggleWishlist(\'' + book.id + '\')" title="' + wishlistTitle + '">' + wishlistIcon + '</button>';
+                
+                row.innerHTML =
+                    '<td><div style="display: flex; align-items: center;">' + coverHtml + '<span>' + book.title + '</span></div></td>' +
+                    '<td>' + book.author + '</td>' +
+                    '<td>' + book.category + '</td>' +
+                    '<td>' + availableText + '</td>' +
+                    '<td>' + actionButtons + '</td>';
+                tbody.appendChild(row);
+            } catch (error) {
+                console.error('❌ Error rendering book:', book.title, error);
+            }
         });
+        
+        console.log('✅ Finished rendering', tbody.children.length, 'book rows');
     }
 
     window.clearFilters = function() {
