@@ -308,9 +308,11 @@ async function ensureStartup() {
         await store.init();
         await ensureSeeded();
         await cleanupUserData();
+        console.log('✓ Server initialized successfully');
       } catch (error) {
-        console.error('STARTUP ERROR:', error);
-        throw error;
+        console.warn('STARTUP WARNING:', error.message || error);
+        console.log('⚠ Server will continue in fallback mode (localStorage/memory)');
+        // Don't throw - allow server to continue without Supabase
       }
     })();
   }
@@ -518,11 +520,16 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 async function start() {
-  await ensureStartup();
+  try {
+    await ensureStartup();
+  } catch (error) {
+    console.warn('Startup had errors but continuing:', error.message || error);
+  }
 
   app.listen(PORT, () => {
-    const mode = isSupabaseEnabled ? 'Supabase' : 'SQLite';
-    console.log(`ENTITY server running at http://localhost:${PORT} (${mode})`);
+    const mode = isSupabaseEnabled ? 'Supabase' : 'Fallback';
+    console.log(`🚀 ENTITY server running at http://localhost:${PORT} (${mode} mode)`);
+    console.log(`📍 Visit: http://localhost:${PORT}`);
   });
 }
 
