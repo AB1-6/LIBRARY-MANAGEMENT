@@ -372,9 +372,18 @@ const ChatUI = {
         if (!messagesContainer) return;
 
         const currentUser = this.getCurrentUser();
-        if (!currentUser) return;
+        if (!currentUser) {
+            console.error('❌ Chat: No current user found');
+            return;
+        }
 
+        console.log('✅ Chat: Current user:', currentUser);
+        
+        const allMessages = ChatHelper.getAllMessages();
+        console.log('📨 Chat: All messages in storage:', allMessages);
+        
         const messages = ChatHelper.getMessages(currentUser.id, 'librarian');
+        console.log('💬 Chat: Filtered messages for user:', messages);
 
         if (messages.length === 0) {
             messagesContainer.innerHTML = '<div class="chat-empty">No messages yet. Start a conversation!</div>';
@@ -421,7 +430,12 @@ const ChatUI = {
         if (!message) return;
 
         const currentUser = this.getCurrentUser();
-        if (!currentUser) return;
+        if (!currentUser) {
+            console.error('❌ Chat: Cannot send - no current user');
+            return;
+        }
+
+        console.log('📤 Chat: Sending message from user:', currentUser);
 
         const result = ChatHelper.sendMessage(
             currentUser.id,
@@ -430,6 +444,8 @@ const ChatUI = {
             'librarian',
             message
         );
+
+        console.log('📤 Chat: Send result:', result);
 
         if (result.success) {
             input.value = '';

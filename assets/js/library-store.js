@@ -8,8 +8,8 @@
     if (currentVersion !== DATA_VERSION) {
         console.log('🧹 CLEARING ALL OLD CACHED DATA...');
         
-        // Save login info only
-        const keysToKeep = ['isLoggedIn', 'userEmail', 'userRole', 'userName', 'rememberMe', 'userMemberId', 'lib_users', 'userData'];
+        // Save login info and chat history
+        const keysToKeep = ['isLoggedIn', 'userEmail', 'userRole', 'userName', 'rememberMe', 'userMemberId', 'lib_users', 'userData', 'lib_chat'];
         const tempData = {};
         keysToKeep.forEach(key => {
             const val = localStorage.getItem(key);
