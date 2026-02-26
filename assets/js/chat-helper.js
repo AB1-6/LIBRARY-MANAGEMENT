@@ -242,26 +242,29 @@ const ChatUI = {
                     to { opacity: 1; transform: translateY(0); }
                 }
                 .chat-message.sent {
-                    align-self: flex-end;
-                    align-items: flex-end;
-                }
-                .chat-message.received {
                     align-self: flex-start;
                     align-items: flex-start;
+                }
+                .chat-message.received {
+                    align-self: flex-end;
+                    align-items: flex-end;
                 }
                 .chat-message-content {
                     padding: 10px 14px;
                     border-radius: 12px;
                     word-wrap: break-word;
                     font-size: 14px;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
                 }
                 .chat-message.sent .chat-message-content {
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
                     color: white;
+                    border-radius: 12px 12px 12px 2px;
                 }
                 .chat-message.received .chat-message-content {
-                    background: white;
-                    color: #333;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border-radius: 12px 12px 2px 12px;
                 }
                 .chat-message-time {
                     font-size: 11px;
