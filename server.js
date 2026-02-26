@@ -445,7 +445,7 @@ app.post('/api/auth/login', async (req, res) => {
 
 app.post('/api/auth/register', async (req, res) => {
   const { firstName, lastName, email, password, studentId } = req.body || {};
-  if (!firstName || !lastName || !email || !password || !studentId) {
+  if (!firstName || !lastName || !email || !password) {
     res.status(400).json({ error: 'All fields are required.' });
     return;
   }
@@ -455,7 +455,6 @@ app.post('/api/auth/register', async (req, res) => {
   const trimmedLastName = lastName.trim();
   const trimmedEmail = email.trim();
   const trimmedPassword = password.trim();
-  const trimmedStudentId = studentId.trim();
 
   try {
     const users = await readTable('users');
@@ -467,15 +466,21 @@ app.post('/api/auth/register', async (req, res) => {
       return;
     }
 
-    // Check if student ID already exists
-    const existingMember = members.find((entry) => entry.id === trimmedStudentId);
-    if (existingMember) {
-      res.status(409).json({ error: 'Student ID already exists.' });
-      return;
-    }
+    // Auto-generate student ID in ENT#### format
+    let maxNum = 0;
+    members.forEach((member) => {
+      const id = member.id || '';
+      if (id.startsWith('ENT')) {
+        const num = parseInt(id.substring(3), 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    });
+    const autoStudentId = 'ENT' + String(maxNum + 1).padStart(4, '0');
 
     const newMember = {
-      id: trimmedStudentId,
+      id: autoStudentId,
       name: `${trimmedFirstName} ${trimmedLastName}`,
       email: trimmedEmail,
       phone: '',

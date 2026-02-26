@@ -215,7 +215,6 @@ function setupRegisterForm() {
 
         const firstName = document.getElementById('firstName').value;
         const lastName = document.getElementById('lastName').value;
-        const studentId = document.getElementById('studentId').value;
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
@@ -226,7 +225,7 @@ function setupRegisterForm() {
         const role = 'student';
 
         // Validation
-        if (!firstName || !lastName || !studentId || !email || !password || !confirmPassword) {
+        if (!firstName || !lastName || !email || !password || !confirmPassword) {
             alert('Please fill in all fields');
             return;
         }
@@ -262,8 +261,15 @@ function setupRegisterForm() {
         let newMemberId = '';
 
         try {
-            const payload = await registerWithApi(firstName, lastName, email, password, studentId);
+            const payload = await registerWithApi(firstName, lastName, email, password, '');
             newMemberId = payload.memberId || '';
+            
+            // Show the assigned student ID in the input field
+            const studentIdField = document.getElementById('studentId');
+            if (studentIdField && newMemberId) {
+                studentIdField.value = newMemberId;
+            }
+            
             if (window.LibraryStore && window.LibraryStore.hydrateFromApi) {
                 window.LibraryStore.hydrateFromApi();
             }
@@ -274,15 +280,30 @@ function setupRegisterForm() {
             const members = membersRaw ? JSON.parse(membersRaw) : [];
             const users = existingUsers; // Use the already loaded users array
 
-            // Generate member ID
-            newMemberId = 'M' + String(members.length + 1).padStart(3, '0');
-            const actualMemberId = studentId || newMemberId;
+            // Auto-generate student ID in ENT#### format
+            let maxNum = 0;
+            members.forEach((member) => {
+                const id = member.id || '';
+                if (id.startsWith('ENT')) {
+                    const num = parseInt(id.substring(3), 10);
+                    if (!isNaN(num) && num > maxNum) {
+                        maxNum = num;
+                    }
+                }
+            });
+            newMemberId = 'ENT' + String(maxNum + 1).padStart(4, '0');
             
-            // Check if member ID already exists
-            const memberExists = members.some(m => m.id === actualMemberId);
+            // Show the assigned student ID
+            const studentIdField = document.getElementById('studentId');
+            if (studentIdField) {
+                studentIdField.value = newMemberId;
+            }
+            
+            // Check if member ID already exists (shouldn't happen with auto-generation)
+            const memberExists = members.some(m => m.id === newMemberId);
             if (!memberExists) {
                 members.push({
-                    id: actualMemberId,
+                    id: newMemberId,
                     name: firstName + ' ' + lastName,
                     email: email,
                     phone: '',
@@ -299,7 +320,7 @@ function setupRegisterForm() {
                 role: role,
                 firstName: firstName,
                 lastName: lastName,
-                memberId: actualMemberId,
+                memberId: newMemberId,
                 createdDate: new Date().toISOString()
             };
             
