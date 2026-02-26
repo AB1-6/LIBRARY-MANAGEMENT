@@ -433,6 +433,14 @@ const ChatUI = {
         if (!messagesContainer) return;
 
         const isSent = msg.senderId === currentUserId;
+        console.log('🎨 Chat Render:', {
+            messageText: msg.message,
+            senderId: msg.senderId,
+            currentUserId: currentUserId,
+            isSent: isSent,
+            className: isSent ? 'sent' : 'received'
+        });
+        
         const messageDiv = document.createElement('div');
         messageDiv.className = `chat-message ${isSent ? 'sent' : 'received'}`;
         
