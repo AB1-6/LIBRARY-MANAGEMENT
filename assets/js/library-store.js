@@ -42,7 +42,10 @@
         members: 'lib_members',
         issues: 'lib_issues',
         users: 'lib_users',
-        requests: 'lib_requests'
+        requests: 'lib_requests',
+        wishlist: 'lib_wishlist',
+        waitlist: 'lib_waitlist',
+        chat: 'lib_chat'
     };
 
     const RESOURCE_BY_KEY = {
@@ -51,7 +54,10 @@
         lib_members: 'members',
         lib_issues: 'issues',
         lib_users: 'users',
-        lib_requests: 'requests'
+        lib_requests: 'requests',
+        lib_wishlist: 'wishlist',
+        lib_waitlist: 'waitlist',
+        lib_chat: 'chat'
     };
 
     let initPromise = null;
@@ -167,6 +173,8 @@
             if (snapshot.issues) localStorage.setItem(KEYS.issues, JSON.stringify(snapshot.issues));
             if (snapshot.users) localStorage.setItem(KEYS.users, JSON.stringify(snapshot.users));
             if (snapshot.requests) localStorage.setItem(KEYS.requests, JSON.stringify(snapshot.requests));
+            if (snapshot.wishlist) localStorage.setItem(KEYS.wishlist, JSON.stringify(snapshot.wishlist));
+            if (snapshot.waitlist) localStorage.setItem(KEYS.waitlist, JSON.stringify(snapshot.waitlist));
             return true;
         } catch (err) {
             return false;

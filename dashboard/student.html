@@ -6,6 +6,7 @@
     <title>Student Dashboard - Library Management System</title>
     <link rel="stylesheet" href="../assets/css/main.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <link rel="stylesheet" href="../assets/css/notifications.css">
 </head>
 <body>
     <!-- Splash Screen -->
@@ -105,20 +106,41 @@
                 <!-- Browse Books Section -->
                 <div id="section-books" class="content-section" style="display:none;">
                     <h2>📚 Browse Books</h2>
-                    <div class="search-bar">
+                    <div class="search-bar" style="margin-bottom: 15px;">
                         <input type="text" id="bookSearch" placeholder="Search by title, author, or category..." class="search-input">
                         <button class="btn btn-primary" onclick="searchBooks()">🔍 Search</button>
                     </div>
                     
-                    <div class="filter-bar">
-                        <label>Filter by Category:</label>
-                        <select id="categoryFilter" onchange="filterByCategory()">
-                            <option value="">All Categories</option>
-                            <option value="Computer Science">Computer Science</option>
-                            <option value="Programming">Programming</option>
-                            <option value="Software Engineering">Software Engineering</option>
-                            <option value="Mathematics">Mathematics</option>
-                        </select>
+                    <div class="filter-bar" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+                        <div>
+                            <label style="margin-right: 5px; font-weight: 500;">Category:</label>
+                            <select id="categoryFilter" onchange="applyFilters()" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+                                <option value="">All Categories</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="margin-right: 5px; font-weight: 500;">Availability:</label>
+                            <select id="availabilityFilter" onchange="applyFilters()" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+                                <option value="all">All Books</option>
+                                <option value="available">Available Only</option>
+                                <option value="outofstock">Out of Stock</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="margin-right: 5px; font-weight: 500;">Sort By:</label>
+                            <select id="sortFilter" onchange="applyFilters()" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+                                <option value="title-asc">Title (A-Z)</option>
+                                <option value="title-desc">Title (Z-A)</option>
+                                <option value="author-asc">Author (A-Z)</option>
+                                <option value="author-desc">Author (Z-A)</option>
+                                <option value="available-desc">Most Available</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-secondary" onclick="clearFilters()" style="padding: 8px 15px;">Clear Filters</button>
+                    </div>
+                    
+                    <div style="margin-bottom: 10px; color: #666; font-size: 14px;">
+                        <span id="bookResultCount">Loading books...</span>
                     </div>
                     
                     <div class="content-section">
@@ -330,6 +352,18 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <div class="content-section">
+                        <h3>📱 Member QR Code</h3>
+                        <p style="color: #666; margin-bottom: 15px;">Use this QR code for quick identification at the library</p>
+                        <div id="qrCodeContainer" style="min-height: 200px; display: flex; justify-content: center; align-items: center; background: #f9f9f9; border-radius: 8px;">
+                            <p style="color: #999;">Loading QR code...</p>
+                        </div>
+                    </div>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
         </main>
@@ -353,6 +387,11 @@
 
     <script src="../assets/js/ui-modal.js?v=20260226h"></script>
     <script src="../assets/js/library-store.js?v=20260226h"></script>
+    <script src="../assets/js/image-helper.js"></script>
+    <script src="../assets/js/wishlist-helper.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="../assets/js/qrcode-helper.js"></script>
+    <script src="../assets/js/chat-helper.js"></script>
     <script src="../assets/js/student-dashboard.js?v=20260226h"></script>
     <script src="../assets/js/redirect.js?v=20260226g"></script>
     <script>
@@ -430,5 +469,6 @@
             }
         }
     </script>
+    <script src="../assets/js/notifications.js"></script>
 </body>
 </html>

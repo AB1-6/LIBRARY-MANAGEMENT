@@ -213,10 +213,13 @@
         });
         tbody.innerHTML = '';
         books.forEach((book) => {
+            const coverImage = book.coverImage || (window.ImageHelper ? ImageHelper.getPlaceholder() : '');
+            const coverHtml = coverImage ? '<img src="' + coverImage + '" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin-right: 10px;" alt="' + book.title + '">' : '';
+            
             const row = document.createElement('tr');
             row.innerHTML =
                 '<td>' + book.id + '</td>' +
-                '<td>' + book.title + '</td>' +
+                '<td><div style="display: flex; align-items: center;">' + coverHtml + '<span>' + book.title + '</span></div></td>' +
                 '<td>' + book.author + '</td>' +
                 '<td>' + book.category + '</td>' +
                 '<td>' + book.totalCopies + '</td>' +
@@ -347,6 +350,11 @@
         renderRequestsTable();
         renderDueTodayTable();
         renderReports();
+        
+        // Update notification badges
+        if (typeof updateLibrarianRequestBadges === 'function') {
+            updateLibrarianRequestBadges();
+        }
     }
 
     window.searchBooks = function () {
@@ -653,5 +661,10 @@
         
         // Start auto-refresh for real-time updates
         startAutoRefresh();
+        
+        // Initialize chat support for librarian
+        if (window.ChatUI) {
+            ChatUI.init('librarian');
+        }
     });
 })();

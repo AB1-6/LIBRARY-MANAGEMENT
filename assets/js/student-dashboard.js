@@ -192,6 +192,7 @@
     function renderBooksTable(filter, category) {
         const tbody = document.getElementById('studentBooksBody');
         if (!tbody) return;
+        const member = getCurrentMember();
         const books = getBooks().filter((book) => {
             const matchFilter = !filter
                 ? true
@@ -203,18 +204,39 @@
         });
         tbody.innerHTML = '';
         books.forEach((book) => {
+            const coverImage = book.coverImage || (window.ImageHelper ? ImageHelper.getPlaceholder() : '');
+            const coverHtml = coverImage ? '<img src="' + coverImage + '" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin-right: 10px;" alt="' + book.title + '">' : '';
+            
+            // Check wishlist status
+            const inWishlist = member && window.WishlistHelper && WishlistHelper.isInWishlist(member.id, book.id);
+            const wishlistIcon = inWishlist ? '❤️' : '🤍';
+            const wishlistTitle = inWishlist ? 'Remove from wishlist' : 'Add to wishlist';
+            
+            // Check waitlist status
+            const inWaitlist = member && window.WishlistHelper && WishlistHelper.isInWaitlist(member.id, book.id);
+            const waitlistPosition = inWaitlist ? WishlistHelper.getWaitlistPosition(member.id, book.id) : null;
+            
             const row = document.createElement('tr');
             const availableText = book.availableCopies > 0 ? book.availableCopies + ' available' : 'Out of Stock';
+            
+            let actionButtons = '';
+            if (book.availableCopies > 0) {
+                actionButtons = '<button class="btn-icon" onclick="requestIssue(\'' + book.id + '\')">Request</button>';
+            } else if (inWaitlist) {
+                actionButtons = '<button class="btn-icon" disabled>In Waitlist (#' + waitlistPosition + ')</button> ' +
+                               '<button class="btn-icon" onclick="leaveWaitlist(\'' + book.id + '\')">Leave</button>';
+            } else {
+                actionButtons = '<button class="btn-icon" onclick="joinWaitlist(\'' + book.id + '\')">Join Waitlist</button>';
+            }
+            
+            actionButtons += ' <button class="btn-icon" onclick="toggleWishlist(\'' + book.id + '\')" title="' + wishlistTitle + '">' + wishlistIcon + '</button>';
+            
             row.innerHTML =
-                '<td>' + book.title + '</td>' +
+                '<td><div style="display: flex; align-items: center;">' + coverHtml + '<span>' + book.title + '</span></div></td>' +
                 '<td>' + book.author + '</td>' +
                 '<td>' + book.category + '</td>' +
                 '<td>' + availableText + '</td>' +
-                '<td>' +
-                (book.availableCopies > 0
-                    ? '<button class="btn-icon" onclick="requestIssue(\'' + book.id + '\')">Request</button>'
-                    : '<button class="btn-icon" disabled>Unavailable</button>') +
-                '</td>';
+                '<td>' + actionButtons + '</td>';
             tbody.appendChild(row);
         });
     }
@@ -429,6 +451,11 @@
         });
         const outstandingFinesEl = document.getElementById('profileOutstandingFines');
         if (outstandingFinesEl) outstandingFinesEl.textContent = '$' + outstandingFines.toFixed(2);
+        
+        // Generate QR Code
+        if (window.QRCodeHelper) {
+            QRCodeHelper.generateMemberQR(member, 'qrCodeContainer');
+        }
     }
 
     function renderBooksDueSoon() {
@@ -475,6 +502,7 @@
 
     function refreshAll() {
         updateStats();
+        populateCategoryFilter();
         renderBooksTable();
         renderRequestsTable();
         renderBorrowedTable();
@@ -482,19 +510,168 @@
         updateHistoryStats();
         renderBooksDueSoon();
         fillProfile();
+        renderWishlistSection();
+        
+        // Update notification badges
+        if (window.updateStudentRequestBadges) {
+            updateStudentRequestBadges();
+        }
+        
+        // Apply current filters to book table
+        if (typeof applyFilters === 'function') {
+            applyFilters();
+        }
     }
 
     window.searchBooks = function () {
-        const input = document.getElementById('bookSearch');
-        const filter = input ? input.value.toLowerCase() : '';
-        const categoryFilter = document.getElementById('categoryFilter');
-        const category = categoryFilter ? categoryFilter.value : '';
-        renderBooksTable(filter, category);
+        applyFilters();
     };
 
     window.filterByCategory = function () {
-        window.searchBooks();
+        applyFilters();
     };
+
+    window.applyFilters = function() {
+        const searchInput = document.getElementById('bookSearch');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const availabilityFilter = document.getElementById('availabilityFilter');
+        const sortFilter = document.getElementById('sortFilter');
+        
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+        const category = categoryFilter ? categoryFilter.value : '';
+        const availability = availabilityFilter ? availabilityFilter.value : 'all';
+        const sortBy = sortFilter ? sortFilter.value : 'title-asc';
+        
+        const member = getCurrentMember();
+        let books = getBooks();
+        
+        // Apply search filter
+        if (searchTerm) {
+            books = books.filter(book => 
+                book.title.toLowerCase().includes(searchTerm) ||
+                book.author.toLowerCase().includes(searchTerm) ||
+                book.category.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        // Apply category filter
+        if (category) {
+            books = books.filter(book => book.category === category);
+        }
+        
+        // Apply availability filter
+        if (availability === 'available') {
+            books = books.filter(book => book.availableCopies > 0);
+        } else if (availability === 'outofstock') {
+            books = books.filter(book => book.availableCopies === 0);
+        }
+        
+        // Apply sorting
+        books.sort((a, b) => {
+            switch(sortBy) {
+                case 'title-asc':
+                    return a.title.localeCompare(b.title);
+                case 'title-desc':
+                    return b.title.localeCompare(a.title);
+                case 'author-asc':
+                    return a.author.localeCompare(b.author);
+                case 'author-desc':
+                    return b.author.localeCompare(a.author);
+                case 'available-desc':
+                    return b.availableCopies - a.availableCopies;
+                default:
+                    return 0;
+            }
+        });
+        
+        // Update result count
+        const resultCount = document.getElementById('bookResultCount');
+        if (resultCount) {
+            const totalBooks = getBooks().length;
+            resultCount.textContent = `Showing ${books.length} of ${totalBooks} books`;
+        }
+        
+        // Render filtered books
+        renderFilteredBooks(books, member);
+    };
+
+    function renderFilteredBooks(books, member) {
+        const tbody = document.getElementById('studentBooksBody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+        books.forEach((book) => {
+            const coverImage = book.coverImage || (window.ImageHelper ? ImageHelper.getPlaceholder() : '');
+            const coverHtml = coverImage ? '<img src="' + coverImage + '" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin-right: 10px;" alt="' + book.title + '">' : '';
+            
+            // Check wishlist status
+            const inWishlist = member && window.WishlistHelper && WishlistHelper.isInWishlist(member.id, book.id);
+            const wishlistIcon = inWishlist ? '❤️' : '🤍';
+            const wishlistTitle = inWishlist ? 'Remove from wishlist' : 'Add to wishlist';
+            
+            // Check waitlist status
+            const inWaitlist = member && window.WishlistHelper && WishlistHelper.isInWaitlist(member.id, book.id);
+            const waitlistPosition = inWaitlist ? WishlistHelper.getWaitlistPosition(member.id, book.id) : null;
+            
+            const row = document.createElement('tr');
+            const availableText = book.availableCopies > 0 ? book.availableCopies + ' available' : 'Out of Stock';
+            
+            let actionButtons = '';
+            if (book.availableCopies > 0) {
+                actionButtons = '<button class="btn-icon" onclick="requestIssue(\'' + book.id + '\')">Request</button>';
+            } else if (inWaitlist) {
+                actionButtons = '<button class="btn-icon" disabled>In Waitlist (#' + waitlistPosition + ')</button> ' +
+                               '<button class="btn-icon" onclick="leaveWaitlist(\'' + book.id + '\')">Leave</button>';
+            } else {
+                actionButtons = '<button class="btn-icon" onclick="joinWaitlist(\'' + book.id + '\')">Join Waitlist</button>';
+            }
+            
+            actionButtons += ' <button class="btn-icon" onclick="toggleWishlist(\'' + book.id + '\')" title="' + wishlistTitle + '">' + wishlistIcon + '</button>';
+            
+            row.innerHTML =
+                '<td><div style="display: flex; align-items: center;">' + coverHtml + '<span>' + book.title + '</span></div></td>' +
+                '<td>' + book.author + '</td>' +
+                '<td>' + book.category + '</td>' +
+                '<td>' + availableText + '</td>' +
+                '<td>' + actionButtons + '</td>';
+            tbody.appendChild(row);
+        });
+    }
+
+    window.clearFilters = function() {
+        // Reset all filters
+        const searchInput = document.getElementById('bookSearch');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const availabilityFilter = document.getElementById('availabilityFilter');
+        const sortFilter = document.getElementById('sortFilter');
+        
+        if (searchInput) searchInput.value = '';
+        if (categoryFilter) categoryFilter.value = '';
+        if (availabilityFilter) availabilityFilter.value = 'all';
+        if (sortFilter) sortFilter.value = 'title-asc';
+        
+        applyFilters();
+    };
+
+    // Populate category dropdown dynamically
+    function populateCategoryFilter() {
+        const categoryFilter = document.getElementById('categoryFilter');
+        if (!categoryFilter) return;
+        
+        const categories = getCategories();
+        const currentValue = categoryFilter.value;
+        
+        // Clear and rebuild options
+        categoryFilter.innerHTML = '<option value="">All Categories</option>';
+        
+        categories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.name;
+            option.textContent = cat.name;
+            if (cat.name === currentValue) option.selected = true;
+            categoryFilter.appendChild(option);
+        });
+    }
 
     window.requestIssue = function (bookId) {
         const member = getCurrentMember();
@@ -624,6 +801,87 @@
         if (link) link.click();
     };
 
+    // Wishlist functions
+    window.toggleWishlist = function(bookId) {
+        const member = getCurrentMember();
+        if (!member || !window.WishlistHelper) return;
+        
+        const inWishlist = WishlistHelper.isInWishlist(member.id, bookId);
+        
+        if (inWishlist) {
+            // Remove from wishlist
+            const wishlist = WishlistHelper.getWishlist(member.id);
+            const item = wishlist.find(w => w.bookId === bookId);
+            if (item) {
+                const result = WishlistHelper.removeFromWishlist(item.id);
+                if (typeof showNotification === 'function') {
+                    showNotification('Removed', result.message, 'info');
+                }
+            }
+        } else {
+            // Add to wishlist
+            const result = WishlistHelper.addToWishlist(member.id, bookId);
+            if (typeof showNotification === 'function') {
+                showNotification(result.success ? 'Added' : 'Info', result.message, result.success ? 'success' : 'warning');
+            }
+        }
+        
+        renderBooksTable();
+        renderWishlistSection();
+    };
+
+    // Waitlist functions
+    window.joinWaitlist = function(bookId) {
+        const member = getCurrentMember();
+        if (!member || !window.WishlistHelper) return;
+        
+        const result = WishlistHelper.joinWaitlist(member.id, bookId);
+        if (typeof showNotification === 'function') {
+            showNotification(result.success ? 'Joined Waitlist' : 'Info', result.message, result.success ? 'success' : 'warning');
+        }
+        
+        renderBooksTable();
+        renderWishlistSection();
+    };
+
+    window.leaveWaitlist = function(bookId) {
+        const member = getCurrentMember();
+        if (!member || !window.WishlistHelper) return;
+        
+        const waitlist = WishlistHelper.getWaitlist(member.id);
+        const item = waitlist.find(w => w.bookId === bookId && w.status === 'waiting');
+        if (item) {
+            const result = WishlistHelper.leaveWaitlist(item.id);
+            if (typeof showNotification === 'function') {
+                showNotification('Left Waitlist', result.message, 'info');
+            }
+        }
+        
+        renderBooksTable();
+        renderWishlistSection();
+    };
+
+    // Render wishlist section (for dashboard display)
+    function renderWishlistSection() {
+        // Can be called to refresh wishlist display
+        const member = getCurrentMember();
+        if (!member || !window.WishlistHelper) return;
+        
+        const wishlist = WishlistHelper.getWishlist(member.id);
+        const waitlist = WishlistHelper.getWaitlist(member.id).filter(w => w.status === 'waiting');
+        
+        // Update badges or counters if they exist
+        const wishlistBadge = document.getElementById('wishlistBadge');
+        if (wishlistBadge) {
+            wishlistBadge.textContent = wishlist.length > 0 ? wishlist.length : '';
+        }
+        
+        const waitlistBadge = document.getElementById('waitlistBadge');
+        if (waitlistBadge) {
+            waitlistBadge.textContent = waitlist.length > 0 ? waitlist.length : '';
+        }
+    }
+
     // Auto-refresh functionality for real-time updates
     let autoRefreshTimer = null;
     
@@ -670,5 +928,10 @@
         
         // Start auto-refresh for real-time updates
         startAutoRefresh();
+        
+        // Initialize chat support
+        if (window.ChatUI) {
+            ChatUI.init('student');
+        }
     });
 })();

@@ -77,16 +77,34 @@
 
             const fieldsHtml = config.fields
                 .map((field) => {
-                    const value = field.value ? String(field.value) : '';
-                    const placeholder = field.placeholder ? ' placeholder="' + field.placeholder + '"' : '';
-                    const type = field.type || 'text';
-                    const readonly = field.readOnly ? ' readonly' : '';
-                    return (
-                        '<div class="form-group">' +
-                        '<label for="' + field.id + '">' + field.label + '</label>' +
-                        '<input id="' + field.id + '" type="' + type + '" value="' + value + '"' + placeholder + readonly + '>' +
-                        '</div>'
-                    );
+                    if (field.type === 'file') {
+                        // File input for images
+                        const accept = field.accept || 'image/*';
+                        const previewHtml = field.existingImage 
+                            ? `<div id="${field.id}-preview" style="margin-top: 8px;">
+                                <img src="${field. existingImage}" style="max-width: 150px; max-height: 200px; border-radius: 4px; border: 2px solid #ddd;">
+                               </div>`
+                            : `<div id="${field.id}-preview" style="margin-top: 8px;"></div>`;
+                        
+                        return (
+                            '<div class="form-group">' +
+                            '<label for="' + field.id + '">' + field.label + '</label>' +
+                            '<input id="' + field.id + '" type="file" accept="' + accept + '" data-is-file="true">' +
+                            previewHtml +
+                            '</div>'
+                        );
+                    } else {
+                        const value = field.value ? String(field.value) : '';
+                        const placeholder = field.placeholder ? ' placeholder="' + field.placeholder + '"' : '';
+                        const type = field.type || 'text';
+                        const readonly = field.readOnly ? ' readonly' : '';
+                        return (
+                            '<div class="form-group">' +
+                            '<label for="' + field.id + '">' + field.label + '</label>' +
+                            '<input id="' + field.id + '" type="' + type + '" value="' + value + '"' + placeholder + readonly + '>' +
+                            '</div>'
+                        );
+                    }
                 })
                 .join('');
 
@@ -95,6 +113,40 @@
             modalSubmit.textContent = config.submitLabel || 'Save';
             modalCancel.textContent = 'Cancel';
             modalCancel.style.display = 'inline-flex';
+
+            // Handle file inputs
+            const fileData = {};
+            config.fields.forEach((field) => {
+                if (field.type === 'file') {
+                    const fileInput = document.getElementById(field.id);
+                    const previewContainer = document.getElementById(field.id + '-preview');
+                    
+                    if (fileInput && window.ImageHelper) {
+                        fileInput.addEventListener('change', function() {
+                            ImageHelper.handleFileInput(
+                                fileInput,
+                                function(base64) {
+                                    // Success - store the base64 image
+                                    fileData[field.id] = base64;
+                                    
+                                    // Show preview
+                                    if (previewContainer) {
+                                        previewContainer.innerHTML = '<img src="' + base64 + '" style="max-width: 150px; max-height: 200px; border-radius: 4px; border: 2px solid #ddd;">';
+                                    }
+                                },
+                                function(error) {
+                                    // Error
+                                    const errorDiv = document.getElementById('appModalError');
+                                    if (errorDiv) {
+                                        errorDiv.textContent = error;
+                                        errorDiv.style.display = 'block';
+                                    }
+                                }
+                            );
+                        });
+                    }
+                }
+            });
 
             const closeFallback = function () {
                 modalRoot.classList.remove('show');
@@ -106,12 +158,17 @@
                 const values = {};
                 let hasError = false;
                 config.fields.forEach((field) => {
-                    const input = document.getElementById(field.id);
-                    const value = input ? input.value.trim() : '';
-                    if (field.required && !value) {
-                        hasError = true;
+                    if (field.type === 'file') {
+                        // Use stored file data
+                        values[field.id] = fileData[field.id] || null;
+                    } else {
+                        const input = document.getElementById(field.id);
+                        const value = input ? input.value.trim() : '';
+                        if (field.required && !value) {
+                            hasError = true;
+                        }
+                        values[field.id] = value;
                     }
-                    values[field.id] = value;
                 });
                 if (hasError) {
                     const error = document.getElementById('appModalError');
@@ -139,20 +196,71 @@
         }
         const fieldsHtml = config.fields
             .map((field) => {
-                const value = field.value ? String(field.value) : '';
-                const placeholder = field.placeholder ? ' placeholder="' + field.placeholder + '"' : '';
-                const type = field.type || 'text';
-                const readonly = field.readOnly ? ' readonly' : '';
-                return (
-                    '<div class="form-group">' +
-                    '<label for="' + field.id + '">' + field.label + '</label>' +
-                    '<input id="' + field.id + '" type="' + type + '" value="' + value + '"' + placeholder + readonly + '>' +
-                    '</div>'
-                );
+                if (field.type === 'file') {
+                    // File input for images
+                    const accept = field.accept || 'image/*';
+                    const previewHtml = field.existingImage 
+                        ? `<div id="${field.id}-preview" style="margin-top: 8px;">
+                            <img src="${field.existingImage}" style="max-width: 150px; max-height: 200px; border-radius: 4px; border: 2px solid #ddd;">
+                           </div>`
+                        : `<div id="${field.id}-preview" style="margin-top: 8px;"></div>`;
+                    
+                    return (
+                        '<div class="form-group">' +
+                        '<label for="' + field.id + '">' + field.label + '</label>' +
+                        '<input id="' + field.id + '" type="file" accept="' + accept + '" data-is-file="true">' +
+                        previewHtml +
+                        '</div>'
+                    );
+                } else {
+                    const value = field.value ? String(field.value) : '';
+                    const placeholder = field.placeholder ? ' placeholder="' + field.placeholder + '"' : '';
+                    const type = field.type || 'text';
+                    const readonly = field.readOnly ? ' readonly' : '';
+                    return (
+                        '<div class="form-group">' +
+                        '<label for="' + field.id + '">' + field.label + '</label>' +
+                        '<input id="' + field.id + '" type="' + type + '" value="' + value + '"' + placeholder + readonly + '>' +
+                        '</div>'
+                    );
+                }
             })
             .join('');
 
         const bodyHtml = '<div id="appModalError" class="app-modal-error"></div>' + fieldsHtml;
+        
+        // Handle file data
+        const fileData = {};
+        setTimeout(() => {
+            config.fields.forEach((field) => {
+                if (field.type === 'file') {
+                    const fileInput = document.getElementById(field.id);
+                    const previewContainer = document.getElementById(field.id + '-preview');
+                    
+                    if (fileInput && window.ImageHelper) {
+                        fileInput.addEventListener('change', function() {
+                            ImageHelper.handleFileInput(
+                                fileInput,
+                                function(base64) {
+                                    fileData[field.id] = base64;
+                                    if (previewContainer) {
+                                        previewContainer.innerHTML = '<img src="' + base64 + '" style="max-width: 150px; max-height: 200px; border-radius: 4px; border: 2px solid #ddd;">';
+                                    }
+                                },
+                                function(error) {
+                                    const errorDiv = document.getElementById('appModalError');
+                                    if (errorDiv) {
+                                        errorDiv.textContent = error;
+                                        errorDiv.style.display = 'block';
+                                    }
+                                }
+                            );
+                        });
+                    }
+                }
+            });
+        }, 100);
+        
         ModalUI.open({
             title: config.title,
             bodyHtml: bodyHtml,
@@ -163,12 +271,16 @@
                 const values = {};
                 let hasError = false;
                 config.fields.forEach((field) => {
-                    const input = document.getElementById(field.id);
-                    const value = input ? input.value.trim() : '';
-                    if (field.required && !value) {
-                        hasError = true;
+                    if (field.type === 'file') {
+                        values[field.id] = fileData[field.id] || null;
+                    } else {
+                        const input = document.getElementById(field.id);
+                        const value = input ? input.value.trim() : '';
+                        if (field.required && !value) {
+                            hasError = true;
+                        }
+                        values[field.id] = value;
                     }
-                    values[field.id] = value;
                 });
                 if (hasError) {
                     const error = document.getElementById('appModalError');
@@ -276,10 +388,13 @@
         tbody.innerHTML = '';
 
         books.forEach((book) => {
+            const coverImage = book.coverImage || (window.ImageHelper ? ImageHelper.getPlaceholder() : '');
+            const coverHtml = coverImage ? '<img src="' + coverImage + '" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">' : '';
+            
             const row = document.createElement('tr');
             row.innerHTML =
                 '<td>' + book.id + '</td>' +
-                '<td>' + book.title + '</td>' +
+                '<td style="display: flex; align-items: center; gap: 10px;">' + coverHtml + '<span>' + book.title + '</span></td>' +
                 '<td>' + book.author + '</td>' +
                 '<td>' + book.category + '</td>' +
                 '<td>' + book.totalCopies + '</td>' +
@@ -644,7 +759,8 @@
                 { id: 'bookTitle', label: 'Book title', required: true },
                 { id: 'bookAuthor', label: 'Author name', required: true },
                 { id: 'bookCategory', label: 'Category', required: true },
-                { id: 'bookCopies', label: 'Total copies', required: true, type: 'number', value: 1 }
+                { id: 'bookCopies', label: 'Total copies', required: true, type: 'number', value: 1 },
+                { id: 'bookCover', label: 'Book cover (optional)', type: 'file', accept: 'image/*' }
             ],
             onSubmit: function (values) {
                 const totalCopies = parseInt(values.bookCopies, 10);
@@ -660,14 +776,21 @@
                     saveCategories(categories);
                 }
 
-                books.push({
+                const newBook = {
                     id: LibraryStore.nextId('B', books),
                     title: values.bookTitle,
                     author: values.bookAuthor,
                     category: values.bookCategory,
                     totalCopies: totalCopies,
                     availableCopies: totalCopies
-                });
+                };
+                
+                // Add cover image if provided
+                if (values.bookCover) {
+                    newBook.coverImage = values.bookCover;
+                }
+                
+                books.push(newBook);
                 saveBooks(books);
                 refreshAll();
             }
@@ -702,7 +825,8 @@
                 { id: 'bookTitle', label: 'Book title', required: true, value: book.title },
                 { id: 'bookAuthor', label: 'Author name', required: true, value: book.author },
                 { id: 'bookCategory', label: 'Category', required: true, value: book.category },
-                { id: 'bookCopies', label: 'Total copies', required: true, type: 'number', value: book.totalCopies }
+                { id: 'bookCopies', label: 'Total copies', required: true, type: 'number', value: book.totalCopies },
+                { id: 'bookCover', label: 'Book cover (optional)', type: 'file', accept: 'image/*', existingImage: book.coverImage }
             ],
             onSubmit: function (values) {
                 const totalCopies = parseInt(values.bookCopies, 10);
@@ -716,6 +840,12 @@
                 book.category = values.bookCategory;
                 book.totalCopies = totalCopies;
                 book.availableCopies = Math.max(0, book.availableCopies + diff);
+                
+                // Update cover image if provided
+                if (values.bookCover) {
+                    book.coverImage = values.bookCover;
+                }
+                
                 saveBooks(books);
                 refreshAll();
             }
