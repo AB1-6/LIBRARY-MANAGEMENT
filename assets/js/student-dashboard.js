@@ -4,6 +4,10 @@
         return LibraryStore.load(LibraryStore.KEYS.books, []);
     }
 
+    function getCategories() {
+        return LibraryStore.load(LibraryStore.KEYS.categories, []);
+    }
+
     function getMembers() {
         return LibraryStore.load(LibraryStore.KEYS.members, []);
     }
