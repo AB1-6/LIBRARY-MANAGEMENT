@@ -456,9 +456,30 @@
         const outstandingFinesEl = document.getElementById('profileOutstandingFines');
         if (outstandingFinesEl) outstandingFinesEl.textContent = '$' + outstandingFines.toFixed(2);
         
-        // Generate QR Code
+        // Generate QR Code (wait for library to load)
         if (window.QRCodeHelper) {
-            QRCodeHelper.generateMemberQR(member, 'qrCodeContainer');
+            if (window.qrcodeReady) {
+                window.qrcodeReady
+                    .then(() => QRCodeHelper.generateMemberQR(member, 'qrCodeContainer'))
+                    .catch(err => {
+                        console.error('QR Code generation failed:', err);
+                        const container = document.getElementById('qrCodeContainer');
+                        if (container) {
+                            container.innerHTML = `
+                                <div style="text-align: center; padding: 20px; color: #666;">
+                                    <p style="color: #f44336; margin-bottom: 10px;">⚠️ QR Code library unavailable</p>
+                                    <p style="font-size: 14px;">Unable to load QR Code generator. Please refresh the page.</p>
+                                    <button onclick="location.reload()" class="btn btn-primary" style="margin-top: 10px;">
+                                        🔄 Refresh Page
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    });
+            } else {
+                // Fallback if promise not available
+                QRCodeHelper.generateMemberQR(member, 'qrCodeContainer');
+            }
         }
     }
 

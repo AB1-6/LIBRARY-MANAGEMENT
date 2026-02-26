@@ -33,14 +33,20 @@ const QRCodeHelper = {
         const qrString = JSON.stringify(qrData);
 
         try {
-            // Wait for QRCode library to load (with timeout and better detection)
-            let attempts = 0;
-            const maxAttempts = 20; // Increased to 10 seconds
-            
-            while (typeof QRCode === 'undefined' && typeof window.QRCode === 'undefined' && attempts < maxAttempts) {
-                await new Promise(resolve => setTimeout(resolve, 500));
-                attempts++;
-                console.log(`⏳ Waiting for QRCode library... attempt ${attempts}/${maxAttempts}`);
+            // Wait for QRCode library to be ready (using global promise)
+            if (window.qrcodeReady) {
+                console.log('⏳ Waiting for QRCode library to load...');
+                await window.qrcodeReady;
+            } else {
+                // Fallback: manual wait with better detection
+                let attempts = 0;
+                const maxAttempts = 20;
+                
+                while (typeof QRCode === 'undefined' && typeof window.QRCode === 'undefined' && attempts < maxAttempts) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    attempts++;
+                    console.log(`⏳ Waiting for QRCode library... attempt ${attempts}/${maxAttempts}`);
+                }
             }
             
             // Get QRCode reference (check both global and window)
@@ -48,7 +54,7 @@ const QRCodeHelper = {
             
             // Check if QRCode library is loaded
             if (typeof QRCodeLib === 'undefined') {
-                console.error('❌ QRCode library not found after', attempts * 500, 'ms');
+                console.error('❌ QRCode library not available');
                 throw new Error('QRCode library failed to load. Please check your internet connection and try refreshing the page.');
             }
 
