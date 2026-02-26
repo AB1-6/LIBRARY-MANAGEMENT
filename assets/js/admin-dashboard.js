@@ -1000,6 +1000,28 @@
         showMessage('Success', 'Imported ' + imported + ' categories from Excel.');
     }
 
+    // Auto-refresh functionality for real-time updates
+    let autoRefreshTimer = null;
+    
+    async function autoRefresh() {
+        if (!document.hidden) {
+            await LibraryStore.hydrateFromApi();
+            refreshAll();
+        }
+    }
+    
+    function startAutoRefresh() {
+        // Refresh every 10 seconds
+        autoRefreshTimer = setInterval(autoRefresh, 10000);
+        
+        // Also refresh when tab becomes visible
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                autoRefresh();
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', async function () {
         if (!window.LibraryStore) {
             return;
@@ -1009,5 +1031,8 @@
         await LibraryStore.hydrateFromApi();
         
         refreshAll();
+        
+        // Start auto-refresh for real-time updates
+        startAutoRefresh();
     });
 })();

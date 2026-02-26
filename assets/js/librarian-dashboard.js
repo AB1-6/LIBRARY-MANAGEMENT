@@ -607,6 +607,42 @@
         refreshAll();
     };
 
+    // Auto-refresh functionality for real-time updates
+    let autoRefreshTimer = null;
+    
+    async function autoRefresh() {
+        if (!document.hidden) {
+            const indicator = document.getElementById('liveUpdateIndicator');
+            const textEl = document.getElementById('lastUpdateText');
+            
+            // Show updating state
+            if (indicator) indicator.classList.add('updating');
+            if (textEl) textEl.textContent = 'Updating...';
+            
+            await LibraryStore.hydrateFromApi();
+            refreshAll();
+            
+            // Show updated state
+            if (indicator) indicator.classList.remove('updating');
+            if (textEl) {
+                const now = new Date();
+                textEl.textContent = 'Live - ' + now.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+            }
+        }
+    }
+    
+    function startAutoRefresh() {
+        // Refresh every 10 seconds
+        autoRefreshTimer = setInterval(autoRefresh, 10000);
+        
+        // Also refresh when tab becomes visible
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                autoRefresh();
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', async function () {
         if (!window.LibraryStore) return;
         
@@ -614,5 +650,8 @@
         await LibraryStore.hydrateFromApi();
         
         refreshAll();
+        
+        // Start auto-refresh for real-time updates
+        startAutoRefresh();
     });
 })();
