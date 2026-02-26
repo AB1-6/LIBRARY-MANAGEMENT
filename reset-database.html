@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Reset - ENTITY</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #6F4E37 0%, #3E2723 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 700px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #6F4E37;
+            margin-bottom: 20px;
+        }
+
+        .warning-box {
+            background: #FFF3E0;
+            border-left: 4px solid #FF9800;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .danger-box {
+            background: #FFCDD2;
+            border-left: 4px solid #D32F2F;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .success-box {
+            background: #C8E6C9;
+            border-left: 4px solid #388E3C;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            display: none;
+        }
+
+        ul {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        button {
+            background: #D32F2F;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #B71C1C;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: #757575;
+        }
+
+        button.secondary:hover {
+            background: #616161;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.success {
+            background: #C8E6C9;
+            color: #2E7D32;
+            display: block;
+        }
+
+        .status.error {
+            background: #FFCDD2;
+            color: #C62828;
+            display: block;
+        }
+
+        .status.loading {
+            background: #E3F2FD;
+            color: #1976D2;
+            display: block;
+        }
+
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .results h3 {
+            color: #6F4E37;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗑️ Complete Database Reset</h1>
+        
+        <div class="danger-box">
+            <h3 style="margin-bottom: 10px;">⚠️ WARNING: This action cannot be undone!</h3>
+            <p><strong>This will permanently delete:</strong></p>
+        </div>
+
+        <ul>
+            <li>❌ All student accounts and logins</li>
+            <li>❌ All librarian accounts (except admin)</li>
+            <li>❌ All library members</li>
+            <li>❌ All book checkouts and issues</li>
+            <li>❌ All pending requests</li>
+            <li>❌ All fake/test data</li>
+        </ul>
+
+        <div class="warning-box">
+            <p><strong>✅ What will be kept:</strong></p>
+            <ul style="margin-top: 10px;">
+                <li>✓ Admin account (anlinpunneli@gmail.com)</li>
+                <li>✓ All books in the catalog</li>
+                <li>✓ All book categories</li>
+            </ul>
+        </div>
+
+        <button id="resetBtn" onclick="resetDatabase()">🗑️ RESET DATABASE - CLEAR ALL DATA</button>
+        <button class="secondary" onclick="goToLogin()">Cancel - Go to Login</button>
+
+        <div id="status" class="status"></div>
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        async function resetDatabase() {
+            if (!confirm('⚠️⚠️ FINAL WARNING ⚠️⚠️\n\nThis will DELETE ALL users except admin!\n\nAll student/librarian accounts, members, and issues will be permanently removed.\n\nContinue?')) {
+                return;
+            }
+
+            if (!confirm('Are you absolutely sure? Type YES below to confirm:', '')) {
+                const userConfirm = prompt('Type YES to confirm database reset:');
+                if (userConfirm !== 'YES') {
+                    showStatus('Reset cancelled', 'error');
+                    return;
+                }
+            }
+
+            const btn = document.getElementById('resetBtn');
+            btn.disabled = true;
+            showStatus('Resetting database...', 'loading');
+
+            try {
+                // Fetch current data
+                const [usersRes, membersRes, issuesRes, requestsRes] = await Promise.all([
+                    fetch('/api/users'),
+                    fetch('/api/members'),
+                    fetch('/api/issues'),
+                    fetch('/api/requests')
+                ]);
+
+                const users = await usersRes.json();
+                const members = await membersRes.json();
+                const issues = await issuesRes.json();
+                const requests = await requestsRes.json();
+
+                // Keep only admin
+                const cleanUsers = users.filter(user => user.email === 'anlinpunneli@gmail.com' && user.role === 'admin');
+                
+                // Make sure at least admin exists
+                if (cleanUsers.length === 0) {
+                    cleanUsers.push({
+                        id: 'U001',
+                        email: 'anlinpunneli@gmail.com',
+                        password: 'Anlin20#69',
+                        role: 'admin',
+                        firstName: 'Admin',
+                        lastName: 'User',
+                        memberId: '',
+                        createdDate: new Date().toISOString()
+                    });
+                }
+
+                // Clear all members, issues, and requests
+                const cleanMembers = [];
+                const cleanIssues = [];
+                const cleanRequests = [];
+
+                // Update database
+                await Promise.all([
+                    fetch('/api/users', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ items: cleanUsers })
+                    }),
+                    fetch('/api/members', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ items: cleanMembers })
+                    }),
+                    fetch('/api/issues', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ items: cleanIssues })
+                    }),
+                    fetch('/api/requests', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ items: cleanRequests })
+                    })
+                ]);
+
+                // Clear localStorage
+                const keysToRemove = [
+                    'lib_users',
+                    'lib_members',
+                    'lib_issues',
+                    'lib_requests',
+                    'userData'
+                ];
+
+                keysToRemove.forEach(key => {
+                    localStorage.removeItem(key);
+                });
+
+                // Show results
+                const removedUsers = users.length - cleanUsers.length;
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = `
+                    <h3>✅ Database Reset Complete!</h3>
+                    <p><strong>Deleted:</strong></p>
+                    <ul>
+                        <li>${removedUsers} user account(s)</li>
+                        <li>${members.length} member(s)</li>
+                        <li>${issues.length} issue(s)</li>
+                        <li>${requests.length} request(s)</li>
+                    </ul>
+                    <p style="margin-top: 15px;"><strong>Remaining:</strong></p>
+                    <ul>
+                        <li>✓ 1 Admin account</li>
+                        <li>✓ Books catalog preserved</li>
+                    </ul>
+                `;
+                resultsDiv.style.display = 'block';
+
+                showStatus(`✅ Database reset successful! Removed ${removedUsers + members.length + issues.length + requests.length} records.`, 'success');
+
+                // Redirect to login after 3 seconds
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 3000);
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+                btn.disabled = false;
+            }
+        }
+
+        function goToLogin() {
+            window.location.href = '/login.html';
+        }
+    </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 // Shared localStorage helpers for dashboard data
 (function () {
-    const DATA_VERSION = '3.2.0-user-data-preserved';
+    const DATA_VERSION = '4.0.0-clean-slate-2026';
     const VERSION_KEY = 'lib_data_version';
     
     // FORCE CLEAR ALL OLD DATA - aggressive cache clearing
@@ -148,15 +148,6 @@
                     role: 'admin',
                     firstName: 'Admin',
                     lastName: 'User',
-                    createdDate: new Date().toISOString()
-                },
-                {
-                    id: 'U002',
-                    email: 'librarian@entity.com',
-                    password: 'Librarian123!',
-                    role: 'librarian',
-                    firstName: 'Library',
-                    lastName: 'Staff',
                     createdDate: new Date().toISOString()
                 }
             ]);

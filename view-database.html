@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Viewer - ENTITY</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #6F4E37 0%, #3E2723 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #6F4E37;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #6F4E37;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #5A3D2A;
+        }
+
+        button.active {
+            background: #2196F3;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #6F4E37, #8B6347);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .data-section {
+            margin-top: 20px;
+        }
+
+        .data-section h2 {
+            color: #6F4E37;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #6F4E37;
+        }
+
+        .data-table {
+            width: 100%;
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: #6F4E37;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .json-cell {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        .json-cell:hover {
+            white-space: normal;
+            word-break: break-all;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error {
+            background: #FFCDD2;
+            color: #C62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .password-cell {
+            font-family: monospace;
+            background: #FFF9C4;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .back-btn {
+            background: #757575;
+        }
+
+        .back-btn:hover {
+            background: #616161;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗄️ Database Viewer</h1>
+        
+        <div class="controls">
+            <button onclick="loadAllData()">Refresh All Data</button>
+            <button onclick="loadResource('users')">View Users</button>
+            <button onclick="loadResource('books')">View Books</button>
+            <button onclick="loadResource('members')">View Members</button>
+            <button onclick="loadResource('issues')">View Issues</button>
+            <button onclick="loadResource('categories')">View Categories</button>
+            <button class="back-btn" onclick="goBack()">Back to Dashboard</button>
+        </div>
+
+        <div class="stats" id="statsContainer">
+            <div class="loading">Loading statistics...</div>
+        </div>
+
+        <div id="dataContainer">
+            <div class="loading">Click a button to view data</div>
+        </div>
+    </div>
+
+    <script>
+        let allData = {};
+
+        async function loadAllData() {
+            const statsContainer = document.getElementById('statsContainer');
+            const dataContainer = document.getElementById('dataContainer');
+            
+            statsContainer.innerHTML = '<div class="loading">Loading...</div>';
+            dataContainer.innerHTML = '<div class="loading">Loading all data...</div>';
+
+            try {
+                const response = await fetch('/api/init');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data');
+                }
+
+                allData = await response.json();
+                displayStats();
+                displayAllData();
+            } catch (error) {
+                dataContainer.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function loadResource(resourceType) {
+            const dataContainer = document.getElementById('dataContainer');
+            dataContainer.innerHTML = '<div class="loading">Loading...</div>';
+
+            try {
+                const response = await fetch(`/api/${resourceType}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch ${resourceType}`);
+                }
+
+                const data = await response.json();
+                displayResourceData(resourceType, data);
+            } catch (error) {
+                dataContainer.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        function displayStats() {
+            const statsContainer = document.getElementById('statsContainer');
+            
+            const stats = [
+                { label: 'Users', count: allData.users?.length || 0 },
+                { label: 'Books', count: allData.books?.length || 0 },
+                { label: 'Members', count: allData.members?.length || 0 },
+                { label: 'Categories', count: allData.categories?.length || 0 },
+                { label: 'Active Issues', count: allData.issues?.length || 0 },
+                { label: 'Requests', count: allData.requests?.length || 0 }
+            ];
+
+            statsContainer.innerHTML = stats.map(stat => `
+                <div class="stat-card">
+                    <h3>${stat.count}</h3>
+                    <p>${stat.label}</p>
+                </div>
+            `).join('');
+        }
+
+        function displayAllData() {
+            const dataContainer = document.getElementById('dataContainer');
+            let html = '';
+
+            const resources = ['users', 'books', 'members', 'categories', 'issues', 'requests'];
+            
+            resources.forEach(resource => {
+                const data = allData[resource] || [];
+                if (data.length > 0) {
+                    html += generateDataSection(resource, data);
+                }
+            });
+
+            if (!html) {
+                dataContainer.innerHTML = '<div class="no-data">No data found in database</div>';
+            } else {
+                dataContainer.innerHTML = html;
+            }
+        }
+
+        function displayResourceData(resourceType, data) {
+            const dataContainer = document.getElementById('dataContainer');
+            
+            if (!data || data.length === 0) {
+                dataContainer.innerHTML = `<div class="no-data">No ${resourceType} found</div>`;
+                return;
+            }
+
+            dataContainer.innerHTML = generateDataSection(resourceType, data);
+        }
+
+        function generateDataSection(resourceType, data) {
+            const title = resourceType.charAt(0).toUpperCase() + resourceType.slice(1);
+            
+            let html = `
+                <div class="data-section">
+                    <h2>${title} (${data.length})</h2>
+                    <div class="data-table">
+            `;
+
+            if (resourceType === 'users') {
+                html += generateUsersTable(data);
+            } else if (resourceType === 'books') {
+                html += generateBooksTable(data);
+            } else if (resourceType === 'members') {
+                html += generateMembersTable(data);
+            } else if (resourceType === 'issues') {
+                html += generateIssuesTable(data);
+            } else if (resourceType === 'categories') {
+                html += generateCategoriesTable(data);
+            } else {
+                html += generateGenericTable(data);
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            return html;
+        }
+
+        function generateUsersTable(users) {
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Email</th>
+                            <th>Password</th>
+                            <th>Role</th>
+                            <th>Name</th>
+                            <th>Member ID</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            users.forEach(user => {
+                html += `
+                    <tr>
+                        <td>${user.id || ''}</td>
+                        <td>${user.email || ''}</td>
+                        <td><span class="password-cell">${user.password || ''}</span></td>
+                        <td>${user.role || 'student'}</td>
+                        <td>${user.firstName || ''} ${user.lastName || ''}</td>
+                        <td>${user.memberId || ''}</td>
+                        <td>${user.createdDate ? new Date(user.createdDate).toLocaleDateString() : ''}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            return html;
+        }
+
+        function generateBooksTable(books) {
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Author</th>
+                            <th>Category</th>
+                            <th>ISBN</th>
+                            <th>Available</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            books.forEach(book => {
+                html += `
+                    <tr>
+                        <td>${book.id || ''}</td>
+                        <td>${book.title || ''}</td>
+                        <td>${book.author || ''}</td>
+                        <td>${book.category || ''}</td>
+                        <td>${book.isbn || ''}</td>
+                        <td>${book.availableCopies || 0}</td>
+                        <td>${book.totalCopies || 0}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            return html;
+        }
+
+        function generateMembersTable(members) {
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            members.forEach(member => {
+                html += `
+                    <tr>
+                        <td>${member.id || ''}</td>
+                        <td>${member.name || ''}</td>
+                        <td>${member.email || ''}</td>
+                        <td>${member.phone || ''}</td>
+                        <td>${member.type || ''}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            return html;
+        }
+
+        function generateIssuesTable(issues) {
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Member ID</th>
+                            <th>Book ID</th>
+                            <th>Issue Date</th>
+                            <th>Due Date</th>
+                            <th>Return Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            issues.forEach(issue => {
+                html += `
+                    <tr>
+                        <td>${issue.id || ''}</td>
+                        <td>${issue.memberId || ''}</td>
+                        <td>${issue.bookId || ''}</td>
+                        <td>${issue.issueDate ? new Date(issue.issueDate).toLocaleDateString() : ''}</td>
+                        <td>${issue.dueDate ? new Date(issue.dueDate).toLocaleDateString() : ''}</td>
+                        <td>${issue.returnDate ? new Date(issue.returnDate).toLocaleDateString() : 'Not returned'}</td>
+                        <td>${issue.status || 'Active'}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            return html;
+        }
+
+        function generateCategoriesTable(categories) {
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            categories.forEach(cat => {
+                html += `
+                    <tr>
+                        <td>${cat.id || ''}</td>
+                        <td>${cat.name || ''}</td>
+                        <td>${cat.description || ''}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            return html;
+        }
+
+        function generateGenericTable(data) {
+            if (!data.length) return '<p>No data</p>';
+
+            const keys = Object.keys(data[0]);
+            
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            ${keys.map(key => `<th>${key}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.forEach(item => {
+                html += '<tr>';
+                keys.forEach(key => {
+                    const value = item[key];
+                    const displayValue = typeof value === 'object' ? JSON.stringify(value) : value;
+                    html += `<td class="json-cell">${displayValue || ''}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            return html;
+        }
+
+        function goBack() {
+            const userRole = localStorage.getItem('userRole') || 'student';
+            window.location.href = `/dashboard/${userRole}.html`;
+        }
+
+        // Auto-load on page load
+        window.addEventListener('load', () => {
+            loadAllData();
+        });
+    </script>
+</body>
+</html>

@@ -422,15 +422,34 @@
             showMessage('Not Found', 'Issue not found.');
             return;
         }
+        
+        // Calculate fine if overdue ($1/day after due date)
+        const returnDate = new Date();
+        const dueDate = new Date(issue.dueDate);
+        const daysOverdue = Math.max(0, Math.ceil((returnDate - dueDate) / (1000 * 60 * 60 * 24)));
+        const fine = daysOverdue * 1; // $1 per day
+        
         issue.status = 'returned';
-        issue.returnDate = new Date().toISOString().slice(0, 10);
+        issue.returnDate = returnDate.toISOString();
+        issue.fine = fine;
+        issue.daysOverdue = daysOverdue;
+        
+        // Increase available copies when book is returned
         const books = getBooks();
         const book = books.find((b) => b.id === issue.bookId);
         if (book) {
             book.availableCopies += 1;
             saveBooks(books);
         }
+        
         saveIssues(issues);
+        
+        if (fine > 0) {
+            showMessage('Book Returned', 'Book returned successfully. Fine: $' + fine + ' (' + daysOverdue + ' days overdue)');
+        } else {
+            showMessage('Book Returned', 'Book returned successfully. No fine.');
+        }
+        
         refreshAll();
     };
 
@@ -463,6 +482,13 @@
             const availableCopies = book.availableCopies || 0;
             const statusColor = availableCopies > 0 ? 'green' : 'red';
             
+            // Format date and time for real-time display
+            let requestDateTime = '-';
+            if (request.requestDate) {
+                const dt = new Date(request.requestDate);
+                requestDateTime = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString();
+            }
+            
             row.innerHTML =
                 '<td>' + request.id + '</td>' +
                 '<td>' + member.id + '</td>' +
@@ -470,7 +496,7 @@
                 '<td>' + (user ? user.email : member.email || '-') + '</td>' +
                 '<td>' + book.title + '</td>' +
                 '<td>' + book.id + '</td>' +
-                '<td>' + formatDate(request.requestDate) + '</td>' +
+                '<td>' + requestDateTime + '</td>' +
                 '<td style="color:' + statusColor + '; font-weight:bold;">' + availableCopies + '</td>' +
                 '<td>' +
                 (availableCopies > 0 
@@ -527,20 +553,21 @@
             return;
         }
 
-        // Create new issue
+        // Create new issue with 7-day validity
         const issues = getIssues();
         const issueId = 'I' + String(issues.length + 1).padStart(3, '0');
-        const issueDate = new Date().toISOString().slice(0, 10);
+        const issueDate = new Date().toISOString();
         const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + 14);
+        dueDate.setDate(dueDate.getDate() + 7); // 7 days validity
         
         const newIssue = {
             id: issueId,
             bookId: book.id,
             memberId: request.memberId,
             issueDate: issueDate,
-            dueDate: dueDate.toISOString().slice(0, 10),
-            status: 'active'
+            dueDate: dueDate.toISOString(),
+            status: 'active',
+            fine: 0 // Fine tracking: $1/day after 7 days
         };
 
         issues.push(newIssue);
@@ -580,9 +607,12 @@
         refreshAll();
     };
 
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', async function () {
         if (!window.LibraryStore) return;
-        LibraryStore.ensureSeeded();
+        
+        // Force fresh data load from server to prevent showing cached fake data
+        await LibraryStore.hydrateFromApi();
+        
         refreshAll();
     });
 })();

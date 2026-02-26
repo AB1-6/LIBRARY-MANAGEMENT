@@ -37,7 +37,6 @@ function ensureDefaultUsers() {
     const usersRaw = localStorage.getItem('lib_users');
     const users = usersRaw ? JSON.parse(usersRaw) : [];
     const hasAdmin = users.some((user) => user.email === DEFAULT_ADMIN_EMAIL);
-    const hasLibrarian = users.some((user) => user.email === 'librarian@entity.com');
 
     if (!hasAdmin) {
         users.push({
@@ -51,17 +50,7 @@ function ensureDefaultUsers() {
         });
     }
 
-    if (!hasLibrarian) {
-        users.push({
-            id: 'U002',
-            email: 'librarian@entity.com',
-            password: 'Librarian123!',
-            role: 'librarian',
-            firstName: 'Library',
-            lastName: 'Staff',
-            createdDate: new Date().toISOString()
-        });
-    }
+    // Removed fake U002 librarian - create real librarians from admin panel
 
     localStorage.setItem('lib_users', JSON.stringify(users));
 }

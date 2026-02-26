@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seed Users - ENTITY</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #6F4E37 0%, #3E2723 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 700px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #6F4E37;
+            margin-bottom: 20px;
+        }
+
+        .info {
+            background: #E3F2FD;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+        }
+
+        .warning {
+            background: #FFF3E0;
+            border-left: 4px solid #FF9800;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+        }
+
+        .user-card {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #6F4E37;
+        }
+
+        .user-card h3 {
+            color: #6F4E37;
+            margin-bottom: 10px;
+        }
+
+        .user-card p {
+            margin: 5px 0;
+            font-family: monospace;
+        }
+
+        button {
+            background: #6F4E37;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #5A3D2A;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.success {
+            background: #C8E6C9;
+            color: #2E7D32;
+            display: block;
+        }
+
+        .status.error {
+            background: #FFCDD2;
+            color: #C62828;
+            display: block;
+        }
+
+        .status.loading {
+            background: #E3F2FD;
+            color: #1976D2;
+            display: block;
+        }
+
+        .current-users {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .current-users h3 {
+            color: #6F4E37;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌱 Seed Default Users</h1>
+        
+        <div class="info">
+            <p><strong>This tool will add the default admin user to your database:</strong></p>
+        </div>
+
+        <div class="user-card">
+            <h3>👑 Admin Account</h3>
+            <p><strong>Email:</strong> anlinpunneli@gmail.com</p>
+            <p><strong>Password:</strong> Anlin20#69</p>
+            <p><strong>Role:</strong> admin</p>
+        </div>
+
+        <div class="warning-box">
+            <p><strong>⚠️ Note:</strong> This will ensure the admin account exists. Create librarians from the admin panel.</p>
+        </div>
+
+        <button id="seedBtn" onclick="seedUsers()">Seed Admin User</button>
+        <button onclick="checkUsers()">Check Current Users</button>
+        <button onclick="forceReseed()" style="background: #D32F2F;">Force Re-seed (Replace All Users)</button>
+        <button onclick="goToLogin()" style="background: #757575;">Go to Login</button>
+
+        <div id="status" class="status"></div>
+        <div id="currentUsers" class="current-users" style="display: none;"></div>
+    </div>
+
+    <script>
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        async function checkUsers() {
+            showStatus('Checking users...', 'loading');
+            
+            try {
+                const response = await fetch('/api/users');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch users');
+                }
+
+                const users = await response.json();
+                displayCurrentUsers(users);
+                
+                if (users.length === 0) {
+                    showStatus('⚠️ No users found in database!', 'error');
+                } else {
+                    showStatus(`✓ Found ${users.length} user(s) in database`, 'success');
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        function displayCurrentUsers(users) {
+            const container = document.getElementById('currentUsers');
+            
+            if (users.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            let html = '<h3>Current Users in Database:</h3>';
+            users.forEach((user, index) => {
+                html += `
+                    <div style="padding: 10px; margin: 10px 0; background: white; border-radius: 4px; border-left: 3px solid #6F4E37;">
+                        <strong>${index + 1}. ${user.role || 'student'}</strong><br>
+                        Email: ${user.email}<br>
+                        Name: ${user.firstName || ''} ${user.lastName || ''}<br>
+                        ID: ${user.id}
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            container.style.display = 'block';
+        }
+
+        async function seedUsers() {
+            const btn = document.getElementById('seedBtn');
+            btn.disabled = true;
+            showStatus('Seeding users...', 'loading');
+
+            try {
+                // First, check current users
+                const checkResponse = await fetch('/api/users');
+                const existingUsers = await checkResponse.json();
+
+                const defaultUsers = [
+                    {
+                        id: 'U001',
+                        email: 'anlinpunneli@gmail.com',
+                        password: 'Anlin20#69',
+                        role: 'admin',
+                        firstName: 'Admin',
+                        lastName: 'User',
+                        memberId: '',
+                        createdDate: new Date().toISOString()
+                    }
+                ];
+
+                // Merge with existing users (avoid duplicates)
+                let allUsers = [...existingUsers];
+                let added = 0;
+
+                defaultUsers.forEach(defaultUser => {
+                    const exists = allUsers.some(u => u.email === defaultUser.email);
+                    if (!exists) {
+                        allUsers.push(defaultUser);
+                        added++;
+                    }
+                });
+
+                // Update database
+                const response = await fetch('/api/users', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ items: allUsers })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to seed users');
+                }
+
+                const result = await response.json();
+                
+                if (added > 0) {
+                    showStatus(`✓ Successfully added ${added} default user(s)! Total: ${allUsers.length}`, 'success');
+                } else {
+                    showStatus(`✓ All default users already exist. Total: ${allUsers.length}`, 'success');
+                }
+
+                // Show updated user list
+                await checkUsers();
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function forceReseed() {
+            if (!confirm('⚠️ This will REPLACE all existing users with only the admin account. Continue?')) {
+                return;
+            }
+
+            const btn = document.getElementById('seedBtn');
+            btn.disabled = true;
+            showStatus('Force re-seeding...', 'loading');
+
+            try {
+                const defaultUsers = [
+                    {
+                        id: 'U001',
+                        email: 'anlinpunneli@gmail.com',
+                        password: 'Anlin20#69',
+                        role: 'admin',
+                        firstName: 'Admin',
+                        lastName: 'User',
+                        memberId: '',
+                        createdDate: new Date().toISOString()
+                    }
+                ];
+
+                const response = await fetch('/api/users', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ items: defaultUsers })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to seed users');
+                }
+
+                showStatus('✓ Successfully reset to default users!', 'success');
+                await checkUsers();
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function goToLogin() {
+            window.location.href = '/login.html';
+        }
+
+        // Auto-check on load
+        window.addEventListener('load', () => {
+            checkUsers();
+        });
+    </script>
+</body>
+</html>

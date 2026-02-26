@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Cleanup - ENTITY</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #6F4E37 0%, #3E2723 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #6F4E37;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: #6F4E37;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #6F4E37;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #6F4E37, #8B6347);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #6F4E37;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #5A3D2A;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        button.danger {
+            background: #D32F2F;
+        }
+
+        button.danger:hover {
+            background: #B71C1C;
+        }
+
+        button.success {
+            background: #388E3C;
+        }
+
+        button.success:hover {
+            background: #2E7D32;
+        }
+
+        button.secondary {
+            background: #757575;
+        }
+
+        button.secondary:hover {
+            background: #616161;
+        }
+
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.success {
+            background: #C8E6C9;
+            color: #2E7D32;
+            display: block;
+        }
+
+        .status.error {
+            background: #FFCDD2;
+            color: #C62828;
+            display: block;
+        }
+
+        .status.loading {
+            background: #E3F2FD;
+            color: #1976D2;
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th {
+            background: #6F4E37;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-orphan {
+            background: #FFCDD2;
+            color: #C62828;
+        }
+
+        .badge-synced {
+            background: #C8E6C9;
+            color: #2E7D32;
+        }
+
+        .badge-issue {
+            background: #FFF9C4;
+            color: #F57F17;
+        }
+
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .warning-box {
+            background: #FFF3E0;
+            border-left: 4px solid #FF9800;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Database Cleanup & Sync</h1>
+        
+        <div class="stats" id="statsContainer">
+            <div class="stat-card">
+                <h3 id="userCount">-</h3>
+                <p>User Accounts</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="memberCount">-</h3>
+                <p>Library Members</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="issueCount">-</h3>
+                <p>Book Issues</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="orphanCount">-</h3>
+                <p>Orphaned Records</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button onclick="analyzeData()">🔍 Analyze Data</button>
+            <button class="danger" onclick="deleteOrphans()">🗑️ Delete Orphaned Members</button>
+            <button class="success" onclick="syncAccounts()">🔄 Sync Accounts</button>
+            <button class="danger" onclick="cleanAll()">🧹 Clean All Fake Data</button>
+            <button class="secondary" onclick="goBack()">← Back to Dashboard</button>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <div id="analysisContainer"></div>
+    </div>
+
+    <script>
+        let currentData = { users: [], members: [] };
+
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        async function fetchData() {
+            const [usersRes, membersRes] = await Promise.all([
+                fetch('/api/users'),
+                fetch('/api/members')
+            ]);
+
+            currentData.users = await usersRes.json();
+            currentData.members = await membersRes.json();
+
+            return currentData;
+        }
+
+        async function analyzeData() {
+            showStatus('Analyzing data...', 'loading');
+
+            try {
+                const data = await fetchData();
+                
+                // Also fetch issues
+                const issuesRes = await fetch('/api/issues');
+                const issues = await issuesRes.json();
+                
+                // Update stats
+                document.getElementById('userCount').textContent = data.users.length;
+                document.getElementById('memberCount').textContent = data.members.length;
+                document.getElementById('issueCount').textContent = issues.length;
+
+                // Find orphaned members (members without user accounts)
+                const orphanedMembers = data.members.filter(member => {
+                    return !data.users.some(user => user.memberId === member.id || user.email === member.email);
+                });
+
+                // Find users without members
+                const usersWithoutMembers = data.users.filter(user => {
+                    return user.role === 'student' && (!user.memberId || !data.members.some(m => m.id === user.memberId));
+                });
+
+                document.getElementById('orphanCount').textContent = orphanedMembers.length;
+
+                // Display results
+                displayAnalysis(orphanedMembers, usersWithoutMembers, issues);
+
+                if (orphanedMembers.length === 0 && usersWithoutMembers.length === 0 && issues.length === 0) {
+                    showStatus('✓ Database is clean!', 'success');
+                } else {
+                    showStatus(`Found ${orphanedMembers.length} orphaned member(s), ${usersWithoutMembers.length} user(s) without member records, and ${issues.length} issue(s)`, 'error');
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        function displayAnalysis(orphanedMembers, usersWithoutMembers, issues) {
+            const container = document.getElementById('analysisContainer');
+            let html = '';
+
+            if (issues && issues.length > 0) {
+                html += `
+                    <div class="section">
+                        <h2>📚 Book Issues/Checkouts (${issues.length})</h2>
+                        <p>These are the current book checkouts in the system:</p>
+                        <div class="warning-box">
+                            <strong>Note:</strong> If these are test data, click "Clean All Fake Data" to remove them.
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (orphanedMembers.length > 0) {
+                html += `
+                    <div class="section">
+                        <h2>🚨 Orphaned Members (No User Account)</h2>
+                        <p>These members exist but have no login credentials:</p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                orphanedMembers.forEach(member => {
+                    html += `
+                        <tr>
+                            <td>${member.id || 'N/A'}</td>
+                            <td>${member.name || 'N/A'}</td>
+                            <td>${member.email || 'N/A'}</td>
+                            <td>${member.type || 'N/A'}</td>
+                            <td><span class="badge badge-orphan">ORPHANED</span></td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            if (usersWithoutMembers.length > 0) {
+                html += `
+                    <div class="section">
+                        <h2>⚠️ Users Without Member Records</h2>
+                        <p>These user accounts exist but have no member record:</p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Email</th>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                usersWithoutMembers.forEach(user => {
+                    html += `
+                        <tr>
+                            <td>${user.id}</td>
+                            <td>${user.email}</td>
+                            <td>${user.firstName || ''} ${user.lastName || ''}</td>
+                            <td>${user.role}</td>
+                            <td><span class="badge badge-issue">NEEDS MEMBER</span></td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            if (html === '') {
+                html = `
+                    <div class="section">
+                        <h2>✅ All Clear!</h2>
+                        <p>Database is clean - no orphaned records or test data found.</p>
+                    </div>
+                `;
+            } else if ((issues && issues.length > 0) && orphanedMembers.length === 0 && usersWithoutMembers.length === 0) {
+                html += `
+                    <div class="section">
+                        <h2>⚠️ Test Data Detected</h2>
+                        <p>Your database has ${issues.length} book issue(s) that appear to be test data.</p>
+                        <p><strong>Action:</strong> Click "Clean All Fake Data" button to remove all test issues and reset to a clean state.</p>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        async function deleteOrphans() {
+            if (!confirm('⚠️ This will delete all members that don\'t have user accounts.\n\nAre you sure?')) {
+                return;
+            }
+
+            showStatus('Deleting orphaned members...', 'loading');
+
+            try {
+                const data = await fetchData();
+
+                // Find orphaned members
+                const orphanedMembers = data.members.filter(member => {
+                    return !data.users.some(user => user.memberId === member.id || user.email === member.email);
+                });
+
+                // Keep only non-orphaned members
+                const cleanMembers = data.members.filter(member => {
+                    return data.users.some(user => user.memberId === member.id || user.email === member.email);
+                });
+
+                // Update database
+                const response = await fetch('/api/members', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items: cleanMembers })
+                });
+
+                if (!response.ok) throw new Error('Failed to update members');
+
+                showStatus(`✓ Deleted ${orphanedMembers.length} orphaned member(s)`, 'success');
+                await analyzeData();
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function syncAccounts() {
+            showStatus('Syncing accounts...', 'loading');
+
+            try {
+                const data = await fetchData();
+                let changes = 0;
+
+                // For each user without a member, create one
+                const usersNeedingMembers = data.users.filter(user => {
+                    return user.role === 'student' && (!user.memberId || !data.members.some(m => m.id === user.memberId));
+                });
+
+                usersNeedingMembers.forEach(user => {
+                    const newMemberId = user.memberId || generateMemberId(data.members);
+                    const newMember = {
+                        id: newMemberId,
+                        name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+                        email: user.email,
+                        phone: '',
+                        type: 'Student'
+                    };
+
+                    data.members.push(newMember);
+                    
+                    // Update user's memberId
+                    const userIndex = data.users.findIndex(u => u.id === user.id);
+                    if (userIndex !== -1) {
+                        data.users[userIndex].memberId = newMemberId;
+                    }
+                    
+                    changes++;
+                });
+
+                // Save updates
+                await fetch('/api/members', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items: data.members })
+                });
+
+                await fetch('/api/users', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items: data.users })
+                });
+
+                showStatus(`✓ Synced ${changes} account(s)`, 'success');
+                await analyzeData();
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function cleanAll() {
+            if (!confirm('⚠️ This will:\n1. Delete all orphaned members\n2. Keep only Admin & Librarian accounts\n3. Remove all student accounts\n4. DELETE ALL BOOK ISSUES/CHECKOUTS\n5. DELETE ALL REQUESTS\n\nContinue?')) {
+                return;
+            }
+
+            if (!confirm('⚠️⚠️ FINAL WARNING: This cannot be undone!\n\nAll checkout history will be erased!\n\nProceed?')) {
+                return;
+            }
+
+            showStatus('Cleaning all data...', 'loading');
+
+            try {
+                const data = await fetchData();
+
+                // Fetch issues and requests
+                const [issuesRes, requestsRes] = await Promise.all([
+                    fetch('/api/issues'),
+                    fetch('/api/requests')
+                ]);
+                const issues = await issuesRes.json();
+                const requests = await requestsRes.json();
+
+                // Keep only admin and librarian users
+                const cleanUsers = data.users.filter(user => user.role === 'admin' || user.role === 'librarian');
+
+                // Keep only members associated with remaining users
+                const cleanMembers = data.members.filter(member => {
+                    return cleanUsers.some(user => user.memberId === member.id || user.email === member.email);
+                });
+
+                // Clear all issues and requests (empty arrays)
+                const cleanIssues = [];
+                const cleanRequests = [];
+
+                // Update database
+                await Promise.all([
+                    fetch('/api/users', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ items: cleanUsers })
+                    }),
+                    fetch('/api/members', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ items: cleanMembers })
+                    }),
+                    fetch('/api/issues', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ items: cleanIssues })
+                    }),
+                    fetch('/api/requests', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ items: cleanRequests })
+                    })
+                ]);
+
+                const removedUsers = data.users.length - cleanUsers.length;
+                const removedMembers = data.members.length - cleanMembers.length;
+
+                showStatus(`✓ Cleaned: Removed ${removedUsers} user(s), ${removedMembers} member(s), ${issues.length} issue(s), ${requests.length} request(s)`, 'success');
+                await analyzeData();
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        function generateMemberId(members) {
+            let maxNum = 0;
+            members.forEach(member => {
+                if (member.id && member.id.startsWith('M')) {
+                    const num = parseInt(member.id.substring(1), 10);
+                    if (!isNaN(num)) {
+                        maxNum = Math.max(maxNum, num);
+                    }
+                }
+            });
+            return 'M' + String(maxNum + 1).padStart(3, '0');
+        }
+
+        function goBack() {
+            window.location.href = '/dashboard/admin.html';
+        }
+
+        // Auto-analyze on load
+        window.addEventListener('load', () => {
+            analyzeData();
+        });
+    </script>
+</body>
+</html>

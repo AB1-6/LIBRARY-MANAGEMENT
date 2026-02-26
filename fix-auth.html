@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Authentication - ENTITY</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #6F4E37 0%, #3E2723 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #6F4E37;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+
+        .info {
+            background: #E3F2FD;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+        }
+
+        .info p {
+            margin-bottom: 10px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .info p:last-child {
+            margin-bottom: 0;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        button {
+            background: #6F4E37;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background: #5A3D2A;
+        }
+
+        button.secondary {
+            background: #2196F3;
+        }
+
+        button.secondary:hover {
+            background: #1976D2;
+        }
+
+        button.danger {
+            background: #D32F2F;
+        }
+
+        button.danger:hover {
+            background: #B71C1C;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.success {
+            background: #C8E6C9;
+            color: #2E7D32;
+            display: block;
+        }
+
+        .status.error {
+            background: #FFCDD2;
+            color: #C62828;
+            display: block;
+        }
+
+        .user-list {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .user-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .user-item:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix Authentication Issues</h1>
+        
+        <div class="info">
+            <p><strong>This tool helps fix authentication problems caused by:</strong></p>
+            <p>✓ Whitespace in stored credentials</p>
+            <p>✓ Corrupted localStorage data</p>
+            <p>✓ Sync issues between server and browser storage</p>
+        </div>
+
+        <div class="button-group">
+            <button onclick="cleanupLocalStorage()">Clean & Fix User Data</button>
+            <button class="secondary" onclick="showStoredUsers()">View Stored Users</button>
+            <button class="danger" onclick="clearAllData()">Clear All Data (Reset)</button>
+            <button onclick="goToLogin()">Go to Login Page</button>
+        </div>
+
+        <div id="status" class="status"></div>
+        <div id="userList"></div>
+    </div>
+
+    <script>
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function cleanupLocalStorage() {
+            try {
+                const usersRaw = localStorage.getItem('lib_users');
+                if (!usersRaw) {
+                    showStatus('No user data found in localStorage', 'error');
+                    return;
+                }
+
+                const users = JSON.parse(usersRaw);
+                let cleaned = 0;
+
+                const cleanedUsers = users.map(user => {
+                    const needsCleaning = 
+                        user.email !== user.email.trim() || 
+                        user.password !== user.password.trim() ||
+                        (user.firstName && user.firstName !== user.firstName.trim()) ||
+                        (user.lastName && user.lastName !== user.lastName.trim());
+                    
+                    if (needsCleaning) {
+                        cleaned++;
+                    }
+
+                    return {
+                        ...user,
+                        email: user.email.trim(),
+                        password: user.password.trim(),
+                        firstName: user.firstName ? user.firstName.trim() : user.firstName,
+                        lastName: user.lastName ? user.lastName.trim() : user.lastName
+                    };
+                });
+
+                localStorage.setItem('lib_users', JSON.stringify(cleanedUsers));
+                
+                if (cleaned > 0) {
+                    showStatus(`✓ Fixed ${cleaned} user account(s) with whitespace issues`, 'success');
+                } else {
+                    showStatus('✓ All user accounts are clean - no issues found', 'success');
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        function showStoredUsers() {
+            const userListDiv = document.getElementById('userList');
+            
+            try {
+                const usersRaw = localStorage.getItem('lib_users');
+                if (!usersRaw) {
+                    userListDiv.innerHTML = '<div class="user-list"><p>No users found in localStorage</p></div>';
+                    return;
+                }
+
+                const users = JSON.parse(usersRaw);
+                
+                let html = '<div class="user-list"><h3 style="margin-bottom: 15px;">Stored Users:</h3>';
+                users.forEach((user, index) => {
+                    const hasWhitespace = 
+                        user.email !== user.email.trim() || 
+                        user.password !== user.password.trim();
+                    
+                    html += `<div class="user-item">
+                        <strong>${index + 1}. ${user.role || 'student'}</strong><br>
+                        Email: "${user.email}"${hasWhitespace ? ' ⚠️ HAS WHITESPACE' : ''}<br>
+                        Name: ${user.firstName || ''} ${user.lastName || ''}<br>
+                        ID: ${user.id}
+                    </div>`;
+                });
+                html += '</div>';
+                
+                userListDiv.innerHTML = html;
+            } catch (error) {
+                userListDiv.innerHTML = `<div class="user-list"><p style="color: red;">Error: ${error.message}</p></div>`;
+            }
+        }
+
+        function clearAllData() {
+            if (!confirm('⚠️ This will delete ALL stored data including users, books, and issues.\n\nAre you sure?')) {
+                return;
+            }
+
+            if (!confirm('This action cannot be undone. Continue?')) {
+                return;
+            }
+
+            // Clear all library-related data
+            const keysToRemove = [
+                'lib_users',
+                'lib_books',
+                'lib_categories',
+                'lib_members',
+                'lib_issues',
+                'lib_requests',
+                'userData',
+                'userEmail',
+                'userRole',
+                'isLoggedIn',
+                'userName',
+                'userMemberId',
+                'rememberMe'
+            ];
+
+            keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+            });
+
+            showStatus('✓ All data cleared successfully. Please refresh the page.', 'success');
+            
+            // Auto refresh after 2 seconds
+            setTimeout(() => {
+                window.location.href = '/login.html';
+            }, 2000);
+        }
+
+        function goToLogin() {
+            window.location.href = '/login.html';
+        }
+
+        // Auto-check on page load
+        window.addEventListener('load', () => {
+            const usersRaw = localStorage.getItem('lib_users');
+            if (usersRaw) {
+                const users = JSON.parse(usersRaw);
+                const hasIssues = users.some(user => 
+                    user.email !== user.email.trim() || 
+                    user.password !== user.password.trim()
+                );
+                
+                if (hasIssues) {
+                    showStatus('⚠️ Whitespace issues detected in stored credentials!', 'error');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

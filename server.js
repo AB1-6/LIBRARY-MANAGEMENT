@@ -215,17 +215,8 @@ const seedData = {
       lastName: 'User',
       memberId: '',
       createdDate: new Date().toISOString()
-    },
-    {
-      id: 'U002',
-      email: 'librarian@entity.com',
-      password: 'Librarian123!',
-      role: 'librarian',
-      firstName: 'Library',
-      lastName: 'Staff',
-      memberId: '',
-      createdDate: new Date().toISOString()
     }
+    // U002 fake librarian removed - create real librarians from admin panel
   ],
   issues: [],
   requests: []
@@ -275,12 +266,48 @@ app.use(express.static(__dirname));
 
 let startupPromise = null;
 
+// Cleanup function to trim whitespace from existing user data
+async function cleanupUserData() {
+  try {
+    const users = await readTable('users');
+    let updated = false;
+    
+    const cleanedUsers = users.map(user => {
+      const needsCleaning = 
+        user.email !== user.email.trim() || 
+        user.password !== user.password.trim() ||
+        (user.firstName && user.firstName !== user.firstName.trim()) ||
+        (user.lastName && user.lastName !== user.lastName.trim());
+      
+      if (needsCleaning) {
+        updated = true;
+        return {
+          ...user,
+          email: user.email.trim(),
+          password: user.password.trim(),
+          firstName: user.firstName ? user.firstName.trim() : user.firstName,
+          lastName: user.lastName ? user.lastName.trim() : user.lastName
+        };
+      }
+      return user;
+    });
+    
+    if (updated) {
+      await replaceTable('users', cleanedUsers);
+      console.log('User data cleanup completed - trimmed whitespace from credentials');
+    }
+  } catch (error) {
+    console.error('User data cleanup failed:', error);
+  }
+}
+
 async function ensureStartup() {
   if (!startupPromise) {
     startupPromise = (async () => {
       try {
         await store.init();
         await ensureSeeded();
+        await cleanupUserData();
       } catch (error) {
         console.error('STARTUP ERROR:', error);
         throw error;
@@ -386,10 +413,14 @@ app.post('/api/auth/login', async (req, res) => {
     return;
   }
 
+  // Trim email and password to avoid whitespace issues
+  const trimmedEmail = email.trim();
+  const trimmedPassword = password.trim();
+
   try {
     const users = await readTable('users');
     const members = await readTable('members');
-    const user = users.find((entry) => entry.email === email && entry.password === password);
+    const user = users.find((entry) => entry.email.trim() === trimmedEmail && entry.password.trim() === trimmedPassword);
 
     if (!user) {
       res.status(401).json({ error: 'Invalid email or password.' });
@@ -397,7 +428,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const effectiveRole = user.role || role || 'student';
-    const member = user.memberId ? members.find((m) => m.id === user.memberId) : members.find((m) => m.email === email);
+    const member = user.memberId ? members.find((m) => m.id === user.memberId) : members.find((m) => m.email.trim() === trimmedEmail);
 
     res.json({
       id: user.id,
@@ -419,38 +450,45 @@ app.post('/api/auth/register', async (req, res) => {
     return;
   }
 
+  // Trim all fields to avoid whitespace issues
+  const trimmedFirstName = firstName.trim();
+  const trimmedLastName = lastName.trim();
+  const trimmedEmail = email.trim();
+  const trimmedPassword = password.trim();
+  const trimmedStudentId = studentId.trim();
+
   try {
     const users = await readTable('users');
     const members = await readTable('members');
 
-    const existing = users.find((entry) => entry.email === email);
+    const existing = users.find((entry) => entry.email.trim() === trimmedEmail);
     if (existing) {
       res.status(409).json({ error: 'Email already exists.' });
       return;
     }
 
     // Check if student ID already exists
-    const existingMember = members.find((entry) => entry.id === studentId);
+    const existingMember = members.find((entry) => entry.id === trimmedStudentId);
     if (existingMember) {
       res.status(409).json({ error: 'Student ID already exists.' });
       return;
     }
 
     const newMember = {
-      id: studentId,
-      name: `${firstName} ${lastName}`,
-      email,
+      id: trimmedStudentId,
+      name: `${trimmedFirstName} ${trimmedLastName}`,
+      email: trimmedEmail,
       phone: '',
       type: 'Student'
     };
 
     const newUser = {
       id: nextId('U', users),
-      email,
-      password,
+      email: trimmedEmail,
+      password: trimmedPassword,
       role: 'student',
-      firstName,
-      lastName,
+      firstName: trimmedFirstName,
+      lastName: trimmedLastName,
       memberId: newMember.id,
       createdDate: new Date().toISOString()
     };

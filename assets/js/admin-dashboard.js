@@ -249,16 +249,19 @@
     function updateStats() {
         const books = getBooks();
         const members = getMembers();
+        const users = getUsers();
         const issues = getIssues();
         const activeIssues = issues.filter((issue) => issue.status !== 'returned');
         const overdueIssues = activeIssues.filter((issue) => daysBetween(issue.dueDate) < 0);
 
         const totalBooks = document.getElementById('statTotalBooks');
+        const totalUsers = document.getElementById('statTotalUsers');
         const totalMembers = document.getElementById('statTotalMembers');
         const totalIssued = document.getElementById('statBooksIssued');
         const totalOverdue = document.getElementById('statOverdueBooks');
 
         if (totalBooks) totalBooks.textContent = books.length;
+        if (totalUsers) totalUsers.textContent = users.length;
         if (totalMembers) totalMembers.textContent = members.length;
         if (totalIssued) totalIssued.textContent = activeIssues.length;
         if (totalOverdue) totalOverdue.textContent = overdueIssues.length;
@@ -997,11 +1000,14 @@
         showMessage('Success', 'Imported ' + imported + ' categories from Excel.');
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', async function () {
         if (!window.LibraryStore) {
             return;
         }
-        LibraryStore.ensureSeeded();
+        
+        // Force fresh data load from server to prevent showing cached fake data
+        await LibraryStore.hydrateFromApi();
+        
         refreshAll();
     });
 })();

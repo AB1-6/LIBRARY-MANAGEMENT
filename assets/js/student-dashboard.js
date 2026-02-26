@@ -275,13 +275,18 @@
             const issueDate = new Date(issue.issueDate);
             const returnDate = new Date(issue.returnDate);
             const daysKept = returnDate && issueDate ? Math.ceil((returnDate - issueDate) / (1000 * 60 * 60 * 24)) : 0;
+            
+            // Show actual fine from the issue record or calculate it
+            const fine = issue.fine || 0;
+            const fineDisplay = fine > 0 ? '$' + fine : '$0';
+            
             const row = document.createElement('tr');
             row.innerHTML =
                 '<td>' + (book ? book.title : issue.bookId) + '</td>' +
                 '<td>' + formatDate(issue.issueDate) + '</td>' +
                 '<td>' + formatDate(issue.returnDate) + '</td>' +
                 '<td>' + (daysKept > 0 ? daysKept + ' days' : '-') + '</td>' +
-                '<td>$0</td>';
+                '<td>' + fineDisplay + '</td>';
             tbody.appendChild(row);
         });
     }
@@ -298,9 +303,10 @@
         const totalBorrowedEl = document.getElementById('historyTotalBorrowed');
         if (totalBorrowedEl) totalBorrowedEl.textContent = totalBorrowed;
         
-        // Total Fines Paid (placeholder - always $0 for now)
+        // Total Fines Paid (sum of all fines from returned books)
+        const totalFines = returnedIssues.reduce((sum, issue) => sum + (issue.fine || 0), 0);
         const totalFinesEl = document.getElementById('historyTotalFines');
-        if (totalFinesEl) totalFinesEl.textContent = '$0';
+        if (totalFinesEl) totalFinesEl.textContent = '$' + totalFines;
         
         // On-Time Returns Percentage
         let onTimeCount = 0;
@@ -341,6 +347,23 @@
         const active = issues.filter((issue) => issue.status !== 'returned');
         const requests = getRequests().filter((req) => member && req.memberId === member.id && req.status === 'pending');
 
+        // Calculate total fines for all active borrowed books ($1/day after due date)
+        const today = new Date();
+        let totalFines = 0;
+        let dueSoonCount = 0;
+        
+        active.forEach((issue) => {
+            const dueDate = new Date(issue.dueDate);
+            const daysOverdue = Math.max(0, Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24)));
+            totalFines += daysOverdue * 1;
+            
+            // Count books due within 2 days
+            const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+            if (daysUntilDue <= 2 && daysUntilDue >= 0) {
+                dueSoonCount++;
+            }
+        });
+
         const borrowed = document.getElementById('statBorrowed');
         const pending = document.getElementById('statPending');
         const dueSoon = document.getElementById('statDueSoon');
@@ -348,8 +371,8 @@
 
         if (borrowed) borrowed.textContent = active.length;
         if (pending) pending.textContent = requests.length;
-        if (dueSoon) dueSoon.textContent = active.length;
-        if (fines) fines.textContent = '$0';
+        if (dueSoon) dueSoon.textContent = dueSoonCount;
+        if (fines) fines.textContent = '$' + totalFines;
     }
 
     function fillProfile() {
@@ -399,7 +422,7 @@
             bookId: bookId,
             memberId: member.id,
             reason: '',
-            requestDate: new Date().toISOString().slice(0, 10),
+            requestDate: new Date().toISOString(), // Store full timestamp
             status: 'pending'
         });
         saveRequests(requests);
@@ -428,7 +451,7 @@
             bookId: book.id,
             memberId: member.id,
             reason: reasonInput ? reasonInput.value.trim() : '',
-            requestDate: new Date().toISOString().slice(0, 10),
+            requestDate: new Date().toISOString(), // Store full timestamp
             status: 'pending'
         });
         saveRequests(requests);
@@ -515,9 +538,12 @@
         if (link) link.click();
     };
 
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', async function () {
         if (!window.LibraryStore) return;
-        LibraryStore.ensureSeeded();
+        
+        // Force fresh data load from server to prevent showing cached fake data
+        await LibraryStore.hydrateFromApi();
+        
         refreshAll();
     });
 })();
