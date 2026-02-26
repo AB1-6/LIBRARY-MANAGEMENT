@@ -509,19 +509,53 @@ const ChatUI = {
 
     // Get current user info
     getCurrentUser: function() {
-        const email = localStorage.getItem('userEmail');
-        const role = localStorage.getItem('userRole');
+        let email = localStorage.getItem('userEmail');
+        let role = localStorage.getItem('userRole');
         
         console.log('👤 getCurrentUser: email =', email, ', role =', role);
         
+        // Fallback: detect role from page URL if localStorage is missing
+        if (!role) {
+            const path = window.location.pathname.toLowerCase();
+            if (path.includes('faculty.html') || path.includes('librarian')) {
+                role = 'librarian';
+                console.log('🔧 Fallback: Detected librarian from URL');
+            } else if (path.includes('student.html')) {
+                role = 'student';
+                console.log('🔧 Fallback: Detected student from URL');
+            } else if (path.includes('admin.html')) {
+                role = 'admin';
+                console.log('🔧 Fallback: Detected admin from URL');
+            }
+        }
+        
         if (role === 'student') {
+            // For student, we need their member ID from the members list
             const members = LibraryStore.load(LibraryStore.KEYS.members, []);
             console.log('👥 Found members:', members.length);
-            const member = members.find(m => m.email === email);
-            console.log('🎯 Matched member:', member);
-            return member ? { ...member, role: 'student' } : null;
-        } else if (role === 'librarian') {
-            return { id: 'librarian', role: 'librarian', name: 'Librarian' };
+            
+            if (email) {
+                const member = members.find(m => m.email === email);
+                console.log('🎯 Matched member by email:', member);
+                if (member) return { ...member, role: 'student' };
+            }
+            
+            // Fallback: try to find current logged in student
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            if (isLoggedIn && members.length > 0) {
+                // Check if there's a userMemberId
+                const memberId = localStorage.getItem('userMemberId');
+                if (memberId) {
+                    const member = members.find(m => m.id === memberId);
+                    console.log('🎯 Matched member by ID:', member);
+                    if (member) return { ...member, role: 'student' };
+                }
+            }
+            
+            return null;
+        } else if (role === 'librarian' || role === 'admin') {
+            // For librarian/admin, use a generic ID
+            return { id: 'librarian', role: role, name: 'Librarian' };
         }
         
         return null;
