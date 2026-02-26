@@ -512,9 +512,13 @@ const ChatUI = {
         const email = localStorage.getItem('userEmail');
         const role = localStorage.getItem('userRole');
         
+        console.log('👤 getCurrentUser: email =', email, ', role =', role);
+        
         if (role === 'student') {
             const members = LibraryStore.load(LibraryStore.KEYS.members, []);
+            console.log('👥 Found members:', members.length);
             const member = members.find(m => m.email === email);
+            console.log('🎯 Matched member:', member);
             return member ? { ...member, role: 'student' } : null;
         } else if (role === 'librarian') {
             return { id: 'librarian', role: 'librarian', name: 'Librarian' };
