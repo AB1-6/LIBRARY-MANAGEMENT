@@ -228,7 +228,7 @@ const ChatUI = {
                     flex: 1;
                     overflow-y: auto;
                     padding: 15px;
-                    background: #f5f5f5;
+                    background: #ECE5DD;
                 }
                 .chat-message {
                     margin-bottom: 12px;
@@ -242,29 +242,31 @@ const ChatUI = {
                     to { opacity: 1; transform: translateY(0); }
                 }
                 .chat-message.sent {
-                    align-self: flex-start;
-                    align-items: flex-start;
-                }
-                .chat-message.received {
                     align-self: flex-end;
                     align-items: flex-end;
                 }
+                .chat-message.received {
+                    align-self: flex-start;
+                    align-items: flex-start;
+                }
                 .chat-message-content {
-                    padding: 10px 14px;
-                    border-radius: 12px;
+                    padding: 8px 12px;
+                    border-radius: 8px;
                     word-wrap: break-word;
                     font-size: 14px;
-                    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+                    max-width: 100%;
                 }
                 .chat-message.sent .chat-message-content {
-                    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-                    color: white;
-                    border-radius: 12px 12px 12px 2px;
+                    background: #DCF8C6;
+                    color: #000;
+                    border-radius: 8px 8px 0px 8px;
                 }
                 .chat-message.received .chat-message-content {
-                    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-                    color: white;
-                    border-radius: 12px 12px 2px 12px;
+                    background: #FFFFFF;
+                    color: #000;
+                    border-radius: 8px 8px 8px 0px;
+                    border: 1px solid #E5E5EA;
                 }
                 .chat-message-time {
                     font-size: 11px;
