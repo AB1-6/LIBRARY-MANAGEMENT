@@ -33,21 +33,7 @@ const QRCodeHelper = {
         const qrString = JSON.stringify(qrData);
 
         try {
-            console.log('🔄 Generating QR code...');
-            
-            let qrCanvas = null;
-            let qrImageUrl = null;
-            
-            // Try client-side generation first
-            if (window.SimpleQR) {
-                console.log('✅ Using client-side QR generation');
-                qrCanvas = SimpleQR.generate(qrString, 200);
-            } else {
-                // Fallback to Google Chart API
-                console.log('⚠️ Client-side generator not available, using Google Chart API...');
-                const encodedData = encodeURIComponent(qrString);
-                qrImageUrl = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodedData}&choe=UTF-8`;
-            }
+            console.log('🔄 Generating functional QR code...');
             
             // Create QR code container
             const qrWrapper = document.createElement('div');
@@ -66,29 +52,25 @@ const QRCodeHelper = {
             `;
             
             const qrContainer = document.createElement('div');
+            qrContainer.id = 'qrCodeCanvas';
             qrContainer.style.cssText = 'display: inline-block; padding: 10px; background: white; border: 2px solid #ddd; border-radius: 4px;';
             
-            // Add QR code (canvas or image)
-            if (qrCanvas) {
-                qrCanvas.style.cssText = 'width: 200px; height: 200px; display: block;';
-                qrContainer.appendChild(qrCanvas);
-            } else {
-                const qrImage = document.createElement('img');
-                qrImage.src = qrImageUrl;
-                qrImage.alt = 'Member QR Code';
-                qrImage.style.cssText = 'width: 200px; height: 200px; display: block;';
-                qrImage.onerror = () => {
-                    // Show member info card if image fails
-                    qrContainer.innerHTML = `
-                        <div style="width: 200px; height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; padding: 20px; text-align: center;">
-                            <div style="font-size: 48px; margin-bottom: 10px;">👤</div>
-                            <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">${qrData.name.split(' ')[0]}</div>
-                            <div style="font-size: 12px; opacity: 0.9;">ID: ${qrData.id}</div>
-                        </div>
-                    `;
-                };
-                qrContainer.appendChild(qrImage);
+            // Check if QRCode library is loaded
+            if (typeof QRCode === 'undefined') {
+                console.error('❌ QRCode library not loaded');
+                throw new Error('QRCode library not available. Please refresh the page.');
             }
+            
+            // Generate functional QR code using QRCode.js
+            console.log('✅ QRCode library available, generating...');
+            new QRCode(qrContainer, {
+                text: qrString,
+                width: 200,
+                height: 200,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
             
             const buttons = document.createElement('div');
             buttons.style.cssText = 'margin-top: 15px; display: flex; gap: 10px; justify-content: center;';
@@ -97,14 +79,11 @@ const QRCodeHelper = {
             downloadBtn.textContent = '📥 Download QR';
             downloadBtn.className = 'btn btn-primary';
             downloadBtn.onclick = () => {
-                if (qrCanvas) {
+                // Get the canvas from QRCode.js
+                const canvas = qrContainer.querySelector('canvas');
+                if (canvas) {
                     const link = document.createElement('a');
-                    link.href = qrCanvas.toDataURL('image/png');
-                    link.download = `member-qr-${qrData.id}.png`;
-                    link.click();
-                } else if (qrImageUrl) {
-                    const link = document.createElement('a');
-                    link.href = qrImageUrl;
+                    link.href = canvas.toDataURL('image/png');
                     link.download = `member-qr-${qrData.id}.png`;
                     link.click();
                 }
@@ -113,7 +92,12 @@ const QRCodeHelper = {
             const printBtn = document.createElement('button');
             printBtn.textContent = '🖨️ Print Card';
             printBtn.className = 'btn btn-secondary';
-            printBtn.onclick = () => this.printMemberCard(qrData, qrCanvas, qrCanvas ? qrCanvas.toDataURL('image/png') : qrImageUrl);
+            printBtn.onclick = () => {
+                const canvas = qrContainer.querySelector('canvas');
+                if (canvas) {
+                    this.printMemberCard(qrData, canvas, canvas.toDataURL('image/png'));
+                }
+            };
             
             buttons.appendChild(downloadBtn);
             buttons.appendChild(printBtn);
