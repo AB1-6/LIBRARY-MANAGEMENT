@@ -503,7 +503,6 @@
     function refreshAll() {
         updateStats();
         populateCategoryFilter();
-        renderBooksTable();
         renderRequestsTable();
         renderBorrowedTable();
         renderHistoryTable();
@@ -517,9 +516,11 @@
             updateStudentRequestBadges();
         }
         
-        // Apply current filters to book table
+        // Render books with current filters
         if (typeof applyFilters === 'function') {
             applyFilters();
+        } else {
+            renderBooksTable();
         }
     }
 
@@ -826,7 +827,12 @@
             }
         }
         
-        renderBooksTable();
+        // Refresh book display
+        if (typeof applyFilters === 'function') {
+            applyFilters();
+        } else {
+            renderBooksTable();
+        }
         renderWishlistSection();
     };
 
@@ -840,7 +846,12 @@
             showNotification(result.success ? 'Joined Waitlist' : 'Info', result.message, result.success ? 'success' : 'warning');
         }
         
-        renderBooksTable();
+        // Refresh book display
+        if (typeof applyFilters === 'function') {
+            applyFilters();
+        } else {
+            renderBooksTable();
+        }
         renderWishlistSection();
     };
 
@@ -857,7 +868,12 @@
             }
         }
         
-        renderBooksTable();
+        // Refresh book display
+        if (typeof applyFilters === 'function') {
+            applyFilters();
+        } else {
+            renderBooksTable();
+        }
         renderWishlistSection();
     };
 

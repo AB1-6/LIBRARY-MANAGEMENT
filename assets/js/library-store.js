@@ -173,8 +173,22 @@
             if (snapshot.issues) localStorage.setItem(KEYS.issues, JSON.stringify(snapshot.issues));
             if (snapshot.users) localStorage.setItem(KEYS.users, JSON.stringify(snapshot.users));
             if (snapshot.requests) localStorage.setItem(KEYS.requests, JSON.stringify(snapshot.requests));
-            if (snapshot.wishlist) localStorage.setItem(KEYS.wishlist, JSON.stringify(snapshot.wishlist));
-            if (snapshot.waitlist) localStorage.setItem(KEYS.waitlist, JSON.stringify(snapshot.waitlist));
+            // Initialize new storage with empty arrays if not in snapshot
+            if (snapshot.wishlist) {
+                localStorage.setItem(KEYS.wishlist, JSON.stringify(snapshot.wishlist));
+            } else if (!localStorage.getItem(KEYS.wishlist)) {
+                localStorage.setItem(KEYS.wishlist, '[]');
+            }
+            if (snapshot.waitlist) {
+                localStorage.setItem(KEYS.waitlist, JSON.stringify(snapshot.waitlist));
+            } else if (!localStorage.getItem(KEYS.waitlist)) {
+                localStorage.setItem(KEYS.waitlist, '[]');
+            }
+            if (snapshot.chat) {
+                localStorage.setItem(KEYS.chat, JSON.stringify(snapshot.chat));
+            } else if (!localStorage.getItem(KEYS.chat)) {
+                localStorage.setItem(KEYS.chat, '[]');
+            }
             return true;
         } catch (err) {
             return false;
