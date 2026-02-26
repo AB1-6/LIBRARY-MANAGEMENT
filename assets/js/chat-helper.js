@@ -257,12 +257,12 @@ const ChatUI = {
                     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
                 }
                 .chat-message.sent .chat-message-content {
-                    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+                    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
                     color: white;
                     border-radius: 12px 12px 12px 2px;
                 }
                 .chat-message.received .chat-message-content {
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
                     color: white;
                     border-radius: 12px 12px 2px 12px;
                 }
