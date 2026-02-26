@@ -19,7 +19,7 @@ const QRCodeHelper = {
         }
 
         // Clear existing content
-        container.innerHTML = '';
+        container.innerHTML = '<p style="color: #666;">Generating QR code...</p>';
 
         // Create QR data object
         const qrData = {
@@ -33,10 +33,19 @@ const QRCodeHelper = {
         const qrString = JSON.stringify(qrData);
 
         try {
+            // Wait for QRCode library to load (with timeout)
+            let attempts = 0;
+            while (typeof QRCode === 'undefined' && attempts < 10) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                attempts++;
+            }
+            
             // Check if QRCode library is loaded
             if (typeof QRCode === 'undefined') {
-                throw new Error('QRCode library not loaded');
+                throw new Error('QRCode library failed to load from CDN');
             }
+
+            console.log('✅ QRCode library loaded, generating QR...');
 
             // Generate QR code canvas
             const canvas = document.createElement('canvas');
@@ -92,10 +101,19 @@ const QRCodeHelper = {
             
             container.appendChild(qrWrapper);
             
+            console.log('✅ QR code generated successfully');
             return true;
         } catch (error) {
-            console.error('QR generation error:', error);
-            container.innerHTML = '<p style="color: red;">Failed to generate QR code. Please refresh the page.</p>';
+            console.error('❌ QR generation error:', error);
+            container.innerHTML = `
+                <div style="text-align: center; padding: 20px; color: #666;">
+                    <p style="color: #f44336; margin-bottom: 10px;">⚠️ Failed to generate QR code</p>
+                    <p style="font-size: 14px;">${error.message || 'Unknown error'}</p>
+                    <button onclick="location.reload()" class="btn btn-primary" style="margin-top: 10px;">
+                        🔄 Refresh Page
+                    </button>
+                </div>
+            `;
             return false;
         }
     },
