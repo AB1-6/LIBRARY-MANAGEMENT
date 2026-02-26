@@ -378,6 +378,8 @@
     function fillProfile() {
         const member = getCurrentMember();
         if (!member) return;
+        
+        // Personal Information
         const nameInput = document.getElementById('profileName');
         const idInput = document.getElementById('profileId');
         const emailInput = document.getElementById('profileEmail');
@@ -386,6 +388,47 @@
         if (idInput) idInput.value = member.id;
         if (emailInput) emailInput.value = member.email;
         if (phoneInput) phoneInput.value = member.phone;
+        
+        // Account Statistics
+        const allIssues = getIssues().filter((issue) => issue.memberId === member.id);
+        const activeIssues = allIssues.filter((issue) => issue.status !== 'returned');
+        const returnedIssues = allIssues.filter((issue) => issue.status === 'returned');
+        
+        // Member Since
+        const users = getUsers();
+        const userEmail = localStorage.getItem('userEmail');
+        const user = users.find(u => u.email === userEmail);
+        let memberSince = 'Unknown';
+        if (user && user.createdDate) {
+            const createdDate = new Date(user.createdDate);
+            memberSince = createdDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        const memberSinceEl = document.getElementById('profileMemberSince');
+        if (memberSinceEl) memberSinceEl.textContent = memberSince;
+        
+        // Total Books Borrowed
+        const totalBorrowedEl = document.getElementById('profileTotalBorrowed');
+        if (totalBorrowedEl) totalBorrowedEl.textContent = allIssues.length + ' book' + (allIssues.length !== 1 ? 's' : '');
+        
+        // Current Books
+        const currentBooksEl = document.getElementById('profileCurrentBooks');
+        if (currentBooksEl) currentBooksEl.textContent = activeIssues.length + ' book' + (activeIssues.length !== 1 ? 's' : '');
+        
+        // Total Fines Paid (from returned books)
+        const totalFinesPaid = returnedIssues.reduce((sum, issue) => sum + (issue.fine || 0), 0);
+        const totalFinesEl = document.getElementById('profileTotalFines');
+        if (totalFinesEl) totalFinesEl.textContent = '$' + totalFinesPaid.toFixed(2);
+        
+        // Outstanding Fines (from active books)
+        const today = new Date();
+        let outstandingFines = 0;
+        activeIssues.forEach((issue) => {
+            const dueDate = new Date(issue.dueDate);
+            const daysOverdue = Math.max(0, Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24)));
+            outstandingFines += daysOverdue * 1;
+        });
+        const outstandingFinesEl = document.getElementById('profileOutstandingFines');
+        if (outstandingFinesEl) outstandingFinesEl.textContent = '$' + outstandingFines.toFixed(2);
     }
 
     function renderBooksDueSoon() {
