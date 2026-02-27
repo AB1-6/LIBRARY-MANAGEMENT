@@ -56,12 +56,18 @@ const BookGallery = {
             });
         });
         
-        // Insert before the table or at the beginning
+        // Find the table's parent content-section div and insert after the h3
         const table = this.container.querySelector('table');
         if (table) {
-            this.container.insertBefore(toggleContainer, table);
+            const tableParent = table.closest('.content-section');
+            const heading = tableParent ? tableParent.querySelector('h3') : null;
+            if (heading) {
+                heading.parentNode.insertBefore(toggleContainer, heading.nextSibling);
+            } else {
+                tableParent.insertBefore(toggleContainer, table);
+            }
         } else {
-            this.container.insertBefore(toggleContainer, this.container.firstChild);
+            this.container.appendChild(toggleContainer);
         }
     },
     
@@ -130,9 +136,10 @@ const BookGallery = {
             });
         }
         
-        // Insert gallery
+        // Insert gallery in the same container as the table
         if (table) {
-            this.container.insertBefore(galleryContainer, table);
+            const tableParent = table.parentNode;
+            tableParent.insertBefore(galleryContainer, table);
         } else {
             this.container.appendChild(galleryContainer);
         }
