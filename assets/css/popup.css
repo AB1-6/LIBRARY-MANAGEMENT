@@ -202,10 +202,13 @@
     .modal-content {
         padding: 1.5rem;
         border-radius: 10px;
+        max-width: 95%;
+        max-height: 85vh;
+        overflow-y: auto;
     }
 
     .modal-header h2 {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
     }
 
     .close {
@@ -216,5 +219,91 @@
 
     .role-icon {
         font-size: 1.5rem;
+    }
+
+    .modal-body {
+        font-size: 0.9rem;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    .modal-actions .btn {
+        width: 100%;
+    }
+}
+
+/* Chat widget mobile optimization */
+@media (max-width: 768px) {
+    .chat-window {
+        width: calc(100vw - 20px) !important;
+        height: calc(100vh - 100px) !important;
+        bottom: 10px !important;
+        right: 10px !important;
+        left: 10px !important;
+        max-width: none !important;
+    }
+
+    .chat-window.student-mode {
+        width: calc(100vw - 20px) !important;
+    }
+
+    .chat-conversations-list {
+        width: 140px !important;
+    }
+
+    .chat-toggle-btn {
+        width: 56px !important;
+        height: 56px !important;
+        font-size: 22px !important;
+    }
+
+    .chat-header h3 {
+        font-size: 14px !important;
+    }
+
+    .chat-input {
+        font-size: 14px !important;
+    }
+
+    .chat-send-btn {
+        width: 38px !important;
+        height: 38px !important;
+        font-size: 16px !important;
+    }
+
+    .conversation-item {
+        padding: 10px 8px !important;
+    }
+
+    .conv-name {
+        font-size: 12px !important;
+    }
+
+    .conv-preview {
+        font-size: 10px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .chat-conversations-list {
+        width: 100px !important;
+    }
+
+    .chat-window {
+        width: calc(100vw - 10px) !important;
+        height: calc(100vh - 80px) !important;
+        bottom: 70px !important;
+        right: 5px !important;
+        left: 5px !important;
+    }
+
+    .conv-name {
+        font-size: 11px !important;
+    }
+
+    .conv-preview {
+        display: none !important;
     }
 }

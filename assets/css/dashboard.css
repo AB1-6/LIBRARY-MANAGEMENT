@@ -198,6 +198,15 @@
     overflow-x: hidden;
 }
 
+/* Mobile menu toggle - hidden on desktop */
+.mobile-menu-toggle {
+    display: none;
+}
+
+.mobile-menu-overlay {
+    display: none;
+}
+
 .dashboard-header {
     background-color: var(--white);
     padding: 1.5rem 2rem;
@@ -313,20 +322,123 @@
     background-color: #f9f9f9;
 }
 
+/* Table wrapper for horizontal scroll */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.table-responsive::after {
+    content: '→ Scroll';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(to left, rgba(255,255,255,0.95) 60%, transparent);
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    color: var(--gray);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .table-responsive::after {
+        opacity: 1;
+    }
+
+    .table-responsive.scrolled-end::after {
+        opacity: 0;
+    }
+}
+
+.table-responsive .data-table {
+    margin-bottom: 0;
+}
+
+/* Utility classes */
+.hide-mobile {
+    display: table-cell;
+}
+
+@media (max-width: 600px) {
+    .hide-mobile {
+        display: none;
+    }
+}
+
+.show-mobile {
+    display: none;
+}
+
+@media (max-width: 600px) {
+    .show-mobile {
+        display: table-cell;
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .sidebar {
         width: 200px;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 1000;
+    }
+
+    .sidebar.mobile-open {
+        transform: translateX(0);
     }
 
     .dashboard-main {
-        margin-left: 200px;
+        margin-left: 0;
+    }
+
+    /* Mobile menu toggle button */
+    .mobile-menu-toggle {
+        display: block;
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+        z-index: 1001;
+        background: var(--primary-brown);
+        color: white;
+        border: none;
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mobile-menu-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 999;
+    }
+
+    .mobile-menu-overlay.show {
+        display: block;
     }
 
     .dashboard-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
+        padding-left: 3.5rem;
     }
 
     .stats-grid {
@@ -364,13 +476,234 @@
         grid-template-columns: 1fr;
     }
 
+    /* Make tables scrollable on mobile */
+    .content-section {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
     .data-table {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+        min-width: 100%;
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
     }
 
     .data-table th,
     .data-table td {
+        padding: 0.6rem 0.5rem;
+        min-width: 80px;
+    }
+
+    /* Sticky action column on mobile */
+    .data-table th:last-child,
+    .data-table td:last-child {
+        position: sticky;
+        right: 0;
+        background: #fff;
+        box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+        min-width: 120px;
+        z-index: 2;
+    }
+
+    .data-table thead th:last-child {
+        background: var(--primary-brown);
+        z-index: 3;
+    }
+
+    /* Improve button sizing for touch */
+    .btn, .btn-sm, .btn-primary, .btn-secondary, .btn-danger, .btn-success {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+        min-height: 44px; /* Apple's recommended touch target */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-sm {
+        padding: 0.5rem 0.8rem;
+        min-height: 40px;
+    }
+
+    /* Action buttons in tables */
+    .data-table .action-buttons,
+    .data-table .btn-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        min-width: 100px;
+    }
+
+    .data-table .btn {
+        width: 100%;
+        font-size: 0.75rem;
+        padding: 0.4rem 0.6rem;
+    }
+
+    /* Dashboard header responsive */
+    .dashboard-header {
+        padding: 1rem;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.3rem;
+    }
+
+    .user-profile {
+        font-size: 0.85rem;
+    }
+
+    .profile-avatar {
+        width: 32px;
+        height: 32px;
+    }
+
+    /* Stat cards */
+    .stat-card {
+        padding: 1rem;
+    }
+
+    .stat-card h3 {
+        font-size: 0.9rem;
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+    }
+
+    /* Search bars */
+    .search-bar {
+        flex-direction: column;
+    }
+
+    .search-input {
+        min-width: 100%;
+        width: 100%;
+    }
+
+    /* Filter bars */
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    .filter-bar select {
+        width: 100%;
+    }
+
+    /* Action buttons */
+    .action-buttons {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .action-buttons .btn {
+        width: 100%;
+    }
+
+    /* Forms */
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        font-size: 16px; /* Prevents iOS zoom on focus */
+    }
+
+    /* Modal */
+    .app-modal-dialog {
+        width: 95vw;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 1rem;
+    }
+
+    /* Content sections */
+    .dashboard-content {
         padding: 0.75rem;
+    }
+
+    .content-section h2 {
+        font-size: 1.3rem;
+    }
+
+    .content-section h3 {
+        font-size: 1.1rem;
+    }
+
+    /* Alert messages */
+    .alert {
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    /* Sidebar menu on mobile */
+    .sidebar-menu ul li a {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    /* Quick actions section */
+    .quick-actions {
+        grid-template-columns: 1fr;
+    }
+
+    /* Tab-like sections */
+    .tabs {
+        flex-wrap: wrap;
+    }
+
+    .tab-button {
+        flex: 1 1 auto;
+        min-width: 120px;
+    }
+
+    /* Notification badge */
+    .notification-badge {
+        font-size: 0.7rem;
+        min-width: 18px;
+        height: 18px;
+    }
+}
+
+/* Additional mobile optimization for very small screens */
+@media (max-width: 400px) {
+    .data-table {
+        font-size: 0.75rem;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.5rem 0.3rem;
+        min-width: 70px;
+    }
+
+    .data-table th:last-child,
+    .data-table td:last-child {
+        min-width: 100px;
+    }
+
+    .btn, .btn-sm {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.7rem;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.1rem;
+    }
+
+    .stat-card h3 {
+        font-size: 0.8rem;
+    }
+
+    .stat-number {
+        font-size: 1.3rem;
+    }
+
+    /* Hide less critical columns on very small screens */
+    .data-table .hide-mobile {
+        display: none;
     }
 }
 /* Additional Styles for Library Management System */
