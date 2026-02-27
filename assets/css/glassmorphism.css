@@ -1,146 +1,75 @@
-/* Glassmorphism Effects - Frosted Glass UI */
+/* Subtle Glass Effects - Keeps original theme with minimal transparency */
 
-/* Base glass effect for cards */
-.glass-effect,
-.stat-card,
-.content-section,
-.app-modal-dialog,
-.sidebar,
-.dashboard-header {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-}
-
-/* Stronger glass effect for elevated cards */
-.glass-card-strong {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.25);
-    border-radius: 12px;
-}
-
-/* Stat cards with glass effect */
+/* Stat cards - solid with subtle shadow */
 .stat-card {
-    position: relative;
-    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid rgba(139, 69, 19, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
 }
 
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s ease;
-}
-
-.stat-card:hover::before {
-    left: 100%;
-}
-
 .stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.3);
-    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(139, 69, 19, 0.15);
+    border-color: rgba(139, 69, 19, 0.25);
 }
 
-/* Content sections with glass */
+/* Content sections - solid white */
 .content-section {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: 16px;
-    padding: 2rem;
-    margin-bottom: 2rem;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-/* Sidebar glass effect */
+/* Sidebar - keep original styling */
 .sidebar {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-right: 1px solid rgba(255, 255, 255, 0.15);
+    /* Keep original sidebar styles */
 }
 
-/* Header glass effect */
+/* Header - keep original styling */
 .dashboard-header {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.1);
+    /* Keep original header styles */
 }
 
-/* Modal glass effect */
+/* Modal - solid with good contrast */
 .app-modal-dialog {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 16px;
-    box-shadow: 0 16px 48px 0 rgba(31, 38, 135, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .app-modal-overlay {
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
+    background: rgba(0, 0, 0, 0.5);
 }
 
-/* Table glass effect */
+/* Tables - solid backgrounds */
 table {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: 12px;
-    overflow: hidden;
+    background: #ffffff;
+    border-radius: 8px;
 }
 
 thead {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: #f8f9fa;
 }
 
 tbody tr {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: #ffffff;
     transition: all 0.2s ease;
 }
 
 tbody tr:hover {
-    background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.1);
-    transform: scale(1.01);
+    background: #f8f9fa;
+    transform: scale(1.005);
 }
 
-/* Button glass effect */
+/* Buttons - keep original colors */
 .btn-primary,
 .nav-btn {
-    background: rgba(139, 69, 19, 0.8);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
+    /* Keep original button styles */
 }
 
-.btn-primary:hover,
-.nav-btn:hover {
-    background: rgba(139, 69, 19, 0.95);
-    box-shadow: 0 8px 24px 0 rgba(139, 69, 19, 0.4);
-    transform: translateY(-2px);
-}
-
-/* Search box glass effect */
+/* Inputs - subtle transparency */
 input[type="text"],
 input[type="email"],
 input[type="password"],
@@ -148,27 +77,20 @@ input[type="number"],
 input[type="date"],
 select,
 textarea {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
+    background: #ffffff;
+    border: 1px solid #ddd;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-    background: rgba(255, 255, 255, 0.15);
+    background: #ffffff;
     border-color: rgba(139, 69, 19, 0.5);
-    box-shadow: 0 4px 16px 0 rgba(139, 69, 19, 0.2);
+    box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
 }
 
-/* Badges with glass */
+/* Badges - solid colors */
 .badge {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
     padding: 0.4rem 0.8rem;
     border-radius: 20px;
     font-size: 0.85rem;
@@ -176,131 +98,37 @@ textarea:focus {
 }
 
 .badge-success {
-    background: rgba(40, 167, 69, 0.2);
-    border-color: rgba(40, 167, 69, 0.4);
-    color: #28a745;
+    background: #28a745;
+    color: white;
 }
 
 .badge-warning {
-    background: rgba(255, 193, 7, 0.2);
-    border-color: rgba(255, 193, 7, 0.4);
-    color: #ffc107;
+    background: #ffc107;
+    color: #333;
 }
 
 .badge-danger {
-    background: rgba(220, 53, 69, 0.2);
-    border-color: rgba(220, 53, 69, 0.4);
-    color: #dc3545;
+    background: #dc3545;
+    color: white;
 }
 
 .badge-info {
-    background: rgba(23, 162, 184, 0.2);
-    border-color: rgba(23, 162, 184, 0.4);
-    color: #17a2b8;
+    background: #17a2b8;
+    color: white;
 }
 
-/* Activity log glass */
-.activity-log {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: 12px;
-    padding: 1.5rem;
+/* Remove body background change */
+body {
+    /* Keep original background */
 }
 
-/* Stats overlay effect */
-.stats-grid {
-    display: grid;
-    gap: 1.5rem;
-    perspective: 1000px;
-}
-
+/* Hover effect on cards - subtle */
 .stat-card {
-    transform-style: preserve-3d;
-    transition: transform 0.6s ease;
+    cursor: pointer;
 }
 
 .stat-card:hover {
-    transform: rotateY(5deg) rotateX(5deg) translateY(-5px);
+    transform: translateY(-3px);
 }
 
-/* Premium glow effect on hover */
-.glass-glow:hover {
-    box-shadow: 
-        0 0 20px rgba(139, 69, 19, 0.3),
-        0 8px 32px 0 rgba(31, 38, 135, 0.25);
-}
-
-/* Frosted overlay for modals */
-.frosted-overlay {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
-}
-
-/* Glass divider */
-.glass-divider {
-    height: 1px;
-    background: linear-gradient(
-        to right,
-        rgba(255, 255, 255, 0),
-        rgba(255, 255, 255, 0.3),
-        rgba(255, 255, 255, 0)
-    );
-    margin: 2rem 0;
-}
-
-/* Enhance existing cards with subtle animation */
-@keyframes glassShimmer {
-    0% {
-        background-position: -200% center;
-    }
-    100% {
-        background-position: 200% center;
-    }
-}
-
-.glass-shimmer {
-    background: linear-gradient(
-        90deg,
-        rgba(255, 255, 255, 0.1) 0%,
-        rgba(255, 255, 255, 0.2) 50%,
-        rgba(255, 255, 255, 0.1) 100%
-    );
-    background-size: 200% 100%;
-    animation: glassShimmer 3s ease-in-out infinite;
-}
-
-/* Dashboard background enhancement */
-body {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    background-attachment: fixed;
-}
-
-/* Dark mode support for glass effects */
-@media (prefers-color-scheme: dark) {
-    .glass-effect,
-    .stat-card,
-    .content-section {
-        background: rgba(0, 0, 0, 0.3);
-        border-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    .app-modal-dialog {
-        background: rgba(0, 0, 0, 0.7);
-    }
-    
-    tbody tr:hover {
-        background: rgba(255, 255, 255, 0.05);
-    }
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .glass-effect,
-    .stat-card,
-    .content-section {
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-    }
-}
+/* Remove all dark mode and shimmer effects */
