@@ -4,62 +4,77 @@
 
     const GOOGLE_BOOKS_API = 'https://www.googleapis.com/books/v1/volumes';
     
-    // Fetch book cover from Google Books API
+    // Fetch book cover from Google Books API with multiple fallback strategies
     async function fetchBookCover(title, author) {
         try {
-            // Build search query
-            let query = `intitle:${encodeURIComponent(title)}`;
-            if (author) {
-                query += `+inauthor:${encodeURIComponent(author)}`;
-            }
+            // Clean up title and author
+            const cleanTitle = title.trim();
+            const cleanAuthor = author ? author.trim() : '';
             
-            const url = `${GOOGLE_BOOKS_API}?q=${query}&maxResults=1`;
-            const response = await fetch(url);
+            // Try multiple search strategies in order of specificity
+            const searchStrategies = [
+                // Strategy 1: Exact title + author
+                cleanAuthor ? `intitle:"${cleanTitle}"+inauthor:"${cleanAuthor}"` : null,
+                // Strategy 2: Title keywords + author
+                cleanAuthor ? `${cleanTitle}+${cleanAuthor}` : null,
+                // Strategy 3: Just title (flexible)
+                `intitle:${cleanTitle}`,
+                // Strategy 4: General search with title and author
+                cleanAuthor ? `"${cleanTitle}" "${cleanAuthor}"` : `"${cleanTitle}"`,
+                // Strategy 5: Title keywords only
+                cleanTitle
+            ].filter(Boolean);
             
-            if (!response.ok) {
-                throw new Error('Failed to fetch from Google Books API');
-            }
-            
-            const data = await response.json();
-            
-            if (data.items && data.items.length > 0) {
-                const book = data.items[0].volumeInfo;
+            for (const query of searchStrategies) {
+                const url = `${GOOGLE_BOOKS_API}?q=${encodeURIComponent(query)}&maxResults=3`;
+                const response = await fetch(url);
                 
-                // Try to get the highest quality image available
-                let coverUrl = null;
-                if (book.imageLinks) {
-                    // Priority: extraLarge > large > medium > small > thumbnail
-                    coverUrl = book.imageLinks.extraLarge ||
-                              book.imageLinks.large ||
-                              book.imageLinks.medium ||
-                              book.imageLinks.small ||
-                              book.imageLinks.thumbnail;
-                    
-                    // Convert http to https for security
-                    if (coverUrl) {
-                        coverUrl = coverUrl.replace('http://', 'https://');
-                        // Remove edge=curl parameter for better quality
-                        coverUrl = coverUrl.replace('&edge=curl', '');
+                if (!response.ok) continue;
+                
+                const data = await response.json();
+                
+                if (data.items && data.items.length > 0) {
+                    // Try to find best match with image
+                    for (const item of data.items) {
+                        const book = item.volumeInfo;
+                        
+                        // Skip if no image
+                        if (!book.imageLinks) continue;
+                        
+                        // Get highest quality image available
+                        let coverUrl = book.imageLinks.extraLarge ||
+                                      book.imageLinks.large ||
+                                      book.imageLinks.medium ||
+                                      book.imageLinks.small ||
+                                      book.imageLinks.thumbnail;
+                        
+                        if (coverUrl) {
+                            // Convert http to https for security
+                            coverUrl = coverUrl.replace('http://', 'https://');
+                            // Remove edge=curl and increase size
+                            coverUrl = coverUrl.replace('&edge=curl', '').replace('zoom=1', 'zoom=0');
+                            
+                            return {
+                                success: true,
+                                coverUrl: coverUrl,
+                                bookData: {
+                                    title: book.title,
+                                    authors: book.authors ? book.authors.join(', ') : '',
+                                    publisher: book.publisher,
+                                    publishedDate: book.publishedDate,
+                                    description: book.description,
+                                    isbn: book.industryIdentifiers ? book.industryIdentifiers[0]?.identifier : null
+                                }
+                            };
+                        }
                     }
                 }
-                
-                return {
-                    success: true,
-                    coverUrl: coverUrl,
-                    bookData: {
-                        title: book.title,
-                        authors: book.authors ? book.authors.join(', ') : '',
-                        publisher: book.publisher,
-                        publishedDate: book.publishedDate,
-                        description: book.description,
-                        isbn: book.industryIdentifiers ? book.industryIdentifiers[0]?.identifier : null
-                    }
-                };
             }
             
+            // No book found with any strategy
             return {
                 success: false,
-                error: 'No book found matching the search criteria'
+                error: `No match found in Google Books for "${cleanTitle}"${cleanAuthor ? ` by ${cleanAuthor}` : ''}`
             };
             
         } catch (error) {
@@ -128,8 +143,8 @@
                 progressCallback(i + 1, books.length, book.title, result.success ? 'success' : 'failed');
             }
             
-            // Small delay to avoid rate limiting
-            await new Promise(resolve => setTimeout(resolve, 200));
+            // Small delay to avoid rate limiting (100ms is sufficient)
+            await new Promise(resolve => setTimeout(resolve, 100));
         }
         
         // Save updated books

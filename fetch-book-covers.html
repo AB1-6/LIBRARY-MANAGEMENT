@@ -179,6 +179,53 @@
         .success { color: #4caf50; }
         .error { color: #f44336; }
         .warning { color: #ff9800; }
+
+        .details-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .details-btn:hover {
+            background: #764ba2;
+        }
+
+        .details-list {
+            display: none;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            background: white;
+        }
+
+        .detail-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-title {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .detail-error {
+            color: #999;
+            font-size: 12px;
+            margin-top: 3px;
+        }
     </style>
 </head>
 <body>
@@ -231,6 +278,8 @@
                 <span class="result-label">⏭️ Skipped:</span>
                 <span class="result-value warning" id="result-skipped">0</span>
             </div>
+            <button class="details-btn" onclick="toggleDetails()">📋 View Failed Books</button>
+            <div class="details-list" id="details-list"></div>
         </div>
     </div>
 
@@ -302,6 +351,21 @@
                 document.getElementById('result-failed').textContent = results.failed;
                 document.getElementById('result-skipped').textContent = results.skipped;
                 
+                // Populate failed books list
+                const failedBooksList = document.getElementById('failed-books-list');
+                failedBooksList.innerHTML = '';
+                
+                const failedBooks = results.details.filter(d => d.status === 'failed');
+                if (failedBooks.length > 0) {
+                    failedBooks.forEach(book => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<strong>${book.title}</strong><br><small>${book.error || 'Unknown error'}</small>`;
+                        failedBooksList.appendChild(li);
+                    });
+                } else {
+                    failedBooksList.innerHTML = '<li style="color: #28a745;">No failures! All books processed successfully.</li>';
+                }
+                
                 resultsDiv.style.display = 'block';
                 progressText.textContent = '✅ All done!';
                 progressDetails.textContent = 'You can now close this page and refresh your dashboard.';
@@ -311,6 +375,19 @@
                 console.error(error);
             } finally {
                 buttons.forEach(btn => btn.disabled = false);
+            }
+        }
+
+        function toggleDetails() {
+            const detailsDiv = document.getElementById('failed-books-details');
+            const btn = document.querySelector('#results button');
+            
+            if (detailsDiv.style.display === 'none' || !detailsDiv.style.display) {
+                detailsDiv.style.display = 'block';
+                btn.textContent = '▼ Hide Failed Books';
+            } else {
+                detailsDiv.style.display = 'none';
+                btn.textContent = '▶ View Failed Books';
             }
         }
 
