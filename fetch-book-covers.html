@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch Book Covers from Google Books</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 4px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            color: #555;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-fetch {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-refresh {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        #progress-container {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 40px;
+            background: #e0e0e0;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .progress-details {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .results {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .results h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: #666;
+        }
+
+        .result-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .success { color: #4caf50; }
+        .error { color: #f44336; }
+        .warning { color: #ff9800; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Book Cover Fetcher</h1>
+        <p class="subtitle">Automatically fetch book covers from Google Books API</p>
+
+        <div class="info-box">
+            <h3>ℹ️ What This Does:</h3>
+            <ul>
+                <li>Connects to your library database</li>
+                <li>Searches Google Books API for each book</li>
+                <li>Downloads high-quality cover images</li>
+                <li>Saves covers to your database</li>
+            </ul>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-fetch" onclick="fetchCovers(false)">
+                🖼️ Fetch Missing Covers
+            </button>
+            <button class="btn-refresh" onclick="fetchCovers(true)">
+                🔄 Refresh All Covers
+            </button>
+        </div>
+
+        <div id="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill">0%</div>
+            </div>
+            <div class="progress-text" id="progress-text">Initializing...</div>
+            <div class="progress-details" id="progress-details"></div>
+        </div>
+
+        <div class="results" id="results">
+            <h3>✅ Complete!</h3>
+            <div class="result-item">
+                <span class="result-label">Total Books:</span>
+                <span class="result-value" id="result-total">0</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">✅ Successful:</span>
+                <span class="result-value success" id="result-success">0</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">❌ Failed:</span>
+                <span class="result-value error" id="result-failed">0</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">⏭️ Skipped:</span>
+                <span class="result-value warning" id="result-skipped">0</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/library-store.js"></script>
+    <script src="assets/js/google-books-helper.js"></script>
+    <script>
+        async function fetchCovers(forceRefresh) {
+            const progressContainer = document.getElementById('progress-container');
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            const progressDetails = document.getElementById('progress-details');
+            const resultsDiv = document.getElementById('results');
+            const buttons = document.querySelectorAll('button');
+
+            // Disable buttons
+            buttons.forEach(btn => btn.disabled = true);
+
+            // Show progress
+            progressContainer.style.display = 'block';
+            resultsDiv.style.display = 'none';
+
+            try {
+                // Load data from server
+                progressText.textContent = 'Loading books from database...';
+                await LibraryStore.hydrateFromApi();
+
+                const books = LibraryStore.load(LibraryStore.KEYS.books, []);
+                
+                if (books.length === 0) {
+                    alert('No books found in the database!');
+                    buttons.forEach(btn => btn.disabled = false);
+                    progressContainer.style.display = 'none';
+                    return;
+                }
+
+                const booksToProcess = forceRefresh 
+                    ? books 
+                    : books.filter(b => !b.coverImage || b.coverImage.trim() === '');
+
+                if (booksToProcess.length === 0) {
+                    const doRefresh = confirm('All books already have covers!\n\nDo you want to refresh all covers?');
+                    if (doRefresh) {
+                        return fetchCovers(true);
+                    }
+                    buttons.forEach(btn => btn.disabled = false);
+                    progressContainer.style.display = 'none';
+                    return;
+                }
+
+                progressText.textContent = `Processing ${booksToProcess.length} books...`;
+
+                // Fetch covers
+                const results = await GoogleBooksHelper.fetchAllBookCovers(
+                    (current, total, title, status) => {
+                        const percentage = Math.round((current / total) * 100);
+                        progressFill.style.width = percentage + '%';
+                        progressFill.textContent = percentage + '%';
+                        progressText.textContent = `Processing: ${current} of ${total}`;
+                        
+                        const statusIcon = status === 'success' ? '✅' : status === 'failed' ? '❌' : '⏭️';
+                        progressDetails.textContent = `${statusIcon} ${title}`;
+                    },
+                    forceRefresh
+                );
+
+                // Show results
+                document.getElementById('result-total').textContent = results.total;
+                document.getElementById('result-success').textContent = results.successful;
+                document.getElementById('result-failed').textContent = results.failed;
+                document.getElementById('result-skipped').textContent = results.skipped;
+                
+                resultsDiv.style.display = 'block';
+                progressText.textContent = '✅ All done!';
+                progressDetails.textContent = 'You can now close this page and refresh your dashboard.';
+
+            } catch (error) {
+                alert('Error: ' + error.message);
+                console.error(error);
+            } finally {
+                buttons.forEach(btn => btn.disabled = false);
+            }
+        }
+
+        // Check if LibraryStore is loaded
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!window.LibraryStore || !window.GoogleBooksHelper) {
+                alert('Required libraries not loaded. Please make sure you are running this from the correct directory.');
+            }
+        });
+    </script>
+</body>
+</html>
