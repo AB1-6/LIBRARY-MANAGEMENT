@@ -207,18 +207,55 @@
             return matchFilter && matchCategory;
         });
         tbody.innerHTML = '';
+        
+        // Pre-build lookup maps for better performance
+        let wishlistMap = {};
+        let waitlistMap = {};
+        
+        if (member) {
+            // Build wishlist lookup
+            if (window.WishlistHelper) {
+                const wishlists = LibraryStore.load(LibraryStore.KEYS.wishlist, []);
+                wishlists.filter(w => w.memberId === member.id).forEach(w => {
+                    wishlistMap[w.bookId] = true;
+                });
+            }
+            
+            // Build waitlist lookup
+            if (window.WishlistHelper) {
+                const waitlists = LibraryStore.load(LibraryStore.KEYS.waitlist, []);
+                waitlists.filter(w => w.bookId).forEach(w => {
+                    if (!waitlistMap[w.bookId]) waitlistMap[w.bookId] = [];
+                    waitlistMap[w.bookId].push(w);
+                });
+            }
+        }
+        
+        // Use DocumentFragment for batch DOM insertion
+        const fragment = document.createDocumentFragment();
+        
         books.forEach((book) => {
             const coverImage = book.coverImage || (window.ImageHelper ? ImageHelper.getPlaceholder() : '');
             const coverHtml = coverImage ? '<img src="' + coverImage + '" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin-right: 10px;" alt="' + book.title + '">' : '';
             
-            // Check wishlist status
-            const inWishlist = member && window.WishlistHelper && WishlistHelper.isInWishlist(member.id, book.id);
+            // Check wishlist status from pre-built map
+            const inWishlist = wishlistMap[book.id] || false;
             const wishlistIcon = inWishlist ? '❤️' : '🤍';
             const wishlistTitle = inWishlist ? 'Remove from wishlist' : 'Add to wishlist';
             
-            // Check waitlist status
-            const inWaitlist = member && window.WishlistHelper && WishlistHelper.isInWaitlist(member.id, book.id);
-            const waitlistPosition = inWaitlist ? WishlistHelper.getWaitlistPosition(member.id, book.id) : null;
+            // Check waitlist status from pre-built map
+            let inWaitlist = false;
+            let waitlistPosition = null;
+            
+            if (waitlistMap[book.id] && Array.isArray(waitlistMap[book.id])) {
+                const memberWaitlist = waitlistMap[book.id].find(w => w.memberId === member.id);
+                if (memberWaitlist) {
+                    inWaitlist = true;
+                    waitlistPosition = waitlistMap[book.id]
+                        .sort((a, b) => new Date(a.joinedDate) - new Date(b.joinedDate))
+                        .findIndex(w => w.memberId === member.id) + 1;
+                }
+            }
             
             const row = document.createElement('tr');
             const availableText = book.availableCopies > 0 ? book.availableCopies + ' available' : 'Out of Stock';
@@ -241,8 +278,11 @@
                 '<td>' + book.category + '</td>' +
                 '<td>' + availableText + '</td>' +
                 '<td>' + actionButtons + '</td>';
-            tbody.appendChild(row);
+            fragment.appendChild(row);
         });
+        
+        // Batch insert all rows at once
+        tbody.appendChild(fragment);
     }
 
     function renderRequestsTable() {
@@ -557,6 +597,15 @@
         applyFilters();
     };
 
+    // Debounce utility for search
+    let searchDebounceTimer;
+    window.debouncedSearch = function() {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+            applyFilters();
+        }, 300); // 300ms delay
+    };
+
     window.filterByCategory = function () {
         applyFilters();
     };
@@ -642,30 +691,61 @@
             return;
         }
         
+        // Pre-build lookup maps for better performance
+        let wishlistMap = {};
+        let waitlistMap = {};
+        let ratingMap = {};
+        
+        if (member) {
+            // Build wishlist lookup
+            if (window.WishlistHelper && typeof WishlistHelper.isInWishlist === 'function') {
+                const wishlists = LibraryStore.load(LibraryStore.KEYS.wishlist, []);
+                wishlists.filter(w => w.memberId === member.id).forEach(w => {
+                    wishlistMap[w.bookId] = true;
+                });
+            }
+            
+            // Build waitlist lookup
+            if (window.WishlistHelper && typeof WishlistHelper.isInWaitlist === 'function') {
+                const waitlists = LibraryStore.load(LibraryStore.KEYS.waitlist, []);
+                waitlists.filter(w => w.bookId).forEach(w => {
+                    if (!waitlistMap[w.bookId]) waitlistMap[w.bookId] = [];
+                    waitlistMap[w.bookId].push(w);
+                });
+            }
+        }
+        
+        // Build rating lookup
+        if (window.ReviewsHelper) {
+            books.forEach(book => {
+                ratingMap[book.id] = ReviewsHelper.getBookRating(book.id);
+            });
+        }
+        
+        // Use DocumentFragment for batch DOM insertion
+        const fragment = document.createDocumentFragment();
+        
         books.forEach((book) => {
             try {
                 const coverImage = book.coverImage || (window.ImageHelper ? ImageHelper.getPlaceholder() : '');
                 const coverHtml = coverImage ? '<img src="' + coverImage + '" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin-right: 10px;" alt="' + book.title + '">' : '';
                 
-                // Check wishlist status (with safety checks)
-                let inWishlist = false;
-                let wishlistIcon = '🤍';
-                let wishlistTitle = 'Add to wishlist';
+                // Check wishlist status from pre-built map
+                const inWishlist = wishlistMap[book.id] || false;
+                const wishlistIcon = inWishlist ? '❤️' : '🤍';
+                const wishlistTitle = inWishlist ? 'Remove from wishlist' : 'Add to wishlist';
                 
-                if (member && window.WishlistHelper && typeof WishlistHelper.isInWishlist === 'function') {
-                    inWishlist = WishlistHelper.isInWishlist(member.id, book.id);
-                    wishlistIcon = inWishlist ? '❤️' : '🤍';
-                    wishlistTitle = inWishlist ? 'Remove from wishlist' : 'Add to wishlist';
-                }
-                
-                // Check waitlist status (with safety checks)
+                // Check waitlist status from pre-built map
                 let inWaitlist = false;
                 let waitlistPosition = null;
                 
-                if (member && window.WishlistHelper && typeof WishlistHelper.isInWaitlist === 'function') {
-                    inWaitlist = WishlistHelper.isInWaitlist(member.id, book.id);
-                    if (inWaitlist && typeof WishlistHelper.getWaitlistPosition === 'function') {
-                        waitlistPosition = WishlistHelper.getWaitlistPosition(member.id, book.id);
+                if (waitlistMap[book.id] && Array.isArray(waitlistMap[book.id])) {
+                    const memberWaitlist = waitlistMap[book.id].find(w => w.memberId === member.id);
+                    if (memberWaitlist) {
+                        inWaitlist = true;
+                        waitlistPosition = waitlistMap[book.id]
+                            .sort((a, b) => new Date(a.joinedDate) - new Date(b.joinedDate))
+                            .findIndex(w => w.memberId === member.id) + 1;
                     }
                 }
                 
@@ -703,11 +783,14 @@
                     '<td>' + book.category + '</td>' +
                     '<td>' + availableText + '</td>' +
                     '<td>' + actionButtons + '</td>';
-                tbody.appendChild(row);
+                fragment.appendChild(row);
             } catch (error) {
                 console.error('❌ Error rendering book:', book.title, error);
             }
         });
+        
+        // Batch insert all rows at once
+        tbody.appendChild(fragment);
         
         console.log('✅ Finished rendering', tbody.children.length, 'book rows');
     }
