@@ -1,0 +1,351 @@
+/* Book Gallery View Styles */
+
+/* View Toggle Buttons */
+.view-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    justify-content: flex-end;
+}
+
+.view-toggle-btn {
+    padding: 0.6rem 1.2rem;
+    border: 2px solid #8b4513;
+    background: white;
+    color: #8b4513;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.view-toggle-btn:hover {
+    background: #f5f5f5;
+    transform: translateY(-2px);
+}
+
+.view-toggle-btn.active {
+    background: #8b4513;
+    color: white;
+}
+
+/* Gallery Container */
+.book-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+/* Book Card with Flip Animation */
+.book-card {
+    position: relative;
+    width: 100%;
+    height: 380px;
+    perspective: 1000px;
+    cursor: pointer;
+}
+
+.book-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+
+.book-card:hover .book-card-inner {
+    transform: rotateY(180deg);
+}
+
+.book-card-front,
+.book-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Front of Card - Book Cover */
+.book-card-front {
+    background: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.book-cover-image {
+    width: 100%;
+    height: 280px;
+    object-fit: cover;
+    background: linear-gradient(135deg, #8b4513 0%, #d2691e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+}
+
+.book-cover-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.book-cover-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #8b4513 0%, #d2691e 100%);
+    color: white;
+    font-size: 3rem;
+}
+
+.book-card-info {
+    padding: 1rem;
+    background: white;
+}
+
+.book-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 0.3rem 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.book-card-author {
+    font-size: 0.85rem;
+    color: #666;
+    margin: 0 0 0.5rem 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.book-card-status {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-available {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-unavailable {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Back of Card - Details */
+.book-card-back {
+    background: linear-gradient(135deg, #8b4513 0%, #d2691e 100%);
+    color: white;
+    transform: rotateY(180deg);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.book-card-back h3 {
+    font-size: 1.1rem;
+    margin: 0 0 1rem 0;
+    font-weight: 700;
+}
+
+.book-details {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.book-detail-item {
+    margin-bottom: 0.8rem;
+}
+
+.book-detail-label {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.2rem;
+}
+
+.book-detail-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.book-card-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.card-action-btn {
+    flex: 1;
+    padding: 0.6rem;
+    border: 2px solid white;
+    background: transparent;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+}
+
+.card-action-btn:hover {
+    background: white;
+    color: #8b4513;
+}
+
+/* Masonry Layout (Pinterest-style) */
+.book-gallery.masonry {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-auto-rows: 10px;
+    gap: 1.5rem;
+}
+
+.book-gallery.masonry .book-card {
+    height: auto;
+}
+
+.book-gallery.masonry .book-card:nth-child(3n + 1) {
+    grid-row-end: span 40;
+}
+
+.book-gallery.masonry .book-card:nth-child(3n + 2) {
+    grid-row-end: span 45;
+}
+
+.book-gallery.masonry .book-card:nth-child(3n + 3) {
+    grid-row-end: span 38;
+}
+
+/* Loading Animation */
+.gallery-loading {
+    text-align: center;
+    padding: 3rem;
+    color: #8b4513;
+    font-size: 1.2rem;
+}
+
+.gallery-loading::after {
+    content: '...';
+    animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+}
+
+/* Empty State */
+.gallery-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #666;
+}
+
+.gallery-empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.gallery-empty-text {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.gallery-empty-subtext {
+    font-size: 0.95rem;
+    color: #999;
+}
+
+/* Hover Effects */
+.book-card {
+    transition: transform 0.3s ease;
+}
+
+.book-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .book-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .book-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 1rem;
+    }
+    
+    .book-card {
+        height: 320px;
+    }
+    
+    .book-cover-image {
+        height: 220px;
+    }
+    
+    .view-toggle {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .book-gallery {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .book-card {
+        height: 280px;
+    }
+    
+    .book-cover-image {
+        height: 180px;
+    }
+}
+
+/* Animation for gallery appearance */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.book-card {
+    animation: fadeInUp 0.5s ease-out;
+    animation-fill-mode: both;
+}
+
+.book-card:nth-child(1) { animation-delay: 0.05s; }
+.book-card:nth-child(2) { animation-delay: 0.1s; }
+.book-card:nth-child(3) { animation-delay: 0.15s; }
+.book-card:nth-child(4) { animation-delay: 0.2s; }
+.book-card:nth-child(5) { animation-delay: 0.25s; }
+.book-card:nth-child(6) { animation-delay: 0.3s; }

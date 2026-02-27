@@ -410,6 +410,11 @@
                 '</td>';
             tbody.appendChild(row);
         });
+        
+        // Initialize gallery view
+        if (window.BookGallery) {
+            BookGallery.init('section-books', books);
+        }
     }
 
     function renderLibrariansTable() {
