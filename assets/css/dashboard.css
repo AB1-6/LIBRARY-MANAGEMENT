@@ -123,6 +123,7 @@
     background: linear-gradient(180deg, var(--primary-brown) 0%, var(--dark-brown) 100%);
     color: var(--white);
     padding: 2rem 0;
+    padding-bottom: 6rem;
     position: fixed;
     height: 100vh;
     overflow-y: auto;

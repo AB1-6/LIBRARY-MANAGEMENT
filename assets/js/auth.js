@@ -74,6 +74,9 @@ function setupLoginForm() {
             return;
         }
 
+        // Clear previous user's name to avoid showing wrong name
+        localStorage.removeItem('userName');
+
         // Get role from URL parameter
         const urlParams = new URLSearchParams(window.location.search);
         let role = urlParams.get('role') || 'student';
@@ -94,7 +97,11 @@ function setupLoginForm() {
                 const fullName = [adminUser.firstName || '', adminUser.lastName || ''].join(' ').trim();
                 if (fullName) {
                     localStorage.setItem('userName', fullName);
+                } else {
+                    localStorage.setItem('userName', 'Admin');
                 }
+            } else {
+                localStorage.setItem('userName', 'Admin');
             }
 
             if (remember && remember.checked) {
@@ -117,7 +124,15 @@ function setupLoginForm() {
                 const fullName = [payload.firstName || '', payload.lastName || ''].join(' ').trim();
                 if (fullName) {
                     localStorage.setItem('userName', fullName);
+                } else {
+                    // Set default name based on role
+                    const defaultName = finalRole === 'librarian' ? 'Librarian' : 'Student';
+                    localStorage.setItem('userName', defaultName);
                 }
+            } else {
+                // Set default name based on role
+                const defaultName = finalRole === 'librarian' ? 'Librarian' : 'Student';
+                localStorage.setItem('userName', defaultName);
             }
             if (window.LibraryStore && window.LibraryStore.hydrateFromApi) {
                 window.LibraryStore.hydrateFromApi();
@@ -159,7 +174,13 @@ function setupLoginForm() {
                     const fullName = [matchedUser.firstName || '', matchedUser.lastName || ''].join(' ').trim();
                     if (fullName) {
                         localStorage.setItem('userName', fullName);
+                    } else {
+                        const defaultName = matchedUser.role === 'librarian' ? 'Librarian' : 'Student';
+                        localStorage.setItem('userName', defaultName);
                     }
+                } else {
+                    const defaultName = matchedUser.role === 'librarian' ? 'Librarian' : 'Student';
+                    localStorage.setItem('userName', defaultName);
                 }
             }
         }
