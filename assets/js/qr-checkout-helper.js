@@ -4,6 +4,7 @@
 
     let videoStream = null;
     let scannerActive = false;
+    let scanningPaused = false;
     let lastScanTime = 0;
     const SCAN_COOLDOWN = 2000; // 2 seconds between scans
 
@@ -60,6 +61,12 @@
                 return;
             }
 
+            // Skip scanning if paused (but keep the loop running)
+            if (scanningPaused) {
+                requestAnimationFrame(scan);
+                return;
+            }
+
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -85,9 +92,21 @@
         scan();
     }
 
+    // Pause scanning (keeps camera active)
+    function pauseScanning() {
+        scanningPaused = true;
+    }
+
+    // Resume scanning
+    function resumeScanning() {
+        scanningPaused = false;
+        lastScanTime = Date.now(); // Reset cooldown to prevent immediate re-scan
+    }
+
     // Stop scanner and release camera
     function stopScanner() {
         scannerActive = false;
+        scanningPaused = false;
         if (videoStream) {
             videoStream.getTracks().forEach(track => track.stop());
             videoStream = null;
@@ -189,10 +208,13 @@
         const memberRole = memberData.type || (user ? user.role : 'student');
         
         // Create modal HTML
+        // Pause scanning to prevent continuous refresh
+        pauseScanning();
+
         const modalHTML = `
             <div class="membership-card-overlay" id="membershipCardOverlay">
                 <div class="membership-card-container">
-                    <button class="membership-card-close" onclick="document.getElementById('membershipCardOverlay').remove()">&times;</button>
+                    <button class="membership-card-close" onclick="window.QRCheckoutHelper.closeMembershipCard()">&times;</button>
                     <div class="membership-card">
                         <div class="membership-card-header">
                             <h2>📇 Membership Card</h2>
@@ -220,10 +242,10 @@
                             </div>
                         </div>
                         <div class="membership-card-footer">
-                            <button class="membership-card-btn btn-primary" onclick="window.QRCheckoutHelper.proceedWithCheckout('${memberData.id}', '${memberName}'); document.getElementById('membershipCardOverlay').remove();">
+                            <button class="membership-card-btn btn-primary" onclick="window.QRCheckoutHelper.proceedWithCheckout('${memberData.id}', '${memberName}'); window.QRCheckoutHelper.closeMembershipCard();">
                                 ✓ Proceed to Checkout
                             </button>
-                            <button class="membership-card-btn btn-secondary" onclick="document.getElementById('membershipCardOverlay').remove()">
+                            <button class="membership-card-btn btn-secondary" onclick="window.QRCheckoutHelper.closeMembershipCard()">
                                 Cancel
                             </button>
                         </div>
@@ -376,16 +398,26 @@
         showNotification('Error', message, 'error');
     }
 
+    // Close membership card and resume scanning
+    function closeMembershipCard() {
+        const overlay = document.getElementById('membershipCardOverlay');
+        if (overlay) overlay.remove();
+        resumeScanning();
+    }
+
     // Public API
     window.QRCheckoutHelper = {
         initScanner: initScanner,
         stopScanner: stopScanner,
+        pauseScanning: pauseScanning,
+        resumeScanning: resumeScanning,
         handleQRScan: handleQRScan,
         manualCheckout: manualCheckout,
         batchCheckout: batchCheckout,
         quickReturn: quickReturn,
         displayMembershipCard: displayMembershipCard,
         proceedWithCheckout: proceedWithCheckout,
+        closeMembershipCard: closeMembershipCard,
         getPendingCheckout: () => pendingCheckout,
         clearPendingCheckout: () => { pendingCheckout = null; },
         MAX_BORROW_LIMIT: 5,
