@@ -614,9 +614,17 @@
     /* Modal */
     .app-modal-dialog {
         width: 95vw;
-        max-height: 90vh;
-        overflow-y: auto;
+        max-height: 95vh;
         padding: 1rem;
+    }
+    
+    .app-modal-header {
+        margin-bottom: 0.75rem;
+    }
+    
+    .app-modal-actions {
+        margin-top: 1rem;
+        gap: 0.5rem;
     }
 
     /* Content sections */
@@ -886,10 +894,13 @@
     position: relative;
     background: #fff;
     width: min(520px, 92vw);
+    max-height: 90vh;
     border-radius: 16px;
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
     padding: 1.5rem;
     z-index: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .app-modal-header {
@@ -917,6 +928,9 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
 }
 
 .app-modal-body .form-group {
