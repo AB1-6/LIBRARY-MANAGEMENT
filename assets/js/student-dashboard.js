@@ -235,8 +235,12 @@
         const fragment = document.createDocumentFragment();
         
         books.forEach((book) => {
-            const coverImage = book.coverImage || (window.ImageHelper ? ImageHelper.getPlaceholder() : '');
-            const coverHtml = coverImage ? '<img src="' + coverImage + '" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin-right: 10px;" alt="' + book.title + '">' : '';
+            // Ensure we always have a cover image (use placeholder if not set)
+            let coverImage = (book.coverImage && book.coverImage.trim() !== '') ? book.coverImage : null;
+            if (!coverImage && window.ImageHelper) {
+                coverImage = ImageHelper.getPlaceholder();
+            }
+            const coverHtml = coverImage ? '<img src="' + coverImage + '" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin-right: 10px;" alt="' + book.title + '" onerror="this.src=ImageHelper.getPlaceholder()">' : '';
             
             // Check wishlist status from pre-built map
             const inWishlist = wishlistMap[book.id] || false;
@@ -727,8 +731,12 @@
         
         books.forEach((book) => {
             try {
-                const coverImage = book.coverImage || (window.ImageHelper ? ImageHelper.getPlaceholder() : '');
-                const coverHtml = coverImage ? '<img src="' + coverImage + '" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin-right: 10px;" alt="' + book.title + '">' : '';
+                // Ensure we always have a cover image (use placeholder if not set)
+                let coverImage = (book.coverImage && book.coverImage.trim() !== '') ? book.coverImage : null;
+                if (!coverImage && window.ImageHelper) {
+                    coverImage = ImageHelper.getPlaceholder();
+                }
+                const coverHtml = coverImage ? '<img src="' + coverImage + '" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin-right: 10px;" alt="' + book.title + '" onerror="this.src=ImageHelper.getPlaceholder()">' : '';
                 
                 // Check wishlist status from pre-built map
                 const inWishlist = wishlistMap[book.id] || false;
@@ -1068,9 +1076,12 @@
         
         // Book Info
         detailsHtml += '<div class="book-details-header">';
-        const coverImage = book.coverImage || (window.ImageHelper ? ImageHelper.getPlaceholder() : '');
+        let coverImage = (book.coverImage && book.coverImage.trim() !== '') ? book.coverImage : null;
+        if (!coverImage && window.ImageHelper) {
+            coverImage = ImageHelper.getPlaceholder();
+        }
         if (coverImage) {
-            detailsHtml += '<img src="' + coverImage + '" style="width: 150px; height: 225px; object-fit: cover; border-radius: 8px; border: 2px solid #ddd;" alt="' + book.title + '">';
+            detailsHtml += '<img src="' + coverImage + '" style="width: 150px; height: 225px; object-fit: cover; border-radius: 8px; border: 2px solid #ddd;" alt="' + book.title + '" onerror="this.src=ImageHelper.getPlaceholder()">';
         }
         detailsHtml += '<div class="book-details-info">';
         detailsHtml += '<h3>' + book.title + '</h3>';

@@ -62,9 +62,23 @@ const ImageHelper = {
 
     // Get placeholder image
     getPlaceholder: function() {
-        // SVG placeholder - book icon (safe encoding without Unicode)
-        const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300"><rect width="200" height="300" fill="#e0e0e0"/><g transform="translate(60, 100)"><path d="M10 0 L70 0 L70 100 L40 85 L10 100 Z" fill="#9e9e9e"/><rect x="15" y="10" width="50" height="5" fill="#757575"/><rect x="15" y="20" width="50" height="3" fill="#757575"/><rect x="15" y="27" width="40" height="3" fill="#757575"/></g></svg>';
-        // Use URL encoding instead of btoa to avoid Unicode issues
+        // SVG placeholder - book icon with better styling
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300">
+            <defs>
+                <linearGradient id="bookGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#8e8e93;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#636366;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <rect width="200" height="300" fill="#f2f2f7"/>
+            <rect x="40" y="50" width="120" height="200" rx="8" fill="url(#bookGrad)"/>
+            <rect x="40" y="50" width="10" height="200" fill="#48484a" opacity="0.3"/>
+            <rect x="55" y="70" width="90" height="4" rx="2" fill="#ffffff" opacity="0.6"/>
+            <rect x="55" y="90" width="70" height="3" rx="1.5" fill="#ffffff" opacity="0.4"/>
+            <rect x="55" y="105" width="85" height="3" rx="1.5" fill="#ffffff" opacity="0.4"/>
+            <circle cx="100" cy="180" r="25" fill="#ffffff" opacity="0.2"/>
+            <path d="M 100 165 L 100 195 M 85 180 L 115 180" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.3"/>
+        </svg>`;
         return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     },
 

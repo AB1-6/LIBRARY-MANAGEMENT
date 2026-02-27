@@ -388,8 +388,12 @@
         tbody.innerHTML = '';
 
         books.forEach((book) => {
-            const coverImage = book.coverImage || (window.ImageHelper ? ImageHelper.getPlaceholder() : '');
-            const coverHtml = coverImage ? '<img src="' + coverImage + '" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">' : '';
+            // Ensure we always have a cover image (use placeholder if not set)
+            let coverImage = (book.coverImage && book.coverImage.trim() !== '') ? book.coverImage : null;
+            if (!coverImage && window.ImageHelper) {
+                coverImage = ImageHelper.getPlaceholder();
+            }
+            const coverHtml = coverImage ? '<img src="' + coverImage + '" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;" alt="' + book.title + '" onerror="this.src=ImageHelper.getPlaceholder()">' : '';
             
             const row = document.createElement('tr');
             row.innerHTML =
