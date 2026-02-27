@@ -1453,7 +1453,7 @@
     }
 
     // Google Books Cover Fetching Functions
-    window.fetchAllBookCovers = async function() {
+    window.fetchAllBookCovers = async function(forceRefresh = false) {
         if (!window.GoogleBooksHelper) {
             alert('Google Books Helper not loaded');
             return;
@@ -1462,24 +1462,36 @@
         const books = getBooks();
         const booksWithoutCovers = books.filter(b => !b.coverImage || b.coverImage.trim() === '');
         
-        if (booksWithoutCovers.length === 0) {
-            alert('All books already have covers!');
-            return;
+        if (!forceRefresh && booksWithoutCovers.length === 0) {
+            const refreshAll = window.confirm(
+                'All books already have covers!\n\n' +
+                'Do you want to refresh all covers from Google Books?'
+            );
+            if (refreshAll) {
+                forceRefresh = true;
+            } else {
+                return;
+            }
         }
         
+        const targetCount = forceRefresh ? books.length : booksWithoutCovers.length;
+        const actionText = forceRefresh ? 'refresh covers for all' : 'fetch covers for';
+        
         const confirm = window.confirm(
-            `This will fetch covers for ${booksWithoutCovers.length} books from Google Books API.\n\n` +
+            `This will ${actionText} ${targetCount} books from Google Books API.\n\n` +
             `This may take a few minutes. Continue?`
         );
         
         if (!confirm) return;
         
-        GoogleBooksHelper.showBulkProgress('Fetching Book Covers', 'Initializing...');
+        const title = forceRefresh ? 'Refreshing All Book Covers' : 'Fetching Book Covers';
+        GoogleBooksHelper.showBulkProgress(title, 'Initializing...');
         
         const results = await GoogleBooksHelper.fetchAllBookCovers(
             (current, total, title, status) => {
                 GoogleBooksHelper.updateProgress(current, total, title, status);
-            }
+            },
+            forceRefresh
         );
         
         GoogleBooksHelper.showProgressComplete(results);

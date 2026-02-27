@@ -72,7 +72,7 @@
     }
     
     // Fetch covers for all books in bulk
-    async function fetchAllBookCovers(progressCallback) {
+    async function fetchAllBookCovers(progressCallback, forceRefresh = false) {
         const books = LibraryStore.load(LibraryStore.KEYS.books, []);
         const results = {
             total: books.length,
@@ -85,8 +85,8 @@
         for (let i = 0; i < books.length; i++) {
             const book = books[i];
             
-            // Skip if book already has a cover
-            if (book.coverImage && book.coverImage.trim() !== '') {
+            // Skip if book already has a cover (unless force refresh)
+            if (!forceRefresh && book.coverImage && book.coverImage.trim() !== '') {
                 results.skipped++;
                 results.details.push({
                     bookId: book.id,

@@ -116,7 +116,8 @@
                     <div class="action-buttons">
                         <button class="btn btn-primary" onclick="showAddBookForm()">➕ Add New Book</button>
                         <button class="btn btn-secondary" onclick="showAddCategoryForm()">🏷️ Add Category</button>
-                        <button class="btn btn-success" onclick="fetchAllBookCovers()" title="Fetch book covers from Google Books API">🖼️ Fetch All Covers</button>
+                        <button class="btn btn-success" onclick="fetchAllBookCovers(false)" title="Fetch covers only for books without covers">🖼️ Fetch Missing Covers</button>
+                        <button class="btn btn-warning" onclick="fetchAllBookCovers(true)" title="Replace all book covers from Google Books" style="background: #ff9800;">🔄 Refresh All Covers</button>
                     </div>
                     
                     <div class="content-section">

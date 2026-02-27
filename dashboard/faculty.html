@@ -163,7 +163,8 @@
                 <div id="section-books" class="content-section" style="display:none;">
                     <h2>📚 View Books</h2>
                     <div class="action-buttons" style="margin-bottom: 15px;">
-                        <button class="btn btn-success" onclick="fetchAllBookCovers()" title="Fetch book covers from Google Books API">🖼️ Fetch All Covers</button>
+                        <button class="btn btn-success" onclick="fetchAllBookCovers(false)" title="Fetch covers only for books without covers">🖼️ Fetch Missing Covers</button>
+                        <button class="btn btn-warning" onclick="fetchAllBookCovers(true)" title="Replace all book covers from Google Books" style="background: #ff9800;">🔄 Refresh All Covers</button>
                     </div>
                     <div class="search-bar">
                         <input type="text" id="bookSearch" placeholder="Search books by title, author, or ISBN..." class="search-input">
