@@ -210,9 +210,30 @@ const tables = {
 };
 
 const seedData = {
-  categories: [],
-  books: [],
-  members: [],
+  categories: [
+    { id: 'CAT001', name: 'Computer Science', description: 'Books about computer science and technology' },
+    { id: 'CAT002', name: 'Programming', description: 'Programming languages and techniques' },
+    { id: 'CAT003', name: 'Software Engineering', description: 'Software development methodologies' },
+    { id: 'CAT004', name: 'Data Science', description: 'Data analysis and machine learning' },
+    { id: 'CAT005', name: 'Web Development', description: 'Frontend and backend web technologies' }
+  ],
+  books: [
+    { id: 'B001', title: 'Introduction to Algorithms', author: 'Cormen', category: 'Computer Science', totalCopies: 3, availableCopies: 3, isbn: '9780262033848', publisher: 'MIT Press', publicationYear: 2009 },
+    { id: 'B002', title: 'Clean Code', author: 'Robert Martin', category: 'Programming', totalCopies: 2, availableCopies: 2, isbn: '9780132350884', publisher: 'Prentice Hall', publicationYear: 2008 },
+    { id: 'B003', title: 'Design Patterns', author: 'Gang of Four', category: 'Software Engineering', totalCopies: 1, availableCopies: 1, isbn: '9780201633610', publisher: 'Addison-Wesley', publicationYear: 1994 },
+    { id: 'B004', title: 'The Pragmatic Programmer', author: 'Hunt and Thomas', category: 'Programming', totalCopies: 2, availableCopies: 2, isbn: '9780135957059', publisher: 'Addison-Wesley', publicationYear: 2019 },
+    { id: 'B005', title: 'JavaScript: The Good Parts', author: 'Douglas Crockford', category: 'Web Development', totalCopies: 3, availableCopies: 3, isbn: '9780596517748', publisher: "O'Reilly", publicationYear: 2008 },
+    { id: 'B006', title: 'Python Crash Course', author: 'Eric Matthes', category: 'Programming', totalCopies: 2, availableCopies: 2, isbn: '9781593279288', publisher: 'No Starch Press', publicationYear: 2019 },
+    { id: 'B007', title: 'Data Science from Scratch', author: 'Joel Grus', category: 'Data Science', totalCopies: 2, availableCopies: 2, isbn: '9781492041139', publisher: "O'Reilly", publicationYear: 2019 },
+    { id: 'B008', title: 'The Mythical Man-Month', author: 'Frederick Brooks', category: 'Software Engineering', totalCopies: 1, availableCopies: 1, isbn: '9780201835953', publisher: 'Addison-Wesley', publicationYear: 1995 },
+    { id: 'B009', title: 'Head First Design Patterns', author: 'Freeman & Freeman', category: 'Software Engineering', totalCopies: 2, availableCopies: 2, isbn: '9780596007126', publisher: "O'Reilly", publicationYear: 2004 },
+    { id: 'B010', title: 'Eloquent JavaScript', author: 'Marijn Haverbeke', category: 'Web Development', totalCopies: 2, availableCopies: 2, isbn: '9781593279509', publisher: 'No Starch Press', publicationYear: 2018 }
+  ],
+  members: [
+    { id: 'M001', name: 'John Doe', email: 'john@example.com', phone: '1234567890', address: '123 Main St', joinDate: new Date().toISOString() },
+    { id: 'M002', name: 'Jane Smith', email: 'jane@example.com', phone: '0987654321', address: '456 Oak Ave', joinDate: new Date().toISOString() },
+    { id: 'M003', name: 'Bob Johnson', email: 'bob@example.com', phone: '5555555555', address: '789 Pine Rd', joinDate: new Date().toISOString() }
+  ],
   users: [
     {
       id: 'U001',

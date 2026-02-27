@@ -377,6 +377,11 @@
         if (totalMembers) totalMembers.textContent = members.length;
         if (totalIssued) totalIssued.textContent = activeIssues.length;
         if (totalOverdue) totalOverdue.textContent = overdueIssues.length;
+        
+        // Animate statistics on load
+        if (window.AnimatedCounter) {
+            window.AnimatedCounter.animateAll('.stat-number');
+        }
     }
 
     function renderBooksTable() {
@@ -393,7 +398,7 @@
             if (!coverImage && window.ImageHelper) {
                 coverImage = ImageHelper.getPlaceholder();
             }
-            const coverHtml = coverImage ? '<img src="' + coverImage + '" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;" alt="' + book.title + '" onerror="this.src=ImageHelper.getPlaceholder()">' : '';
+            const coverHtml = coverImage ? '<img src="' + coverImage + '" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; cursor: pointer;" alt="' + book.title + '" onerror="this.src=ImageHelper.getPlaceholder()" onclick="Lightbox.open(this.src)">' : '';
             
             const row = document.createElement('tr');
             row.innerHTML =
@@ -410,6 +415,14 @@
                 '</td>';
             tbody.appendChild(row);
         });
+        
+        // Initialize gallery view (only if not already initialized)
+        if (window.GalleryView && !document.querySelector('.view-toggle')) {
+            window.GalleryView.init('section-books', books, {
+                showActions: true,
+                onBookClick: null
+            });
+        }
     }
 
     function renderLibrariansTable() {
@@ -1455,7 +1468,7 @@
     // Google Books Cover Fetching Functions
     window.fetchAllBookCovers = async function(forceRefresh = false) {
         if (!window.GoogleBooksHelper) {
-            alert('Google Books Helper not loaded');
+            Toast.error('Google Books Helper not loaded');
             return;
         }
         
@@ -1477,7 +1490,22 @@
         const targetCount = forceRefresh ? books.length : booksWithoutCovers.length;
         const actionText = forceRefresh ? 'refresh covers for all' : 'fetch covers for';
         
-        const confirm = window.confirm(
+        if (window.ModalUI) {
+            window.ModalUI.openConfirm(
+                'Fetch Book Covers',
+                `Ready to ${actionText} ${targetCount} books from Google Books API.\n\nThis may take a few minutes. Continue?`,
+                async function() {
+                    const loadingToast = Toast.loading('Fetching book covers...');
+                    const result = await GoogleBooksHelper.fetchAllBookCovers(() => {}, forceRefresh);
+                    loadingToast.remove();
+                    
+                    Toast.success(`✅ Done! ${result.successful} covers fetched, ${result.failed} failed, ${result.skipped} skipped`);
+                    renderBooksTable();
+                    updateStats();
+                },
+                'Start Fetching'
+            );
+        }
             `This will ${actionText} ${targetCount} books from Google Books API.\n\n` +
             `This may take a few minutes. Continue?`
         );
@@ -1499,7 +1527,7 @@
     
     window.fetchSingleBookCover = async function(bookId) {
         if (!window.GoogleBooksHelper) {
-            alert('Google Books Helper not loaded');
+            Toast.error('Google Books Helper not loaded');
             return;
         }
         
@@ -1507,7 +1535,7 @@
         const book = books.find(b => b.id === bookId);
         
         if (!book) {
-            alert('Book not found');
+            Toast.error('Book not found');
             return;
         }
         
@@ -1519,10 +1547,10 @@
         const result = await GoogleBooksHelper.refreshBookCover(bookId);
         
         if (result.success && result.coverUrl) {
-            alert(`✅ Cover fetched successfully for "${book.title}"!`);
+            Toast.success(`✅ Cover fetched successfully for "${book.title}"!`);
             refreshAll(); // Refresh to show new cover
         } else {
-            alert(`❌ Could not fetch cover for "${book.title}".\n\nReason: ${result.error || 'No cover found'}`);
+            Toast.error(`❌ Could not fetch cover for "${book.title}".\n\nReason: ${result.error || 'No cover found'}`, 6000);
             button.innerHTML = originalText;
             button.disabled = false;
         }
