@@ -174,15 +174,92 @@
     // QR-based checkout (scan member QR, then book QR/barcode)
     let pendingCheckout = null;
 
+    // Display membership card modal
+    function displayMembershipCard(memberData) {
+        const users = LibraryStore.load(LibraryStore.KEYS.users, []);
+        const members = LibraryStore.load(LibraryStore.KEYS.members, []);
+        
+        // Find member details
+        const member = members.find(m => m.id === memberData.id);
+        const user = users.find(u => u.memberId === memberData.id);
+        
+        const memberName = memberData.name || (member ? member.name : 'Unknown');
+        const memberEmail = member ? member.email : (user ? user.email : 'N/A');
+        const memberSince = member ? new Date(member.memberSince || member.createdDate).toLocaleDateString() : 'N/A';
+        const memberRole = memberData.type || (user ? user.role : 'student');
+        
+        // Create modal HTML
+        const modalHTML = `
+            <div class="membership-card-overlay" id="membershipCardOverlay">
+                <div class="membership-card-container">
+                    <button class="membership-card-close" onclick="document.getElementById('membershipCardOverlay').remove()">&times;</button>
+                    <div class="membership-card">
+                        <div class="membership-card-header">
+                            <h2>📇 Membership Card</h2>
+                        </div>
+                        <div class="membership-card-body">
+                            <div class="membership-field">
+                                <span class="membership-label">Member ID:</span>
+                                <span class="membership-value">${memberData.id}</span>
+                            </div>
+                            <div class="membership-field">
+                                <span class="membership-label">Member Name:</span>
+                                <span class="membership-value">${memberName}</span>
+                            </div>
+                            <div class="membership-field">
+                                <span class="membership-label">Email:</span>
+                                <span class="membership-value">${memberEmail}</span>
+                            </div>
+                            <div class="membership-field">
+                                <span class="membership-label">Member Since:</span>
+                                <span class="membership-value">${memberSince}</span>
+                            </div>
+                            <div class="membership-field">
+                                <span class="membership-label">Role:</span>
+                                <span class="membership-value membership-role">${memberRole.toUpperCase()}</span>
+                            </div>
+                        </div>
+                        <div class="membership-card-footer">
+                            <button class="membership-card-btn btn-primary" onclick="window.QRCheckoutHelper.proceedWithCheckout('${memberData.id}', '${memberName}'); document.getElementById('membershipCardOverlay').remove();">
+                                ✓ Proceed to Checkout
+                            </button>
+                            <button class="membership-card-btn btn-secondary" onclick="document.getElementById('membershipCardOverlay').remove()">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove any existing membership card
+        const existing = document.getElementById('membershipCardOverlay');
+        if (existing) existing.remove();
+        
+        // Add to page
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Auto fade-in animation
+        setTimeout(() => {
+            const overlay = document.getElementById('membershipCardOverlay');
+            if (overlay) overlay.classList.add('show');
+        }, 10);
+    }
+
+    // Proceed with checkout after viewing card
+    function proceedWithCheckout(memberId, memberName) {
+        pendingCheckout = { memberId: memberId, memberName: memberName };
+        showNotification('Ready', 'Now scan the book barcode to complete checkout', 'info');
+    }
+
     function handleQRScan(qrData) {
         try {
             // Try to parse as JSON (member QR code)
             const data = JSON.parse(qrData);
             
             if (data.id && data.type === 'student') {
-                // This is a member QR code
-                pendingCheckout = { memberId: data.id, memberName: data.name };
-                showNotification('Member Scanned', 'Now scan the book barcode', 'info');
+                // This is a member QR code - display membership card
+                displayMembershipCard(data);
                 return {
                     type: 'member',
                     data: data
@@ -307,6 +384,8 @@
         manualCheckout: manualCheckout,
         batchCheckout: batchCheckout,
         quickReturn: quickReturn,
+        displayMembershipCard: displayMembershipCard,
+        proceedWithCheckout: proceedWithCheckout,
         getPendingCheckout: () => pendingCheckout,
         clearPendingCheckout: () => { pendingCheckout = null; },
         MAX_BORROW_LIMIT: 5,

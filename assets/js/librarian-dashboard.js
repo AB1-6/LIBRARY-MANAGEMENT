@@ -698,10 +698,12 @@
         container.style.display = 'block';
         status.textContent = 'Initializing camera...';
 
-        QRCheckoutHelper.initScanner('qrVideo', 'qrCanvas');
-        QRCheckoutHelper.startScanningLoop();
+        // Initialize scanner with handleQRScan callback
+        QRCheckoutHelper.initScanner('qrVideo', QRCheckoutHelper.handleQRScan);
         
-        status.textContent = 'Ready! Scan member QR or book barcode';
+        setTimeout(() => {
+            status.textContent = 'Ready! Scan member QR or book barcode';
+        }, 1000);
     };
 
     window.stopQRScanner = function() {
