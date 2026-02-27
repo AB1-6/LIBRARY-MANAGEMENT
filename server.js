@@ -198,7 +198,15 @@ const tables = {
   members: 'members',
   issues: 'issues',
   users: 'users',
-  requests: 'requests'
+  requests: 'requests',
+  wishlist: 'wishlist',
+  waitlist: 'waitlist',
+  chat: 'chat',
+  reviews: 'reviews',
+  borrowedHistory: 'borrowedHistory',
+  fines: 'fines',
+  notifications: 'notifications',
+  notificationPreferences: 'notificationPreferences'
 };
 
 const seedData = {
@@ -219,7 +227,15 @@ const seedData = {
     // U002 fake librarian removed - create real librarians from admin panel
   ],
   issues: [],
-  requests: []
+  requests: [],
+  wishlist: [],
+  waitlist: [],
+  chat: [],
+  reviews: [],
+  borrowedHistory: [],
+  fines: [],
+  notifications: [],
+  notificationPreferences: []
 };
 
 async function replaceTable(tableName, items) {

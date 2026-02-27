@@ -84,7 +84,18 @@ function setupLoginForm() {
             localStorage.setItem('userEmail', email);
             localStorage.setItem('userRole', 'admin');
             localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('userName', 'Admin User');
+            
+            // Try to get actual admin name from users data
+            const usersRaw = localStorage.getItem('lib_users');
+            const users = usersRaw ? JSON.parse(usersRaw) : [];
+            const adminUser = users.find(u => u.email === email && u.role === 'admin');
+            
+            if (adminUser && (adminUser.firstName || adminUser.lastName)) {
+                const fullName = [adminUser.firstName || '', adminUser.lastName || ''].join(' ').trim();
+                if (fullName) {
+                    localStorage.setItem('userName', fullName);
+                }
+            }
 
             if (remember && remember.checked) {
                 localStorage.setItem('rememberMe', 'true');

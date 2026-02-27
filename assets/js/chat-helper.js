@@ -130,10 +130,13 @@ const ChatUI = {
     isOpen: false,
     currentReceiver: null,
     currentReceiverRole: null,
+    currentReceiverName: null,
     pollInterval: null,
+    userRole: null,
 
     // Initialize chat UI
     init: function(userRole) {
+        this.userRole = userRole;
         // Add chat CSS
         if (!document.getElementById('chatStyles')) {
             const style = document.createElement('style');
@@ -181,18 +184,86 @@ const ChatUI = {
                     position: fixed;
                     bottom: 90px;
                     right: 20px;
-                    width: 350px;
+                    width: 450px;
                     height: 500px;
                     background: white;
                     border-radius: 12px;
                     box-shadow: 0 8px 24px rgba(0,0,0,0.2);
                     display: none;
-                    flex-direction: column;
+                    flex-direction: row;
                     overflow: hidden;
                     z-index: 9998;
                 }
                 .chat-window.open {
                     display: flex;
+                }
+                .chat-window.student-mode {
+                    width: 350px;
+                    flex-direction: column;
+                }
+                .chat-conversations-list {
+                    width: 180px;
+                    background: #f5f5f5;
+                    border-right: 1px solid #ddd;
+                    display: flex;
+                    flex-direction: column;
+                    overflow-y: auto;
+                }
+                .chat-window.student-mode .chat-conversations-list {
+                    display: none;
+                }
+                .conversation-item {
+                    padding: 12px 10px;
+                    border-bottom: 1px solid #e0e0e0;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                    position: relative;
+                }
+                .conversation-item:hover {
+                    background: #e8e8e8;
+                }
+                .conversation-item.active {
+                    background: #667eea;
+                    color: white;
+                }
+                .conversation-item.active .conv-name,
+                .conversation-item.active .conv-preview {
+                    color: white;
+                }
+                .conv-name {
+                    font-weight: 600;
+                    font-size: 13px;
+                    margin-bottom: 3px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .conv-preview {
+                    font-size: 11px;
+                    color: #666;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .conv-unread {
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    background: #f44336;
+                    color: white;
+                    border-radius: 10px;
+                    padding: 2px 6px;
+                    font-size: 10px;
+                    font-weight: bold;
+                }
+                .conversation-item.active .conv-unread {
+                    background: white;
+                    color: #667eea;
+                }
+                .chat-main-area {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
                 }
                 .chat-header {
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -206,7 +277,12 @@ const ChatUI = {
                     margin: 0;
                     font-size: 16px;
                 }
-                .chat-close-btn {
+                .chat-header-buttons {
+                    display: flex;
+                    gap: 10px;
+                    align-items: center;
+                }
+                .chat-back-btn, .chat-close-btn {
                     background: none;
                     border: none;
                     color: white;
@@ -221,7 +297,7 @@ const ChatUI = {
                     border-radius: 50%;
                     transition: background 0.2s;
                 }
-                .chat-close-btn:hover {
+                .chat-back-btn:hover, .chat-close-btn:hover {
                     background: rgba(255,255,255,0.2);
                 }
                 .chat-messages {
@@ -248,6 +324,12 @@ const ChatUI = {
                 .chat-message.received {
                     align-self: flex-start;
                     align-items: flex-start;
+                }
+                .chat-message-sender {
+                    font-size: 11px;
+                    font-weight: 600;
+                    color: #667eea;
+                    margin-bottom: 3px;
                 }
                 .chat-message-content {
                     padding: 8px 12px;
@@ -310,6 +392,15 @@ const ChatUI = {
                     color: #999;
                     padding: 40px 20px;
                 }
+                .chat-select-prompt {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
+                    color: #999;
+                    text-align: center;
+                    padding: 20px;
+                }
             `;
             document.head.appendChild(style);
         }
@@ -317,25 +408,57 @@ const ChatUI = {
         // Create chat widget HTML
         const widget = document.createElement('div');
         widget.className = 'chat-widget';
-        widget.innerHTML = `
-            <button class="chat-toggle-btn" id="chatToggleBtn" title="Chat Support">
-                💬
-                <span class="unread-badge" id="chatUnreadBadge" style="display: none;"></span>
-            </button>
-            <div class="chat-window" id="chatWindow">
-                <div class="chat-header">
-                    <h3>${userRole === 'student' ? '💬 Chat with Librarian' : '💬 Student Support'}</h3>
-                    <button class="chat-close-btn" id="chatCloseBtn">×</button>
+        
+        if (userRole === 'student') {
+            // Student view - simple single chat
+            widget.innerHTML = `
+                <button class="chat-toggle-btn" id="chatToggleBtn" title="Chat Support">
+                    💬
+                    <span class="unread-badge" id="chatUnreadBadge" style="display: none;"></span>
+                </button>
+                <div class="chat-window student-mode" id="chatWindow">
+                    <div class="chat-main-area">
+                        <div class="chat-header">
+                            <h3>💬 Chat with Librarian</h3>
+                            <button class="chat-close-btn" id="chatCloseBtn">×</button>
+                        </div>
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="chat-empty">No messages yet. Start a conversation!</div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" class="chat-input" id="chatInput" placeholder="Type a message...">
+                            <button class="chat-send-btn" id="chatSendBtn">➤</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="chat-messages" id="chatMessages">
-                    <div class="chat-empty">No messages yet. Start a conversation!</div>
+            `;
+        } else {
+            // Librarian view - conversation list + chat
+            widget.innerHTML = `
+                <button class="chat-toggle-btn" id="chatToggleBtn" title="Chat Support">
+                    💬
+                    <span class="unread-badge" id="chatUnreadBadge" style="display: none;"></span>
+                </button>
+                <div class="chat-window" id="chatWindow">
+                    <div class="chat-conversations-list" id="chatConversationsList">
+                        <div class="chat-empty" style="padding: 20px 10px; font-size: 12px;">No conversations yet</div>
+                    </div>
+                    <div class="chat-main-area">
+                        <div class="chat-header">
+                            <h3 id="chatHeaderTitle">💬 Student Support</h3>
+                            <button class="chat-close-btn" id="chatCloseBtn">×</button>
+                        </div>
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="chat-select-prompt">← Select a conversation to start chatting</div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" class="chat-input" id="chatInput" placeholder="Type a message...">
+                            <button class="chat-send-btn" id="chatSendBtn">➤</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="chat-input-area">
-                    <input type="text" class="chat-input" id="chatInput" placeholder="Type a message...">
-                    <button class="chat-send-btn" id="chatSendBtn">➤</button>
-                </div>
-            </div>
-        `;
+            `;
+        }
 
         document.body.appendChild(widget);
 
@@ -358,7 +481,15 @@ const ChatUI = {
         
         if (this.isOpen) {
             window.classList.add('open');
-            this.loadMessages();
+            if (this.userRole === 'librarian' || this.userRole === 'admin') {
+                this.loadConversationList();
+                // Load messages if a conversation is selected
+                if (this.currentReceiver) {
+                    this.loadMessages();
+                }
+            } else {
+                this.loadMessages();
+            }
             document.getElementById('chatInput').focus();
         } else {
             window.classList.remove('open');
@@ -369,6 +500,121 @@ const ChatUI = {
     close: function() {
         this.isOpen = false;
         document.getElementById('chatWindow').classList.remove('open');
+    },
+
+    // Load conversation list for librarian
+    loadConversationList: function() {
+        const listContainer = document.getElementById('chatConversationsList');
+        if (!listContainer) return;
+
+        const allMessages = ChatHelper.getAllMessages();
+        const currentUser = this.getCurrentUser();
+        
+        // Get users who sent messages
+        const users = LibraryStore.load(LibraryStore.KEYS.users || 'lib_users', []);
+        const members = LibraryStore.load(LibraryStore.KEYS.members || 'lib_members', []);
+        
+        // Group messages by student
+        const conversationsMap = {};
+        allMessages.forEach(msg => {
+            const studentId = msg.senderRole === 'student' ? msg.senderId : 
+                            (msg.receiverRole === 'student' ? msg.receiverId : null);
+            
+            if (studentId && studentId !== 'librarian') {
+                if (!conversationsMap[studentId]) {
+                    conversationsMap[studentId] = {
+                        studentId: studentId,
+                        messages: [],
+                        unreadCount: 0
+                    };
+                }
+                conversationsMap[studentId].messages.push(msg);
+                
+                // Count unread messages TO librarian FROM this student
+                if (msg.receiverId === 'librarian' && !msg.read) {
+                    conversationsMap[studentId].unreadCount++;
+                }
+            }
+        });
+
+        const conversations = Object.values(conversationsMap);
+        
+        if (conversations.length === 0) {
+            listContainer.innerHTML = '<div class="chat-empty" style="padding: 20px 10px; font-size: 12px;">No conversations yet</div>';
+            return;
+        }
+
+        // Sort by latest message
+        conversations.sort((a, b) => {
+            const aLast = a.messages[a.messages.length - 1];
+            const bLast = b.messages[b.messages.length - 1];
+            return new Date(bLast.timestamp) - new Date(aLast.timestamp);
+        });
+
+        listContainer.innerHTML = '';
+        conversations.forEach(conv => {
+            const user = users.find(u => u.id === conv.studentId);
+            const member = members.find(m => m.id === user?.memberId);
+            
+            const studentName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email : 
+                              member ? member.name :
+                              conv.studentId;
+            
+            const lastMsg = conv.messages[conv.messages.length - 1];
+            const preview = lastMsg.message.substring(0, 30) + (lastMsg.message.length > 30 ? '...' : '');
+            
+            const convItem = document.createElement('div');
+            convItem.className = 'conversation-item';
+            if (this.currentReceiver === conv.studentId) {
+                convItem.classList.add('active');
+            }
+            
+            convItem.innerHTML = `
+                <div class="conv-name">${studentName}</div>
+                <div class="conv-preview">${this.escapeHtml(preview)}</div>
+                ${conv.unreadCount > 0 ? `<div class="conv-unread">${conv.unreadCount}</div>` : ''}
+            `;
+            
+            convItem.addEventListener('click', () => this.selectConversation(conv.studentId, studentName));
+            listContainer.appendChild(convItem);
+        });
+        
+        // Auto-select first conversation if none selected
+        if (!this.currentReceiver && conversations.length > 0) {
+            const firstConv = conversations[0];
+            const user = users.find(u => u.id === firstConv.studentId);
+            const member = members.find(m => m.id === user?.memberId);
+            const studentName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email : 
+                              member ? member.name :
+                              firstConv.studentId;
+            // Set receiver without triggering full load to avoid loop
+            this.currentReceiver = firstConv.studentId;
+            this.currentReceiverRole = 'student';
+            this.currentReceiverName = studentName;
+            const header = document.getElementById('chatHeaderTitle');
+            if (header) {
+                header.textContent = `💬 ${studentName}`;
+            }
+        }
+    },
+
+    // Select a conversation
+    selectConversation: function(studentId, studentName) {
+        this.currentReceiver = studentId;
+        this.currentReceiverRole = 'student';
+        this.currentReceiverName = studentName;
+        
+        // Update header
+        const header = document.getElementById('chatHeaderTitle');
+        if (header) {
+            header.textContent = `💬 ${studentName}`;
+        }
+        
+        // Update active state in conversation list - will be refreshed by loadConversationList
+        // which is called at the end of loadMessages
+        
+        // Load messages for this student
+        this.loadMessages();
     },
 
     // Load and display messages
@@ -388,57 +634,80 @@ const ChatUI = {
         console.log('📨 Chat: All messages in storage:', allMessages);
         
         let messages;
+        let otherUserId = null; // Track the other user in conversation for markAsRead
+        
         if (currentUser.role === 'student') {
             // Student sees conversation with librarian
             messages = ChatHelper.getMessages(currentUser.id, 'librarian');
-        } else if (currentUser.role === 'librarian') {
-            // Librarian sees conversation with last active student
-            const lastStudentMessage = allMessages
-                .filter(msg => (msg.receiverId === 'librarian' || msg.senderId === 'librarian') && 
-                              (msg.senderRole === 'student' || msg.receiverRole === 'student'))
-                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
-            
-            if (lastStudentMessage) {
-                const studentId = lastStudentMessage.senderRole === 'student' ? 
-                                lastStudentMessage.senderId : lastStudentMessage.receiverId;
-                messages = ChatHelper.getMessages('librarian', studentId);
-            } else {
-                messages = [];
+            otherUserId = 'librarian';
+        } else if (currentUser.role === 'librarian' || currentUser.role === 'admin') {
+            // Librarian sees conversation with selected student
+            if (!this.currentReceiver) {
+                messagesContainer.innerHTML = '<div class="chat-select-prompt">← Select a conversation to start chatting</div>';
+                return;
             }
+            messages = ChatHelper.getMessages('librarian', this.currentReceiver);
+            otherUserId = this.currentReceiver;
         }
         
         console.log('💬 Chat: Filtered messages for user:', messages);
 
-        if (messages.length === 0) {
+        if (!messages || messages.length === 0) {
             messagesContainer.innerHTML = '<div class="chat-empty">No messages yet. Start a conversation!</div>';
             return;
         }
 
         messagesContainer.innerHTML = '';
+        
+        // Get user info for displaying names
+        const users = LibraryStore.load(LibraryStore.KEYS.users || 'lib_users', []);
+        const members = LibraryStore.load(LibraryStore.KEYS.members || 'lib_members', []);
+        
         messages.forEach(msg => {
-            this.renderMessage(msg, currentUser.id);
+            let senderName = null;
+            if (currentUser.role === 'librarian' || currentUser.role === 'admin') {
+                // Show sender name for librarian to distinguish
+                if (msg.senderId === currentUser.id || msg.senderId === 'librarian') {
+                    senderName = 'You';
+                } else {
+                    const user = users.find(u => u.id === msg.senderId);
+                    const member = members.find(m => m.id === user?.memberId);
+                    senderName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email :
+                               member ? member.name :
+                               msg.senderId;
+                }
+            }
+            this.renderMessage(msg, currentUser.id, senderName);
         });
 
         // Scroll to bottom
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-        // Mark messages as read
-        ChatHelper.markAsRead('librarian', currentUser.id);
+        // Mark messages as read (mark messages FROM the other user as read)
+        if (otherUserId) {
+            ChatHelper.markAsRead(otherUserId, currentUser.id);
+        }
         this.updateUnreadBadge();
+        
+        // Refresh conversation list to update unread counts
+        if (this.userRole === 'librarian' || this.userRole === 'admin') {
+            this.loadConversationList();
+        }
     },
 
     // Render a single message
-    renderMessage: function(msg, currentUserId) {
+    renderMessage: function(msg, currentUserId, senderName) {
         const messagesContainer = document.getElementById('chatMessages');
         if (!messagesContainer) return;
 
-        const isSent = msg.senderId === currentUserId;
+        const isSent = msg.senderId === currentUserId || (currentUserId === 'librarian' && msg.senderId === 'librarian');
         console.log('🎨 Chat Render:', {
             messageText: msg.message,
             senderId: msg.senderId,
             currentUserId: currentUserId,
             isSent: isSent,
-            className: isSent ? 'sent' : 'received'
+            className: isSent ? 'sent' : 'received',
+            senderName: senderName
         });
         
         const messageDiv = document.createElement('div');
@@ -446,7 +715,13 @@ const ChatUI = {
         
         const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
+        let senderLabel = '';
+        if (senderName && !isSent) {
+            senderLabel = `<div class="chat-message-sender">${this.escapeHtml(senderName)}</div>`;
+        }
+        
         messageDiv.innerHTML = `
+            ${senderLabel}
             <div class="chat-message-content">${this.escapeHtml(msg.message)}</div>
             <div class="chat-message-time">${time}</div>
         `;
@@ -475,20 +750,15 @@ const ChatUI = {
             // Student sends to librarian
             receiverId = 'librarian';
             receiverRole = 'librarian';
-        } else if (currentUser.role === 'librarian') {
-            // Librarian replies to the last student who messaged
-            const allMessages = ChatHelper.getAllMessages();
-            const lastStudentMessage = allMessages
-                .filter(msg => msg.receiverId === 'librarian' && msg.senderRole === 'student')
-                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
-            
-            if (lastStudentMessage) {
-                receiverId = lastStudentMessage.senderId;
-                receiverRole = 'student';
-            } else {
-                console.error('❌ Chat: No student conversation found');
+        } else if (currentUser.role === 'librarian' || currentUser.role === 'admin') {
+            // Librarian/Admin sends to selected student
+            if (!this.currentReceiver) {
+                console.error('❌ Chat: No conversation selected');
+                alert('Please select a conversation first');
                 return;
             }
+            receiverId = this.currentReceiver;
+            receiverRole = 'student';
         }
 
         const result = ChatHelper.sendMessage(
@@ -581,15 +851,31 @@ const ChatUI = {
 
     // Start polling for new messages
     startPolling: function(userRole) {
-        // Poll every 5 seconds
-        this.pollInterval = setInterval(() => {
+        // Poll every 3 seconds for real-time sync across devices
+        this.pollInterval = setInterval(async () => {
             if (!document.hidden) {
+                // Fetch latest chat messages from server
+                try {
+                    const response = await fetch('/api/chat');
+                    if (response.ok) {
+                        const chatMessages = await response.json();
+                        // Update localStorage with server data
+                        localStorage.setItem(LibraryStore.KEYS.chat || 'lib_chat', JSON.stringify(chatMessages));
+                    }
+                } catch (err) {
+                    console.log('Chat sync: using local data');
+                }
+                
                 this.updateUnreadBadge();
                 if (this.isOpen) {
+                    // Refresh conversation list for librarians
+                    if (this.userRole === 'librarian' || this.userRole === 'admin') {
+                        this.loadConversationList();
+                    }
                     this.loadMessages();
                 }
             }
-        }, 5000);
+        }, 3000); // Reduced from 5 seconds to 3 seconds for faster sync
     },
 
     // Escape HTML to prevent XSS

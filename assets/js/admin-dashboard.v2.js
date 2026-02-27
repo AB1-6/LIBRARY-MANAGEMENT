@@ -742,12 +742,37 @@
     }
 
     function refreshAll() {
+        updateUserDisplay();
         updateStats();
         renderBooksTable();
         renderLibrariansTable();
         renderIssuesTables();
         renderUsersTable();
         renderReports();
+    }
+
+    function updateUserDisplay() {
+        const userName = localStorage.getItem('userName');
+        const userEmail = localStorage.getItem('userEmail');
+        const userNameElement = document.getElementById('userName');
+        
+        if (userNameElement) {
+            if (userName) {
+                userNameElement.textContent = userName;
+            } else if (userEmail) {
+                // Fallback to email if no name is set
+                const users = getUsers();
+                const user = users.find(u => u.email === userEmail);
+                if (user && (user.firstName || user.lastName)) {
+                    const displayName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+                    userNameElement.textContent = displayName || userEmail;
+                } else {
+                    userNameElement.textContent = userEmail;
+                }
+            } else {
+                userNameElement.textContent = 'Admin';
+            }
+        }
     }
 
     // Expose functions for inline handlers
