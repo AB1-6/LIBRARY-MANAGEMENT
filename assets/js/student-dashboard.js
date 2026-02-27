@@ -647,6 +647,18 @@
                 const row = document.createElement('tr');
                 const availableText = book.availableCopies > 0 ? book.availableCopies + ' available' : 'Out of Stock';
                 
+                // Get book rating
+                let ratingHtml = '';
+                if (window.ReviewsHelper) {
+                    const rating = ReviewsHelper.getBookRating(book.id);
+                    if (rating.count > 0) {
+                        ratingHtml = '<div style="display: flex; align-items: center; gap: 5px; margin-top: 5px;">' +
+                                    ReviewsHelper.renderStars(parseFloat(rating.average), 'small') +
+                                    '<span style="font-size: 12px; color: #666;">(' + rating.count + ')</span>' +
+                                    '</div>';
+                    }
+                }
+                
                 let actionButtons = '';
                 if (book.availableCopies > 0) {
                     actionButtons = '<button class="btn-icon" onclick="requestIssue(\'' + book.id + '\')">Request</button>';
@@ -658,9 +670,10 @@
                 }
                 
                 actionButtons += ' <button class="btn-icon" onclick="toggleWishlist(\'' + book.id + '\')" title="' + wishlistTitle + '">' + wishlistIcon + '</button>';
+                actionButtons += ' <button class="btn-icon" onclick="viewBookDetails(\'' + book.id + '\')">👁️ Details</button>';
                 
                 row.innerHTML =
-                    '<td><div style="display: flex; align-items: center;">' + coverHtml + '<span>' + book.title + '</span></div></td>' +
+                    '<td><div style="display: flex; align-items: center;">' + coverHtml + '<div><span>' + book.title + '</span>' + ratingHtml + '</div></div></td>' +
                     '<td>' + book.author + '</td>' +
                     '<td>' + book.category + '</td>' +
                     '<td>' + availableText + '</td>' +
@@ -935,6 +948,137 @@
 
     // Auto-refresh functionality for real-time updates
     let autoRefreshTimer = null;
+    
+    // Book Details Modal with Reviews
+    window.viewBookDetails = function(bookId) {
+        const book = getBooks().find(b => b.id === bookId);
+        if (!book) return;
+        
+        const member = getCurrentMember();
+        
+        let detailsHtml = '<div class="book-details-modal">';
+        
+        // Book Info
+        detailsHtml += '<div class="book-details-header">';
+        const coverImage = book.coverImage || (window.ImageHelper ? ImageHelper.getPlaceholder() : '');
+        if (coverImage) {
+            detailsHtml += '<img src="' + coverImage + '" style="width: 150px; height: 225px; object-fit: cover; border-radius: 8px; border: 2px solid #ddd;" alt="' + book.title + '">';
+        }
+        detailsHtml += '<div class="book-details-info">';
+        detailsHtml += '<h3>' + book.title + '</h3>';
+        detailsHtml += '<p><strong>Author:</strong> ' + book.author + '</p>';
+        detailsHtml += '<p><strong>Category:</strong> ' + book.category + '</p>';
+        detailsHtml += '<p><strong>Available Copies:</strong> ' + book.availableCopies + ' / ' + book.totalCopies + '</p>';
+        if (book.isbn) detailsHtml += '<p><strong>ISBN:</strong> ' + book.isbn + '</p>';
+        if (book.publisher) detailsHtml += '<p><strong>Publisher:</strong> ' + book.publisher + '</p>';
+        if (book.publishedDate) detailsHtml += '<p><strong>Published:</strong> ' + book.publishedDate + '</p>';
+        if (book.description) detailsHtml += '<p style="margin-top: 10px;">' + book.description + '</p>';
+        detailsHtml += '</div>';
+        detailsHtml += '</div>';
+        
+        // Reviews Section
+        if (window.ReviewsHelper) {
+            detailsHtml += '<hr style="margin: 20px 0;">';
+            detailsHtml += '<h3>Ratings & Reviews</h3>';
+            detailsHtml += ReviewsHelper.renderRatingSummary(bookId);
+            
+            // Review Form (if eligible)
+            if (member) {
+                detailsHtml += ReviewsHelper.renderReviewForm(bookId, member.id, member.name);
+            }
+            
+            // Reviews List
+            detailsHtml += ReviewsHelper.renderReviewsList(bookId);
+        }
+        
+        detailsHtml += '</div>';
+        
+        // Show in modal
+        const modalBody = document.getElementById('appModalBody');
+        const modalTitle = document.getElementById('appModalTitle');
+        const modalRoot = document.getElementById('appModal');
+        const modalSubmit = document.getElementById('appModalSubmit');
+        const modalCancel = document.getElementById('appModalCancel');
+        
+        if (modalBody && modalTitle && modalRoot) {
+            modalTitle.textContent = 'Book Details';
+            modalBody.innerHTML = detailsHtml;
+            modalSubmit.style.display = 'none';
+            modalCancel.textContent = 'Close';
+            modalCancel.style.display = 'inline-flex';
+            
+            modalCancel.onclick = function() {
+                modalRoot.classList.remove('show');
+                modalRoot.setAttribute('aria-hidden', 'true');
+            };
+            
+            modalRoot.classList.add('show');
+            modalRoot.setAttribute('aria-hidden', 'false');
+        }
+    };
+    
+    // Rating Input Handling
+    window.selectRating = function(rating) {
+        const ratingInput = document.getElementById('reviewRating');
+        if (ratingInput) {
+            ratingInput.value = rating;
+        }
+        
+        // Update visual stars
+        const stars = document.querySelectorAll('.rating-star');
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.classList.add('selected');
+                star.textContent = '★';
+            } else {
+                star.classList.remove('selected');
+                star.textContent = '☆';
+            }
+        });
+    };
+    
+    // Submit Book Review
+    window.submitBookReview = function(bookId, memberId, memberName) {
+        const ratingInput = document.getElementById('reviewRating');
+        const reviewText = document.getElementById('reviewText');
+        
+        if (!ratingInput || !ratingInput.value) {
+            showMessage('Missing Rating', 'Please select a rating (1-5 stars)');
+            return;
+        }
+        
+        const rating = parseInt(ratingInput.value);
+        const text = reviewText ? reviewText.value.trim() : '';
+        
+        if (window.ReviewsHelper) {
+            const result = ReviewsHelper.submitReview(memberId, bookId, rating, text, memberName);
+            
+            if (result.success) {
+                showMessage('Success', result.message);
+                // Refresh the book details view
+                viewBookDetails(bookId);
+            } else {
+                showMessage('Error', result.message);
+            }
+        }
+    };
+    
+    // Mark Review as Helpful
+    window.markReviewHelpful = function(reviewId) {
+        if (window.ReviewsHelper) {
+            const result = ReviewsHelper.markHelpful(reviewId);
+            if (result.success) {
+                // Update the helpful count in the DOM
+                const reviewItem = document.querySelector('[data-review-id="' + reviewId + '"]');
+                if (reviewItem) {
+                    const helpfulBtn = reviewItem.querySelector('button');
+                    if (helpfulBtn) {
+                        helpfulBtn.textContent = '👍 Helpful (' + result.helpful + ')';
+                    }
+                }
+            }
+        }
+    };
     
     async function autoRefresh() {
         if (!document.hidden) {

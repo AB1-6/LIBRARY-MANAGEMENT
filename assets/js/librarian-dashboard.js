@@ -442,6 +442,11 @@
         issue.fine = fine;
         issue.daysOverdue = daysOverdue;
         
+        // Add to borrowed history for review eligibility
+        if (window.ReviewsHelper) {
+            ReviewsHelper.addToBorrowedHistory(issue.memberId, issue.bookId, issue.issueDate, issue.returnDate);
+        }
+        
         // Increase available copies when book is returned
         const books = getBooks();
         const book = books.find((b) => b.id === issue.bookId);

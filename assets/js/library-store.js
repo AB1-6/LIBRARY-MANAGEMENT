@@ -9,7 +9,7 @@
         console.log('🧹 CLEARING ALL OLD CACHED DATA...');
         
         // Save login info and chat history
-        const keysToKeep = ['isLoggedIn', 'userEmail', 'userRole', 'userName', 'rememberMe', 'userMemberId', 'lib_users', 'userData', 'lib_chat'];
+        const keysToKeep = ['isLoggedIn', 'userEmail', 'userRole', 'userName', 'rememberMe', 'userMemberId', 'lib_users', 'userData', 'lib_chat', 'lib_reviews', 'lib_borrowed_books_history'];
         const tempData = {};
         keysToKeep.forEach(key => {
             const val = localStorage.getItem(key);
@@ -45,7 +45,9 @@
         requests: 'lib_requests',
         wishlist: 'lib_wishlist',
         waitlist: 'lib_waitlist',
-        chat: 'lib_chat'
+        chat: 'lib_chat',
+        reviews: 'lib_reviews',
+        borrowedHistory: 'lib_borrowed_books_history'
     };
 
     const RESOURCE_BY_KEY = {
@@ -57,7 +59,9 @@
         lib_requests: 'requests',
         lib_wishlist: 'wishlist',
         lib_waitlist: 'waitlist',
-        lib_chat: 'chat'
+        lib_chat: 'chat',
+        lib_reviews: 'reviews',
+        lib_borrowed_books_history: 'borrowedHistory'
     };
 
     let initPromise = null;
@@ -188,6 +192,17 @@
                 localStorage.setItem(KEYS.chat, JSON.stringify(snapshot.chat));
             } else if (!localStorage.getItem(KEYS.chat)) {
                 localStorage.setItem(KEYS.chat, '[]');
+            }
+            // Initialize reviews and borrowed history
+            if (snapshot.reviews) {
+                localStorage.setItem(KEYS.reviews, JSON.stringify(snapshot.reviews));
+            } else if (!localStorage.getItem(KEYS.reviews)) {
+                localStorage.setItem(KEYS.reviews, '[]');
+            }
+            if (snapshot.borrowedHistory) {
+                localStorage.setItem(KEYS.borrowedHistory, JSON.stringify(snapshot.borrowedHistory));
+            } else if (!localStorage.getItem(KEYS.borrowedHistory)) {
+                localStorage.setItem(KEYS.borrowedHistory, '[]');
             }
             return true;
         } catch (err) {
