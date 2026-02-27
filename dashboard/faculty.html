@@ -162,6 +162,9 @@
                 <!-- View Books Section -->
                 <div id="section-books" class="content-section" style="display:none;">
                     <h2>📚 View Books</h2>
+                    <div class="action-buttons" style="margin-bottom: 15px;">
+                        <button class="btn btn-success" onclick="fetchAllBookCovers()" title="Fetch book covers from Google Books API">🖼️ Fetch All Covers</button>
+                    </div>
                     <div class="search-bar">
                         <input type="text" id="bookSearch" placeholder="Search books by title, author, or ISBN..." class="search-input">
                         <button class="btn btn-primary" onclick="searchBooks()">🔍 Search</button>
@@ -179,6 +182,7 @@
                                     <th>Total Copies</th>
                                     <th>Available</th>
                                     <th>Status</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="librarianBooksBody"></tbody>
@@ -534,6 +538,7 @@
     <script src="../assets/js/qr-checkout-helper.js"></script>
     <script src="../assets/js/notification-helper.js"></script>
     <script src="../assets/js/bulk-ops-helper.js"></script>
+    <script src="../assets/js/google-books-helper.js"></script>
     <script src="../assets/js/chat-helper.js"></script>
     <script src="../assets/js/librarian-dashboard.js?v=20260226h"></script>
     <script src="../assets/js/redirect.js?v=20260226h"></script>

@@ -402,6 +402,7 @@
                 '<td>' +
                 '<button class="btn-icon" onclick="editBook(\'' + book.id + '\')">Edit</button>' +
                 '<button class="btn-icon" onclick="deleteBook(\'' + book.id + '\')">Delete</button>' +
+                '<button class="btn-icon" onclick="fetchSingleBookCover(\'' + book.id + '\')" title="Fetch cover from Google Books">🖼️</button>' +
                 '</td>';
             tbody.appendChild(row);
         });
@@ -1446,6 +1447,70 @@
             }
         });
     }
+
+    // Google Books Cover Fetching Functions
+    window.fetchAllBookCovers = async function() {
+        if (!window.GoogleBooksHelper) {
+            alert('Google Books Helper not loaded');
+            return;
+        }
+        
+        const books = getBooks();
+        const booksWithoutCovers = books.filter(b => !b.coverImage || b.coverImage.trim() === '');
+        
+        if (booksWithoutCovers.length === 0) {
+            alert('All books already have covers!');
+            return;
+        }
+        
+        const confirm = window.confirm(
+            `This will fetch covers for ${booksWithoutCovers.length} books from Google Books API.\n\n` +
+            `This may take a few minutes. Continue?`
+        );
+        
+        if (!confirm) return;
+        
+        GoogleBooksHelper.showBulkProgress('Fetching Book Covers', 'Initializing...');
+        
+        const results = await GoogleBooksHelper.fetchAllBookCovers(
+            (current, total, title, status) => {
+                GoogleBooksHelper.updateProgress(current, total, title, status);
+            }
+        );
+        
+        GoogleBooksHelper.showProgressComplete(results);
+    };
+    
+    window.fetchSingleBookCover = async function(bookId) {
+        if (!window.GoogleBooksHelper) {
+            alert('Google Books Helper not loaded');
+            return;
+        }
+        
+        const books = getBooks();
+        const book = books.find(b => b.id === bookId);
+        
+        if (!book) {
+            alert('Book not found');
+            return;
+        }
+        
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '⏳';
+        button.disabled = true;
+        
+        const result = await GoogleBooksHelper.refreshBookCover(bookId);
+        
+        if (result.success && result.coverUrl) {
+            alert(`✅ Cover fetched successfully for "${book.title}"!`);
+            refreshAll(); // Refresh to show new cover
+        } else {
+            alert(`❌ Could not fetch cover for "${book.title}".\n\nReason: ${result.error || 'No cover found'}`);
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    };
 
     document.addEventListener('DOMContentLoaded', async function () {
         if (!window.LibraryStore) {
