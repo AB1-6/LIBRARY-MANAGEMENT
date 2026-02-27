@@ -656,6 +656,410 @@
         });
     }
 
+    // ===== NEW FEATURES =====
+
+    // QR Checkout Functions
+    window.startQRScanner = function() {
+        const container = document.getElementById('qrScannerContainer');
+        const video = document.getElementById('qrVideo');
+        const canvas = document.getElementById('qrCanvas');
+        const status = document.getElementById('qrScanStatus');
+        
+        if (!window.QRCheckoutHelper) {
+            alert('QR Checkout helper not loaded');
+            return;
+        }
+
+        container.style.display = 'block';
+        status.textContent = 'Initializing camera...';
+
+        QRCheckoutHelper.initScanner('qrVideo', 'qrCanvas');
+        QRCheckoutHelper.startScanningLoop();
+        
+        status.textContent = 'Ready! Scan member QR or book barcode';
+    };
+
+    window.stopQRScanner = function() {
+        const container = document.getElementById('qrScannerContainer');
+        if (window.QRCheckoutHelper) {
+            QRCheckoutHelper.stopScanner();
+        }
+        container.style.display = 'none';
+    };
+
+    window.showManualCheckoutForm = function() {
+        if (!window.QRCheckoutHelper) {
+            alert('QR Checkout helper not loaded');
+            return;
+        }
+
+        openFormModal({
+            title: 'Manual Checkout',
+            fields: [
+                { id: 'checkoutMemberId', label: 'Member ID', required: true, placeholder: 'Enter member ID' },
+                { id: 'checkoutBookId', label: 'Book ID', required: true, placeholder: 'Enter book ID' }
+            ],
+            submitLabel: 'Checkout',
+            onSubmit: function(values) {
+                const result = QRCheckoutHelper.manualCheckout(values.checkoutMemberId, values.checkoutBookId);
+                if (result.success) {
+                    alert('✓ Book checked out successfully!\nDue date: ' + new Date(result.dueDate).toLocaleDateString());
+                    refreshAll();
+                } else {
+                    alert('✗ Checkout failed: ' + result.message);
+                }
+            }
+        });
+    };
+
+    // Fine Management Functions
+    window.loadFineManagement = function() {
+        if (!window.FineHelper) {
+            console.error('FineHelper not loaded');
+            return;
+        }
+
+        const fineStats = FineHelper.getFineStats();
+        const membersWithFines = FineHelper.getMembersWithFines();
+
+        // Update stats
+        document.getElementById('statTotalFines').textContent = '$' + fineStats.totalOutstanding.toFixed(2);
+        document.getElementById('statMembersWithFines').textContent = membersWithFines.length;
+        
+        // Populate table
+        const tbody = document.getElementById('finesMembersBody');
+        if (!tbody) return;
+
+        if (membersWithFines.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No outstanding fines</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = membersWithFines.map(item => {
+            return '<tr>' +
+                '<td>' + item.memberId + '</td>' +
+                '<td>' + item.memberName + '</td>' +
+                '<td>' + item.memberEmail + '</td>' +
+                '<td style="color: #e74c3c; font-weight: bold;">$' + item.totalFine.toFixed(2) + '</td>' +
+                '<td>' + item.overdueCount + '</td>' +
+                '<td>' +
+                '<button class="btn btn-sm btn-primary" onclick="recordFinePayment(\'' + item.memberId + '\')">💳 Record Payment</button> ' +
+                '<button class="btn btn-sm btn-secondary" onclick="waiveMemberFine(\'' + item.memberId + '\')">🎁 Waive</button>' +
+                '</td>' +
+                '</tr>';
+        }).join('');
+    };
+
+    window.recordFinePayment = function(memberId) {
+        if (!window.FineHelper) return;
+        
+        const fineInfo = FineHelper.getMemberFines(memberId);
+        const members = getMembers();
+        const member = members.find(m => m.id === memberId);
+        
+        openFormModal({
+            title: 'Record Fine Payment - ' + (member ? member.name : memberId),
+            fields: [
+                { id: 'fineAmount', label: 'Amount ($)', required: true, type: 'number', value: fineInfo.totalOutstanding.toFixed(2) },
+                { id: 'paymentMethod', label: 'Payment Method', required: true, placeholder: 'Cash/Card/Online' },
+                { id: 'transactionId', label: 'Transaction ID', placeholder: 'Optional' }
+            ],
+            submitLabel: 'Record Payment',
+            onSubmit: function(values) {
+                const amount = parseFloat(values.fineAmount);
+                
+                // Record payment for all active fines
+                fineInfo.activeFines.forEach(fine => {
+                    FineHelper.recordPayment(fine.issueId, amount / fineInfo.activeFines.length, values.paymentMethod, values.transactionId);
+                });
+                
+                alert('✓ Payment of $' + amount.toFixed(2) + ' recorded successfully!');
+                loadFineManagement();
+                refreshAll();
+            }
+        });
+    };
+
+    window.waiveMemberFine = function(memberId) {
+        if (!window.FineHelper) return;
+        
+        const fineInfo = FineHelper.getMemberFines(memberId);
+        const members = getMembers();
+        const member = members.find(m => m.id === memberId);
+        
+        openFormModal({
+            title: 'Waive Fine - ' + (member ? member.name : memberId),
+            fields: [
+                { id: 'waiveReason', label: 'Reason for Waiver', required: true, placeholder: 'Enter reason...' }
+            ],
+            submitLabel: 'Waive Fine',
+            onSubmit: function(values) {
+                const librarianName = localStorage.getItem('userName') || 'Librarian';
+                
+                // Waive all active fines
+                fineInfo.activeFines.forEach(fine => {
+                    FineHelper.waiveFine(fine.issueId, values.waiveReason, librarianName);
+                });
+                
+                alert('✓ Fine of $' + fineInfo.totalOutstanding.toFixed(2) + ' waived successfully!');
+                loadFineManagement();
+                refreshAll();
+            }
+        });
+    };
+
+    window.exportFineReport = function() {
+        if (!window.BulkOpsHelper) {
+            alert('Bulk operations helper not loaded');
+            return;
+        }
+        BulkOpsHelper.exportFineReport();
+    };
+
+    window.sendFineReminders = function() {
+        if (!window.FineHelper || !window.NotificationHelper) {
+            alert('Required helpers not loaded');
+            return;
+        }
+
+        const membersWithFines = FineHelper.getMembersWithFines();
+        const memberIds = membersWithFines.filter(m => m.totalFine >= 10).map(m => m.memberId);
+        
+        if (memberIds.length === 0) {
+            alert('No members with fines >= $10');
+            return;
+        }
+
+        if (confirm('Send fine reminders to ' + memberIds.length + ' members?')) {
+            NotificationHelper.checkFineReminders();
+            alert('✓ Fine reminders sent to ' + memberIds.length + ' members!');
+        }
+    };
+
+    // Analytics Functions
+    window.loadAnalytics = function() {
+        if (!window.AnalyticsHelper) {
+            console.error('AnalyticsHelper not loaded');
+            return;
+        }
+
+        const stats = AnalyticsHelper.getLibraryStats();
+
+        // Update stats cards
+        document.getElementById('statAnalyticsTotalBooks').textContent = stats.totalBooks || 0;
+        document.getElementById('statUtilization').textContent = (stats.utilizationRate || 0).toFixed(1) + '%';
+        document.getElementById('statActiveMembers').textContent = stats.activeMembers ? stats.activeMembers.length : 0;
+        
+        // Calculate average rating
+        const books = getBooks();
+        let totalRating = 0;
+        let ratedBooks = 0;
+        if (window.ReviewsHelper) {
+            books.forEach(book => {
+                const rating = ReviewsHelper.getBookRating(book.id);
+                if (rating.averageRating > 0) {
+                    totalRating += rating.averageRating;
+                    ratedBooks++;
+                }
+            });
+        }
+        const avgRating = ratedBooks > 0 ? (totalRating / ratedBooks).toFixed(1) : '0.0';
+        document.getElementById('statAvgRating').textContent = avgRating;
+
+        // Popular books table
+        const popularBody = document.getElementById('analyticsPopularBooksBody');
+        if (popularBody && stats.popularBooks) {
+            popularBody.innerHTML = stats.popularBooks.slice(0, 10).map((book, index) => {
+                const rating = window.ReviewsHelper ? ReviewsHelper.getBookRating(book.bookId) : { averageRating: 0 };
+                return '<tr>' +
+                    '<td>' + (index + 1) + '</td>' +
+                    '<td>' + (book.title || 'Unknown') + '</td>' +
+                    '<td>' + (book.author || 'Unknown') + '</td>' +
+                    '<td>' + book.borrowCount + '</td>' +
+                    '<td>' + rating.averageRating.toFixed(1) + ' ⭐</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        // Active members table
+        const activeBody = document.getElementById('analyticsActiveMembersBody');
+        if (activeBody && stats.activeMembers) {
+            activeBody.innerHTML = stats.activeMembers.slice(0, 10).map((member, index) => {
+                const memberStats = AnalyticsHelper.getMemberStats(member.memberId);
+                return '<tr>' +
+                    '<td>' + (index + 1) + '</td>' +
+                    '<td>' + member.memberName + '</td>' +
+                    '<td>' + member.borrowCount + '</td>' +
+                    '<td>' + (memberStats.onTimePercentage || 0).toFixed(0) + '%</td>' +
+                    '<td>' + (memberStats.currentStreak || 0) + ' months</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        // Monthly trends chart
+        if (window.ChartHelper && stats.monthlyTrends) {
+            const canvas = document.getElementById('monthlyTrendsChart');
+            if (canvas) {
+                const labels = stats.monthlyTrends.map(t => t.month);
+                const data = stats.monthlyTrends.map(t => t.count);
+                ChartHelper.renderLineChart('monthlyTrendsChart', {
+                    labels: labels,
+                    data: data,
+                    label: 'Books Borrowed',
+                    color: '#3498db',
+                    fillArea: true,
+                    showPoints: true
+                });
+            }
+        }
+    };
+
+    // Bulk Operations Functions
+    window.exportBooksCSV = function() {
+        if (!window.BulkOpsHelper) {
+            alert('Bulk operations helper not loaded');
+            return;
+        }
+        BulkOpsHelper.exportBooks();
+    };
+
+    window.exportMembersCSV = function() {
+        if (!window.BulkOpsHelper) {
+            alert('Bulk operations helper not loaded');
+            return;
+        }
+        BulkOpsHelper.exportMembers();
+    };
+
+    window.exportIssuesCSV = function() {
+        if (!window.BulkOpsHelper) {
+            alert('Bulk operations helper not loaded');
+            return;
+        }
+        BulkOpsHelper.exportIssues('all');
+    };
+
+    window.exportOverdueReport = function() {
+        if (!window.BulkOpsHelper) {
+            alert('Bulk operations helper not loaded');
+            return;
+        }
+        BulkOpsHelper.exportOverdueReport();
+    };
+
+    window.exportFineReportCSV = function() {
+        exportFineReport();
+    };
+
+    window.exportFullLibraryJSON = function() {
+        if (!window.BulkOpsHelper) {
+            alert('Bulk operations helper not loaded');
+            return;
+        }
+        BulkOpsHelper.exportFullReport();
+    };
+
+    window.loadBulkOpsMembers = function() {
+        const members = getMembers();
+        const issues = getIssues();
+        
+        // Populate bulk reminder members
+        const bulkSelect = document.getElementById('bulkReminderMembers');
+        if (bulkSelect) {
+            // Get members with overdue books
+            const today = new Date();
+            const overdueMembers = issues
+                .filter(issue => issue.status !== 'returned' && new Date(issue.dueDate) < today)
+                .map(issue => {
+                    const member = members.find(m => m.id === issue.memberId);
+                    return member ? { id: member.id, name: member.name } : null;
+                })
+                .filter((m, i, a) => m && a.findIndex(t => t.id === m.id) === i);
+            
+            bulkSelect.innerHTML = overdueMembers.map(m => 
+                '<option value="' + m.id + '">' + m.name + ' (' + m.id + ')</option>'
+            ).join('');
+        }
+
+        // Populate print card members
+        const printSelect = document.getElementById('printCardMembers');
+        if (printSelect) {
+            printSelect.innerHTML = members.map(m => 
+                '<option value="' + m.id + '">' + m.name + ' (' + m.id + ')</option>'
+            ).join('');
+        }
+    };
+
+    window.sendBulkReminders = function() {
+        const select = document.getElementById('bulkReminderMembers');
+        const message = document.getElementById('bulkReminderMessage');
+        
+        if (!select || !message) return;
+        
+        const selectedMembers = Array.from(select.selectedOptions).map(o => o.value);
+        const messageText = message.value.trim();
+        
+        if (selectedMembers.length === 0) {
+            alert('Please select at least one member');
+            return;
+        }
+        
+        if (!messageText) {
+            alert('Please enter a message');
+            return;
+        }
+
+        if (!window.BulkOpsHelper) {
+            alert('Bulk operations helper not loaded');
+            return;
+        }
+
+        const result = BulkOpsHelper.bulkSendReminders(selectedMembers, messageText);
+        if (result.success) {
+            alert('✓ ' + result.message);
+            message.value = '';
+        } else {
+            alert('✗ ' + result.message);
+        }
+    };
+
+    window.printMemberCardsBatch = function() {
+        const select = document.getElementById('printCardMembers');
+        if (!select) return;
+        
+        const selectedMembers = Array.from(select.selectedOptions).map(o => o.value);
+        
+        if (selectedMembers.length === 0) {
+            alert('Please select at least one member');
+            return;
+        }
+
+        if (!window.BulkOpsHelper) {
+            alert('Bulk operations helper not loaded');
+            return;
+        }
+
+        BulkOpsHelper.printMemberCards(selectedMembers);
+    };
+
+    // Auto-load analytics and fines when sections are opened
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuItems = document.querySelectorAll('.menu-item');
+        menuItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const section = this.getAttribute('data-section');
+                
+                if (section === 'fines') {
+                    setTimeout(loadFineManagement, 100);
+                } else if (section === 'analytics') {
+                    setTimeout(loadAnalytics, 100);
+                } else if (section === 'bulk-ops') {
+                    setTimeout(loadBulkOpsMembers, 100);
+                }
+            });
+        });
+    });
+
     document.addEventListener('DOMContentLoaded', async function () {
         if (!window.LibraryStore) return;
         

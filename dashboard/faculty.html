@@ -32,10 +32,14 @@
                 <ul>
                     <li><a href="#dashboard" class="menu-item active" data-section="dashboard">📊 Dashboard</a></li>
                     <li><a href="#requests" class="menu-item" data-section="requests">📬 Book Requests</a></li>
+                    <li><a href="#qr-checkout" class="menu-item" data-section="qr-checkout">📱 QR Checkout</a></li>
                     <li><a href="#books" class="menu-item" data-section="books">📚 View Books</a></li>
                     <li><a href="#members" class="menu-item" data-section="members">👥 View Members</a></li>
                     <li><a href="#issue-return" class="menu-item" data-section="issue-return">🔄 Issue & Return</a></li>
-                    <li><a href="#reports" class="menu-item" data-section="reports">📈 Limited Reports</a></li>
+                    <li><a href="#fines" class="menu-item" data-section="fines">💰 Fine Management</a></li>
+                    <li><a href="#analytics" class="menu-item" data-section="analytics">📊 Analytics</a></li>
+                    <li><a href="#bulk-ops" class="menu-item" data-section="bulk-ops">📤 Bulk & Export</a></li>
+                    <li><a href="#reports" class="menu-item" data-section="reports">📈 Reports</a></li>
                 </ul>
             </nav>
             <div class="sidebar-footer">
@@ -255,9 +259,194 @@
                     </div>
                 </div>
 
-                <!-- Limited Reports Section -->
+                <!-- QR Checkout Section -->
+                <div id="section-qr-checkout" class="content-section" style="display:none;">
+                    <h2>📱 QR-Based Checkout & Return</h2>
+                    <div class="alert alert-info">
+                        <strong>Fast Checkout:</strong> Scan member QR code, then scan book barcode(s) for instant checkout!
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="startQRScanner()">📷 Start QR Scanner</button>
+                        <button class="btn btn-secondary" onclick="stopQRScanner()">⏹️ Stop Scanner</button>
+                        <button class="btn btn-info" onclick="showManualCheckoutForm()">⌨️ Manual Checkout</button>
+                    </div>
+
+                    <div class="content-section" id="qrScannerContainer" style="display:none;">
+                        <h3>Scanner View</h3>
+                        <div style="position: relative; max-width: 640px; margin: 0 auto;">
+                            <video id="qrVideo" width="640" height="480" style="border: 2px solid #ddd; border-radius: 8px;"></video>
+                            <canvas id="qrCanvas" style="display:none;"></canvas>
+                            <div id="qrScanFeedback" style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 4px;">
+                                <strong>Status:</strong> <span id="qrScanStatus">Ready to scan...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="content-section" id="qrCheckoutResult" style="display:none;">
+                        <h3>Checkout Result</h3>
+                        <div id="qrCheckoutResultContent"></div>
+                    </div>
+                </div>
+
+                <!-- Fine Management Section -->
+                <div id="section-fines" class="content-section" style="display:none;">
+                    <h2>💰 Fine Management</h2>
+                    <div class="alert alert-info">
+                        <strong>Fine Rate:</strong> $1 per day overdue (max $50 per book)
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Total Outstanding</h3>
+                            <p class="stat-number" id="statTotalFines">$0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Collected Today</h3>
+                            <p class="stat-number" id="statFinesCollectedToday">$0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Members with Fines</h3>
+                            <p class="stat-number" id="statMembersWithFines">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>This Month Total</h3>
+                            <p class="stat-number" id="statFinesThisMonth">$0</p>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="exportFineReport()">📥 Export Fine Report</button>
+                        <button class="btn btn-secondary" onclick="sendFineReminders()">📧 Send Reminders</button>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Members with Outstanding Fines</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Member ID</th>
+                                    <th>Member Name</th>
+                                    <th>Email</th>
+                                    <th>Outstanding Fine</th>
+                                    <th>Overdue Books</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="finesMembersBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Analytics Section -->
+                <div id="section-analytics" class="content-section" style="display:none;">
+                    <h2>📊 Library Analytics</h2>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Total Books</h3>
+                            <p class="stat-number" id="statAnalyticsTotalBooks">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Utilization Rate</h3>
+                            <p class="stat-number" id="statUtilization">0%</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Active Members</h3>
+                            <p class="stat-number" id="statActiveMembers">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Avg. Rating</h3>
+                            <p class="stat-number" id="statAvgRating">0.0</p>
+                        </div>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Most Popular Books</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Book Title</th>
+                                    <th>Author</th>
+                                    <th>Times Borrowed</th>
+                                    <th>Avg. Rating</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analyticsPopularBooksBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Most Active Members</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Member Name</th>
+                                    <th>Books Borrowed</th>
+                                    <th>On-Time %</th>
+                                    <th>Reading Streak</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analyticsActiveMembersBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Monthly Borrowing Trends</h3>
+                        <canvas id="monthlyTrendsChart" width="800" height="400" style="max-width: 100%;"></canvas>
+                    </div>
+                </div>
+
+                <!-- Bulk Operations & Export Section -->
+                <div id="section-bulk-ops" class="content-section" style="display:none;">
+                    <h2>📤 Bulk Operations & Export</h2>
+                    
+                    <div class="content-section">
+                        <h3>Export Reports</h3>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="exportBooksCSV()">📚 Export Books (CSV)</button>
+                            <button class="btn btn-primary" onclick="exportMembersCSV()">👥 Export Members (CSV)</button>
+                            <button class="btn btn-primary" onclick="exportIssuesCSV()">🔄 Export Issues (CSV)</button>
+                            <button class="btn btn-secondary" onclick="exportOverdueReport()">🚨 Export Overdue Report</button>
+                            <button class="btn btn-secondary" onclick="exportFineReportCSV()">💰 Export Fine Report</button>
+                            <button class="btn btn-info" onclick="exportFullLibraryJSON()">📦 Full Library Dump (JSON)</button>
+                        </div>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Bulk Send Reminders</h3>
+                        <p>Send reminders to multiple members at once</p>
+                        <div class="form-group">
+                            <label>Select Members:</label>
+                            <select id="bulkReminderMembers" multiple style="width: 100%; height: 150px;">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Message:</label>
+                            <textarea id="bulkReminderMessage" rows="4" style="width: 100%;" placeholder="Enter your reminder message..."></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="sendBulkReminders()">📧 Send Bulk Reminders</button>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Print Member Cards</h3>
+                        <p>Generate printable member cards in batch</p>
+                        <div class="form-group">
+                            <label>Select Members:</label>
+                            <select id="printCardMembers" multiple style="width: 100%; height: 150px;">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <button class="btn btn-info" onclick="printMemberCardsBatch()">🖨️ Print Member Cards</button>
+                    </div>
+                </div>
+
+                <!-- Reports Section -->
                 <div id="section-reports" class="content-section" style="display:none;">
-                    <h2>📈 Limited Reports</h2>
+                    <h2>📈 Reports</h2>
                     
                     <div class="stats-grid">
                         <div class="stat-card">
