@@ -9,7 +9,7 @@
         console.log('🧹 CLEARING ALL OLD CACHED DATA...');
         
         // Save login info and chat history
-        const keysToKeep = ['isLoggedIn', 'userEmail', 'userRole', 'userName', 'rememberMe', 'userMemberId', 'lib_users', 'userData', 'lib_chat', 'lib_reviews', 'lib_borrowed_books_history'];
+        const keysToKeep = ['isLoggedIn', 'userEmail', 'userRole', 'userName', 'rememberMe', 'userMemberId', 'lib_users', 'userData', 'lib_chat', 'lib_reviews', 'lib_borrowed_books_history', 'lib_fines'];
         const tempData = {};
         keysToKeep.forEach(key => {
             const val = localStorage.getItem(key);
@@ -47,7 +47,8 @@
         waitlist: 'lib_waitlist',
         chat: 'lib_chat',
         reviews: 'lib_reviews',
-        borrowedHistory: 'lib_borrowed_books_history'
+        borrowedHistory: 'lib_borrowed_books_history',
+        fines: 'lib_fines'
     };
 
     const RESOURCE_BY_KEY = {
@@ -61,7 +62,8 @@
         lib_waitlist: 'waitlist',
         lib_chat: 'chat',
         lib_reviews: 'reviews',
-        lib_borrowed_books_history: 'borrowedHistory'
+        lib_borrowed_books_history: 'borrowedHistory',
+        lib_fines: 'fines'
     };
 
     let initPromise = null;
@@ -203,6 +205,11 @@
                 localStorage.setItem(KEYS.borrowedHistory, JSON.stringify(snapshot.borrowedHistory));
             } else if (!localStorage.getItem(KEYS.borrowedHistory)) {
                 localStorage.setItem(KEYS.borrowedHistory, '[]');
+            }
+            if (snapshot.fines) {
+                localStorage.setItem(KEYS.fines, JSON.stringify(snapshot.fines));
+            } else if (!localStorage.getItem(KEYS.fines)) {
+                localStorage.setItem(KEYS.fines, '[]');
             }
             return true;
         } catch (err) {
