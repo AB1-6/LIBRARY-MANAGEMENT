@@ -9,7 +9,7 @@
         console.log('🧹 CLEARING ALL OLD CACHED DATA...');
         
         // Save login info and chat history
-        const keysToKeep = ['isLoggedIn', 'userEmail', 'userRole', 'userName', 'rememberMe', 'userMemberId', 'lib_users', 'userData', 'lib_chat', 'lib_reviews', 'lib_borrowed_books_history', 'lib_fines'];
+        const keysToKeep = ['isLoggedIn', 'userEmail', 'userRole', 'userName', 'rememberMe', 'userMemberId', 'lib_users', 'userData', 'lib_chat', 'lib_reviews', 'lib_borrowed_books_history', 'lib_fines', 'lib_notifications', 'lib_notification_preferences'];
         const tempData = {};
         keysToKeep.forEach(key => {
             const val = localStorage.getItem(key);
@@ -48,7 +48,9 @@
         chat: 'lib_chat',
         reviews: 'lib_reviews',
         borrowedHistory: 'lib_borrowed_books_history',
-        fines: 'lib_fines'
+        fines: 'lib_fines',
+        notifications: 'lib_notifications',
+        notificationPreferences: 'lib_notification_preferences'
     };
 
     const RESOURCE_BY_KEY = {
@@ -63,7 +65,9 @@
         lib_chat: 'chat',
         lib_reviews: 'reviews',
         lib_borrowed_books_history: 'borrowedHistory',
-        lib_fines: 'fines'
+        lib_fines: 'fines',
+        lib_notifications: 'notifications',
+        lib_notification_preferences: 'notificationPreferences'
     };
 
     let initPromise = null;
@@ -210,6 +214,17 @@
                 localStorage.setItem(KEYS.fines, JSON.stringify(snapshot.fines));
             } else if (!localStorage.getItem(KEYS.fines)) {
                 localStorage.setItem(KEYS.fines, '[]');
+            }
+            // Initialize notifications
+            if (snapshot.notifications) {
+                localStorage.setItem(KEYS.notifications, JSON.stringify(snapshot.notifications));
+            } else if (!localStorage.getItem(KEYS.notifications)) {
+                localStorage.setItem(KEYS.notifications, '[]');
+            }
+            if (snapshot.notificationPreferences) {
+                localStorage.setItem(KEYS.notificationPreferences, JSON.stringify(snapshot.notificationPreferences));
+            } else if (!localStorage.getItem(KEYS.notificationPreferences)) {
+                localStorage.setItem(KEYS.notificationPreferences, '{}');
             }
             return true;
         } catch (err) {
