@@ -193,6 +193,17 @@
                     </div>
                 </div>
 
+                <div class="form-group">
+                    <label for="profilePhoto">Profile Photo (Optional)</label>
+                    <input type="file" id="profilePhoto" name="profilePhoto" accept="image/*">
+                    <p style="color: #666; font-size: 0.875rem; margin-top: 0.5rem;">
+                        Upload your photo. It will be displayed when your QR code is scanned.
+                    </p>
+                    <div id="photoPreview" style="margin-top: 10px; display: none;">
+                        <img id="photoPreviewImg" src="" alt="Photo preview" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 2px solid #ddd;">
+                    </div>
+                </div>
+
                 <div class="form-options">
                     <label class="checkbox">
                         <input type="checkbox" name="terms" required>
@@ -248,6 +259,25 @@
                 field.type = 'password';
                 icon.textContent = '👁️'; // Closed eye
             }
+        }
+
+        // Handle photo preview
+        const photoInput = document.getElementById('profilePhoto');
+        const photoPreview = document.getElementById('photoPreview');
+        const photoPreviewImg = document.getElementById('photoPreviewImg');
+        
+        if (photoInput) {
+            photoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        photoPreviewImg.src = e.target.result;
+                        photoPreview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
         }
     </script>
 </body>

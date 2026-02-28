@@ -206,10 +206,22 @@
         const memberEmail = member ? member.email : (user ? user.email : 'N/A');
         const memberSince = member ? new Date(member.memberSince || member.createdDate).toLocaleDateString() : 'N/A';
         const memberRole = memberData.type || (user ? user.role : 'student');
+        const memberPhoto = member?.profilePhoto || user?.profilePhoto || '';
         
         // Create modal HTML
         // Pause scanning to prevent continuous refresh
         pauseScanning();
+
+        // Photo display - show photo if available, otherwise show placeholder
+        const photoHtml = memberPhoto 
+            ? `<div class="membership-card-photo">
+                <img src="${memberPhoto}" alt="${memberName}" style="width: 150px; height: 150px; object-fit: cover; border-radius: 10px; border: 3px solid #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+               </div>`
+            : `<div class="membership-card-photo">
+                <div style="width: 150px; height: 150px; border-radius: 10px; border: 3px solid #fff; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                    <span style="font-size: 60px; color: white;">👤</span>
+                </div>
+               </div>`;
 
         const modalHTML = `
             <div class="membership-card-overlay" id="membershipCardOverlay">
@@ -219,6 +231,7 @@
                         <div class="membership-card-header">
                             <h2>📇 Membership Card</h2>
                         </div>
+                        ${photoHtml}
                         <div class="membership-card-body">
                             <div class="membership-field">
                                 <span class="membership-label">Member ID:</span>

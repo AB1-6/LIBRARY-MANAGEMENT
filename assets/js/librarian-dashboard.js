@@ -1168,6 +1168,118 @@
         }
     };
 
+    // Profile Management Functions
+    function loadProfile() {
+        const userEmail = localStorage.getItem('userEmail');
+        if (!userEmail) return;
+        
+        const users = getUsers();
+        const currentUser = users.find(u => u.email === userEmail);
+        
+        if (!currentUser) return;
+        
+        // Update profile information
+        document.getElementById('profileId').textContent = currentUser.id || '-';
+        document.getElementById('profileName').textContent = (currentUser.firstName || '') + ' ' + (currentUser.lastName || '');
+        document.getElementById('profileEmail').textContent = currentUser.email || '-';
+        document.getElementById('profileRole').textContent = (currentUser.role || 'librarian').toUpperCase();
+        document.getElementById('profileMemberSince').textContent = formatDate(currentUser.createdDate) || '-';
+        
+        // Display current profile photo
+        const currentPhotoContainer = document.getElementById('currentProfilePhoto');
+        if (currentUser.profilePhoto) {
+            currentPhotoContainer.innerHTML = '<img src="' + currentUser.profilePhoto + '" alt="Profile Photo" style="width: 100%; height: 100%; object-fit: cover;">';
+            document.getElementById('removeProfilePhotoBtn').style.display = 'inline-flex';
+        } else {
+            currentPhotoContainer.innerHTML = '<span style="font-size: 80px; color: #999;">👤</span>';
+            document.getElementById('removeProfilePhotoBtn').style.display = 'none';
+        }
+    }
+    
+    function setupProfilePhotoUpload() {
+        const photoInput = document.getElementById('newProfilePhoto');
+        const preview = document.getElementById('newPhotoPreview');
+        const previewImg = document.getElementById('newPhotoPreviewImg');
+        const saveBtn = document.getElementById('saveProfilePhotoBtn');
+        
+        let newPhotoData = null;
+        
+        if (photoInput) {
+            photoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        newPhotoData = e.target.result;
+                        previewImg.src = newPhotoData;
+                        preview.style.display = 'block';
+                        saveBtn.style.display = 'inline-flex';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+        
+        if (saveBtn) {
+            saveBtn.addEventListener('click', function() {
+                if (!newPhotoData) return;
+                
+                const userEmail = localStorage.getItem('userEmail');
+                const users = getUsers();
+                const userIndex = users.findIndex(u => u.email === userEmail);
+                
+                if (userIndex !== -1) {
+                    users[userIndex].profilePhoto = newPhotoData;
+                    LibraryStore.save(LibraryStore.KEYS.users, users);
+                    
+                    // Also update member record if exists
+                    const members = getMembers();
+                    const memberIndex = members.findIndex(m => m.email === userEmail);
+                    if (memberIndex !== -1) {
+                        members[memberIndex].profilePhoto = newPhotoData;
+                        LibraryStore.save(LibraryStore.KEYS.members, members);
+                    }
+                    
+                    alert('✅ Profile photo updated successfully!');
+                    loadProfile();
+                    preview.style.display = 'none';
+                    saveBtn.style.display = 'none';
+                    photoInput.value = '';
+                    newPhotoData = null;
+                }
+            });
+        }
+        
+        const removeBtn = document.getElementById('removeProfilePhotoBtn');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function() {
+                if (!confirm('Are you sure you want to remove your profile photo?')) {
+                    return;
+                }
+                
+                const userEmail = localStorage.getItem('userEmail');
+                const users = getUsers();
+                const userIndex = users.findIndex(u => u.email === userEmail);
+                
+                if (userIndex !== -1) {
+                    users[userIndex].profilePhoto = '';
+                    LibraryStore.save(LibraryStore.KEYS.users, users);
+                    
+                    // Also update member record if exists
+                    const members = getMembers();
+                    const memberIndex = members.findIndex(m => m.email === userEmail);
+                    if (memberIndex !== -1) {
+                        members[memberIndex].profilePhoto = '';
+                        LibraryStore.save(LibraryStore.KEYS.members, members);
+                    }
+                    
+                    alert('✅ Profile photo removed successfully!');
+                    loadProfile();
+                }
+            });
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', async function () {
         if (!window.LibraryStore) return;
         
@@ -1175,6 +1287,10 @@
         await LibraryStore.hydrateFromApi();
         
         refreshAll();
+        
+        // Load profile data
+        loadProfile();
+        setupProfilePhotoUpload();
         
         // Start auto-refresh for real-time updates
         startAutoRefresh();

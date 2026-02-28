@@ -251,6 +251,7 @@ function setupRegisterForm() {
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
         const terms = document.querySelector('input[name="terms"]').checked;
+        const photoInput = document.getElementById('profilePhoto');
 
         // SECURITY RULE: Force student role from public registration
         // Only admin can create admin/librarian accounts from admin panel
@@ -291,6 +292,25 @@ function setupRegisterForm() {
         }
 
         let newMemberId = '';
+        let profilePhotoBase64 = '';
+
+        // Handle profile photo if uploaded
+        if (photoInput && photoInput.files && photoInput.files[0]) {
+            const file = photoInput.files[0];
+            const reader = new FileReader();
+            
+            // Create a promise to handle async file reading
+            const photoPromise = new Promise((resolve) => {
+                reader.onload = function(e) {
+                    profilePhotoBase64 = e.target.result;
+                    resolve();
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            // Wait for photo to be processed
+            await photoPromise;
+        }
 
         try {
             const payload = await registerWithApi(firstName, lastName, email, password, '');
@@ -339,7 +359,9 @@ function setupRegisterForm() {
                     name: firstName + ' ' + lastName,
                     email: email,
                     phone: '',
-                    type: 'Student'
+                    type: 'Student',
+                    profilePhoto: profilePhotoBase64,
+                    createdDate: new Date().toISOString()
                 });
                 localStorage.setItem('lib_members', JSON.stringify(members));
             }
@@ -353,6 +375,7 @@ function setupRegisterForm() {
                 firstName: firstName,
                 lastName: lastName,
                 memberId: newMemberId,
+                profilePhoto: profilePhotoBase64,
                 createdDate: new Date().toISOString()
             };
             

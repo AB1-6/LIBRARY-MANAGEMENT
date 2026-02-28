@@ -905,7 +905,8 @@
                 { id: 'librarianFirstName', label: 'First Name', required: true },
                 { id: 'librarianLastName', label: 'Last Name', required: true },
                 { id: 'librarianEmail', label: 'Email', required: true, type: 'email' },
-                { id: 'librarianPassword', label: 'Password', required: true, type: 'password' }
+                { id: 'librarianPassword', label: 'Password', required: true, type: 'password' },
+                { id: 'librarianPhoto', label: 'Profile Photo (Optional)', type: 'file', accept: 'image/*' }
             ],
             onSubmit: function (values) {
                 const users = getUsers();
@@ -930,6 +931,7 @@
                     firstName: values.librarianFirstName,
                     lastName: values.librarianLastName,
                     memberId: '',
+                    profilePhoto: values.librarianPhoto || '',
                     createdDate: new Date().toISOString()
                 });
                 
