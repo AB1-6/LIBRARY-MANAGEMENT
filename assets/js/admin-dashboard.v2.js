@@ -557,8 +557,22 @@
                 ? '<span class="badge badge-success">Active</span>' 
                 : '<span class="badge badge-warning">Never Logged In</span>';
             
+            // Get profile photo
+            let userPhoto = user.profilePhoto || '';
+            if (user.role === 'student' && user.memberId) {
+                const member = members.find(m => m.id === user.memberId);
+                if (member && member.profilePhoto) {
+                    userPhoto = member.profilePhoto;
+                }
+            }
+            
+            const photoHtml = userPhoto
+                ? '<img src="' + userPhoto + '" alt="Photo" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd;">'
+                : '<div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; border: 2px solid #ddd;"><span style="color: white; font-size: 18px;">👤</span></div>';
+            
             const row = document.createElement('tr');
             row.innerHTML =
+                '<td>' + photoHtml + '</td>' +
                 '<td>' + userId + '</td>' +
                 '<td><strong>' + displayName + '</strong></td>' +
                 '<td>' + user.email + '</td>' +
@@ -578,8 +592,14 @@
         // Then show any members who don't have user accounts yet
         members.forEach((member) => {
             if (!shownMemberIds.has(member.id)) {
+                const memberPhoto = member.profilePhoto || '';
+                const photoHtml = memberPhoto
+                    ? '<img src="' + memberPhoto + '" alt="Photo" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd;">'
+                    : '<div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; border: 2px solid #ddd;"><span style="color: white; font-size: 18px;">👤</span></div>';
+                
                 const row = document.createElement('tr');
                 row.innerHTML =
+                    '<td>' + photoHtml + '</td>' +
                     '<td>' + member.id + '</td>' +
                     '<td><strong>' + (member.name || 'Unknown') + '</strong></td>' +
                     '<td>' + (member.email || '-') + '</td>' +
