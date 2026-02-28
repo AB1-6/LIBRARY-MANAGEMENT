@@ -287,6 +287,11 @@
         
         // Batch insert all rows at once
         tbody.appendChild(fragment);
+        
+        // Initialize gallery view
+        if (window.BookGallery) {
+            BookGallery.init('section-books', books);
+        }
     }
 
     function renderRequestsTable() {

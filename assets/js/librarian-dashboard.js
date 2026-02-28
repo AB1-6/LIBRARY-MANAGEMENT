@@ -232,6 +232,11 @@
                 '<td><button class="btn-icon" onclick="fetchSingleBookCover(\'' + book.id + '\')" title="Fetch/Replace cover from Google Books">🖼️</button></td>';
             tbody.appendChild(row);
         });
+        
+        // Initialize gallery view
+        if (window.BookGallery) {
+            BookGallery.init('section-books', books);
+        }
     }
 
     function renderMembersTable(filter) {
