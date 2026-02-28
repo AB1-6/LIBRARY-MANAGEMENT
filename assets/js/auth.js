@@ -297,12 +297,14 @@ function setupRegisterForm() {
         // Handle profile photo if uploaded
         if (photoInput && photoInput.files && photoInput.files[0]) {
             const file = photoInput.files[0];
+            console.log('📸 Photo file selected:', file.name, 'Size:', file.size, 'bytes');
             const reader = new FileReader();
             
             // Create a promise to handle async file reading
             const photoPromise = new Promise((resolve) => {
                 reader.onload = function(e) {
                     profilePhotoBase64 = e.target.result;
+                    console.log('✅ Photo converted to base64, length:', profilePhotoBase64.length);
                     resolve();
                 };
                 reader.readAsDataURL(file);
@@ -310,6 +312,8 @@ function setupRegisterForm() {
             
             // Wait for photo to be processed
             await photoPromise;
+        } else {
+            console.log('ℹ️ No photo selected during registration');
         }
 
         try {
@@ -354,7 +358,7 @@ function setupRegisterForm() {
             // Check if member ID already exists (shouldn't happen with auto-generation)
             const memberExists = members.some(m => m.id === newMemberId);
             if (!memberExists) {
-                members.push({
+                const newMember = {
                     id: newMemberId,
                     name: firstName + ' ' + lastName,
                     email: email,
@@ -362,8 +366,10 @@ function setupRegisterForm() {
                     type: 'Student',
                     profilePhoto: profilePhotoBase64,
                     createdDate: new Date().toISOString()
-                });
+                };
+                members.push(newMember);
                 localStorage.setItem('lib_members', JSON.stringify(members));
+                console.log('💾 Member saved with photo:', newMemberId, 'Photo length:', profilePhotoBase64.length);
             }
 
             // Add new user
@@ -380,6 +386,8 @@ function setupRegisterForm() {
             };
             
             users.push(newUser);
+            localStorage.setItem('lib_users', JSON.stringify(users));
+            console.log('💾 User saved with photo:', newUser.id, 'Photo length:', profilePhotoBase64.length);
             localStorage.setItem('lib_users', JSON.stringify(users));
             
             // Also save to userData for backward compatibility

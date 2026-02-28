@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug LocalStorage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #6F4E37;
+            padding-bottom: 10px;
+        }
+        .section {
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #6F4E37;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .photo-cell {
+            max-width: 200px;
+            word-break: break-all;
+        }
+        .photo-preview {
+            max-width: 100px;
+            max-height: 100px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        .no-photo {
+            color: #999;
+            font-style: italic;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background: #6F4E37;
+            color: white;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 LocalStorage Debug Tool</h1>
+        
+        <div class="section">
+            <button class="btn btn-primary" onclick="loadData()">🔄 Refresh Data</button>
+            <button class="btn btn-danger" onclick="clearStorage()">🗑️ Clear All Storage</button>
+        </div>
+
+        <div class="section">
+            <h2>👥 Users (lib_users)</h2>
+            <div id="usersTable"></div>
+        </div>
+
+        <div class="section">
+            <h2>👨‍🎓 Members (lib_members)</h2>
+            <div id="membersTable"></div>
+        </div>
+    </div>
+
+    <script>
+        function loadData() {
+            displayUsers();
+            displayMembers();
+        }
+
+        function displayUsers() {
+            const users = JSON.parse(localStorage.getItem('lib_users') || '[]');
+            const container = document.getElementById('usersTable');
+            
+            if (users.length === 0) {
+                container.innerHTML = '<p class="no-photo">No users found in localStorage</p>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Member ID</th><th>Profile Photo</th><th>Preview</th></tr></thead><tbody>';
+            
+            users.forEach(user => {
+                const name = (user.firstName || '') + ' ' + (user.lastName || '');
+                const hasPhoto = user.profilePhoto && user.profilePhoto.length > 0;
+                const photoPreview = hasPhoto 
+                    ? `<img src="${user.profilePhoto}" class="photo-preview" alt="Photo">` 
+                    : '<span class="no-photo">No photo</span>';
+                const photoInfo = hasPhoto 
+                    ? `Yes (${user.profilePhoto.substring(0, 50)}...)` 
+                    : '<span class="no-photo">No</span>';
+                
+                html += `<tr>
+                    <td>${user.id || '-'}</td>
+                    <td>${name || '-'}</td>
+                    <td>${user.email || '-'}</td>
+                    <td>${user.role || '-'}</td>
+                    <td>${user.memberId || '-'}</td>
+                    <td class="photo-cell">${photoInfo}</td>
+                    <td>${photoPreview}</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function displayMembers() {
+            const members = JSON.parse(localStorage.getItem('lib_members') || '[]');
+            const container = document.getElementById('membersTable');
+            
+            if (members.length === 0) {
+                container.innerHTML = '<p class="no-photo">No members found in localStorage</p>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Type</th><th>Profile Photo</th><th>Preview</th></tr></thead><tbody>';
+            
+            members.forEach(member => {
+                const hasPhoto = member.profilePhoto && member.profilePhoto.length > 0;
+                const photoPreview = hasPhoto 
+                    ? `<img src="${member.profilePhoto}" class="photo-preview" alt="Photo">` 
+                    : '<span class="no-photo">No photo</span>';
+                const photoInfo = hasPhoto 
+                    ? `Yes (${member.profilePhoto.substring(0, 50)}...)` 
+                    : '<span class="no-photo">No</span>';
+                
+                html += `<tr>
+                    <td>${member.id || '-'}</td>
+                    <td>${member.name || '-'}</td>
+                    <td>${member.email || '-'}</td>
+                    <td>${member.type || '-'}</td>
+                    <td class="photo-cell">${photoInfo}</td>
+                    <td>${photoPreview}</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function clearStorage() {
+            if (confirm('Are you sure you want to clear ALL localStorage data? This cannot be undone!')) {
+                localStorage.clear();
+                alert('Storage cleared!');
+                loadData();
+            }
+        }
+
+        // Load data on page load
+        loadData();
+    </script>
+</body>
+</html>
