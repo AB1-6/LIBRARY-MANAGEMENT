@@ -273,6 +273,46 @@
                     <h2>👤 My Profile</h2>
                     
                     <div class="content-section">
+                        <h3>Profile Information</h3>
+                        <div style="display: flex; gap: 40px; align-items: flex-start;">
+                            <div style="flex: 0 0 200px;">
+                                <div id="currentProfilePhoto" style="width: 200px; height: 200px; border: 3px solid #ddd; border-radius: 10px; overflow: hidden; background-color: #f5f5f5; display: flex; align-items: center; justify-content: center;">
+                                    <span style="font-size: 80px; color: #999;">👤</span>
+                                </div>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="margin-bottom: 15px;">
+                                    <strong>Student ID:</strong> <span id="profileIdDisplay">-</span>
+                                </div>
+                                <div style="margin-bottom: 15px;">
+                                    <strong>Name:</strong> <span id="profileNameDisplay">-</span>
+                                </div>
+                                <div style="margin-bottom: 15px;">
+                                    <strong>Email:</strong> <span id="profileEmailDisplay">-</span>
+                                </div>
+                                <div style="margin-bottom: 15px;">
+                                    <strong>Phone:</strong> <span id="profilePhoneDisplay">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="content-section">
+                        <h3>Update Profile Photo</h3>
+                        <p style="color: #666; margin-bottom: 15px;">Upload a new profile photo. This will be displayed when scanning QR codes and in the dashboard.</p>
+                        <div class="action-buttons">
+                            <input type="file" id="newProfilePhoto" accept="image/*" style="display: none;">
+                            <button class="btn btn-primary" onclick="document.getElementById('newProfilePhoto').click()">📷 Choose Photo</button>
+                            <button class="btn btn-success" id="saveProfilePhotoBtn" style="display: none;">💾 Save Photo</button>
+                            <button class="btn btn-danger" id="removeProfilePhotoBtn" style="display: none;">🗑️ Remove Photo</button>
+                        </div>
+                        <div id="newPhotoPreview" style="margin-top: 15px; display: none;">
+                            <p style="color: #666; margin-bottom: 10px;">Preview:</p>
+                            <img id="newPhotoPreviewImg" src="" alt="New photo preview" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid #ddd;">
+                        </div>
+                    </div>
+                    
+                    <div class="content-section">
                         <h3>Personal Information</h3>
                         <form class="profile-form">
                             <div class="form-group">

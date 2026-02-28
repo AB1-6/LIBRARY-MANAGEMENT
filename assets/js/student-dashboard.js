@@ -515,6 +515,9 @@
         if (window.QRCodeHelper) {
             QRCodeHelper.generateMemberQR(member, 'qrCodeContainer');
         }
+
+        // Load profile photo
+        loadStudentProfile();
     }
 
     function renderBooksDueSoon() {
@@ -962,6 +965,140 @@
         if (confirmInput) confirmInput.value = '';
     };
 
+    window.togglePassword = function (inputId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(inputId + '-icon');
+        if (!input) return;
+        if (input.type === 'password') {
+            input.type = 'text';
+            if (icon) icon.textContent = '🙈';
+        } else {
+            input.type = 'password';
+            if (icon) icon.textContent = '👁️';
+        }
+    };
+
+    function loadStudentProfile() {
+        const userEmail = localStorage.getItem('userEmail');
+        if (!userEmail) return;
+
+        const users = getUsers();
+        const currentUser = users.find(u => u.email === userEmail);
+        if (!currentUser) return;
+
+        const member = getCurrentMember();
+
+        // Display profile information
+        const profileIdDisplay = document.getElementById('profileIdDisplay');
+        const profileNameDisplay = document.getElementById('profileNameDisplay');
+        const profileEmailDisplay = document.getElementById('profileEmailDisplay');
+        const profilePhoneDisplay = document.getElementById('profilePhoneDisplay');
+
+        if (member) {
+            if (profileIdDisplay) profileIdDisplay.textContent = member.id || '-';
+            if (profileNameDisplay) profileNameDisplay.textContent = member.name || '-';
+            if (profileEmailDisplay) profileEmailDisplay.textContent = member.email || '-';
+            if (profilePhoneDisplay) profilePhoneDisplay.textContent = member.phone || '-';
+        }
+
+        // Display current profile photo if exists
+        const currentPhotoContainer = document.getElementById('currentProfilePhoto');
+        if (currentPhotoContainer) {
+            if (currentUser.profilePhoto) {
+                currentPhotoContainer.innerHTML = '<img src="' + currentUser.profilePhoto + '" alt="Profile Photo" style="width: 100%; height: 100%; object-fit: cover;">';
+                const removeBtn = document.getElementById('removeProfilePhotoBtn');
+                if (removeBtn) removeBtn.style.display = 'inline-flex';
+            } else {
+                currentPhotoContainer.innerHTML = '<span style="font-size: 80px; color: #999;">👤</span>';
+                const removeBtn = document.getElementById('removeProfilePhotoBtn');
+                if (removeBtn) removeBtn.style.display = 'none';
+            }
+        }
+    }
+
+    function setupStudentProfilePhotoUpload() {
+        const photoInput = document.getElementById('newProfilePhoto');
+        const previewContainer = document.getElementById('newPhotoPreview');
+        const previewImg = document.getElementById('newPhotoPreviewImg');
+        const saveBtn = document.getElementById('saveProfilePhotoBtn');
+
+        if (!photoInput) return;
+
+        photoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!window.ImageHelper) {
+                showMessage('Error', 'Image helper not loaded.');
+                return;
+            }
+
+            ImageHelper.validateAndRead(file, function(dataUrl) {
+                if (previewImg) previewImg.src = dataUrl;
+                if (previewContainer) previewContainer.style.display = 'block';
+                if (saveBtn) {
+                    saveBtn.style.display = 'inline-flex';
+                    saveBtn.onclick = function() {
+                        const userEmail = localStorage.getItem('userEmail');
+                        const users = getUsers();
+                        const userIndex = users.findIndex(u => u.email === userEmail);
+
+                        if (userIndex !== -1) {
+                            users[userIndex].profilePhoto = dataUrl;
+                            saveUsers(users);
+
+                            // Also update member profile if exists
+                            const members = getMembers();
+                            const memberIndex = members.findIndex(m => m.email === userEmail);
+                            if (memberIndex !== -1) {
+                                members[memberIndex].profilePhoto = dataUrl;
+                                saveMembers(members);
+                            }
+
+                            showMessage('Success', 'Profile photo updated successfully!');
+                            loadStudentProfile();
+                            photoInput.value = '';
+                            previewContainer.style.display = 'none';
+                            saveBtn.style.display = 'none';
+                        }
+                    };
+                }
+            }, function(error) {
+                showMessage('Error', error);
+            });
+        });
+
+        // Remove photo button
+        const removeBtn = document.getElementById('removeProfilePhotoBtn');
+        if (removeBtn) {
+            removeBtn.onclick = function() {
+                if (window.ModalUI) {
+                    ModalUI.openConfirm('Remove Photo', 'Are you sure you want to remove your profile photo?', function() {
+                        const userEmail = localStorage.getItem('userEmail');
+                        const users = getUsers();
+                        const userIndex = users.findIndex(u => u.email === userEmail);
+
+                        if (userIndex !== -1) {
+                            users[userIndex].profilePhoto = '';
+                            saveUsers(users);
+
+                            // Also update member profile if exists
+                            const members = getMembers();
+                            const memberIndex = members.findIndex(m => m.email === userEmail);
+                            if (memberIndex !== -1) {
+                                members[memberIndex].profilePhoto = '';
+                                saveMembers(members);
+                            }
+
+                            showMessage('Success', 'Profile photo removed successfully!');
+                            loadStudentProfile();
+                        }
+                    }, 'Remove');
+                }
+            };
+        }
+    }
+
     window.browseBooks = function () {
         const link = document.querySelector('[data-section="books"]');
         if (link) link.click();
@@ -1259,6 +1396,9 @@
         
         // Start auto-refresh for real-time updates
         startAutoRefresh();
+        
+        // Initialize profile photo upload
+        setupStudentProfilePhotoUpload();
         
         // Initialize chat support
         if (window.ChatUI) {
