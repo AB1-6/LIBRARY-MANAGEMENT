@@ -197,7 +197,9 @@
         const tbody = document.getElementById('studentBooksBody');
         if (!tbody) return;
         const member = getCurrentMember();
-        const books = getBooks().filter((book) => {
+        const allBooks = getBooks();
+        console.log('📚 Student Dashboard - Loading books:', allBooks.length, 'books');
+        const books = allBooks.filter((book) => {
             const matchFilter = !filter
                 ? true
                 : book.title.toLowerCase().includes(filter) ||
@@ -287,10 +289,14 @@
         
         // Batch insert all rows at once
         tbody.appendChild(fragment);
+        console.log('📊 Rendered', books.length, 'books in table view');
         
         // Initialize gallery view
         if (window.BookGallery) {
+            console.log('🎨 Initializing BookGallery with', books.length, 'books');
             BookGallery.init('section-books', books);
+        } else {
+            console.warn('⚠️ BookGallery not loaded');
         }
     }
 
@@ -1238,10 +1244,16 @@
     }
 
     document.addEventListener('DOMContentLoaded', async function () {
-        if (!window.LibraryStore) return;
+        console.log('🎓 Student Dashboard - Initializing...');
+        if (!window.LibraryStore) {
+            console.error('❌ LibraryStore not loaded!');
+            return;
+        }
         
         // Force fresh data load from server to prevent showing cached fake data
+        console.log('📡 Loading data from API...');
         await LibraryStore.hydrateFromApi();
+        console.log('✅ Data loaded successfully');
         
         refreshAll();
         
