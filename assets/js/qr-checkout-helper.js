@@ -206,7 +206,20 @@
         const memberEmail = member ? member.email : (user ? user.email : 'N/A');
         const memberSince = member ? new Date(member.memberSince || member.createdDate).toLocaleDateString() : 'N/A';
         const memberRole = memberData.type || (user ? user.role : 'student');
-        const memberPhoto = member?.profilePhoto || user?.profilePhoto || '';
+        
+        // Get profile photo - check both member and user records
+        let memberPhoto = '';
+        if (member && member.profilePhoto) {
+            memberPhoto = member.profilePhoto;
+        } else if (user && user.profilePhoto) {
+            memberPhoto = user.profilePhoto;
+        }
+        
+        // Debug logging
+        console.log('Member Data:', memberData);
+        console.log('Member Record:', member);
+        console.log('User Record:', user);
+        console.log('Profile Photo:', memberPhoto ? 'Found' : 'Not found');
         
         // Create modal HTML
         // Pause scanning to prevent continuous refresh
