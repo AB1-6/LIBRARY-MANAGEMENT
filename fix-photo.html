@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Photo Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #6F4E37; }
+        button {
+            padding: 12px 24px;
+            margin: 10px 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn-primary { background: #6F4E37; color: white; }
+        .btn-success { background: #4CAF50; color: white; }
+        .info { 
+            background: #e3f2fd; 
+            padding: 15px; 
+            border-radius: 4px; 
+            margin: 15px 0;
+        }
+        .preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin: 15px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        input[type="file"] { margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Quick Photo Fix Tool</h1>
+        
+        <div class="info">
+            <strong>Current User:</strong> <span id="currentUser">Loading...</span><br>
+            <strong>Member ID:</strong> <span id="memberId">Loading...</span>
+        </div>
+
+        <h3>📸 Upload & Save Photo Directly</h3>
+        <input type="file" id="photoFile" accept="image/*">
+        <div id="preview"></div>
+        
+        <button class="btn-primary" onclick="uploadAndSave()">💾 Save Photo to LocalStorage</button>
+        <button class="btn-success" onclick="goToDashboard()">→ Go to Dashboard</button>
+    </div>
+
+    <script src="assets/js/library-store.js"></script>
+    <script src="assets/js/image-helper.js"></script>
+    <script>
+        let processedPhoto = '';
+        
+        // Display current user info
+        const userEmail = localStorage.getItem('userEmail');
+        const memberId = localStorage.getItem('userMemberId');
+        
+        document.getElementById('currentUser').textContent = userEmail || 'Not logged in';
+        document.getElementById('memberId').textContent = memberId || 'Not set';
+        
+        if (!userEmail) {
+            alert('Please login first!');
+            setTimeout(() => window.location.href = 'login.html', 2000);
+        }
+        
+        // Handle file selection
+        document.getElementById('photoFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            console.log('📸 File selected:', file.name);
+            
+            if (window.ImageHelper && window.ImageHelper.validateAndRead) {
+                ImageHelper.validateAndRead(
+                    file,
+                    function(compressedBase64) {
+                        processedPhoto = compressedBase64;
+                        document.getElementById('preview').innerHTML = 
+                            '<img src="' + compressedBase64 + '" class="preview" alt="Preview">';
+                        console.log('✅ Photo processed, size:', (compressedBase64.length / 1024).toFixed(2), 'KB');
+                    },
+                    function(error) {
+                        alert('Error: ' + error);
+                        console.error('❌ Error:', error);
+                    }
+                );
+            } else {
+                alert('ImageHelper not available!');
+            }
+        });
+        
+        function uploadAndSave() {
+            if (!processedPhoto) {
+                alert('Please select a photo first!');
+                return;
+            }
+            
+            const userEmail = localStorage.getItem('userEmail');
+            const memberId = localStorage.getItem('userMemberId');
+            
+            if (!userEmail) {
+                alert('Not logged in!');
+                return;
+            }
+            
+            // Update user record
+            const users = LibraryStore.load(LibraryStore.KEYS.users, []);
+            const userIndex = users.findIndex(u => u.email === userEmail);
+            
+            if (userIndex !== -1) {
+                users[userIndex].profilePhoto = processedPhoto;
+                LibraryStore.save(LibraryStore.KEYS.users, users);
+                console.log('✅ Saved to user record');
+            } else {
+                alert('User not found!');
+                return;
+            }
+            
+            // Update member record
+            const members = LibraryStore.load(LibraryStore.KEYS.members, []);
+            let memberIndex = members.findIndex(m => m.email === userEmail);
+            
+            if (memberIndex === -1 && memberId) {
+                memberIndex = members.findIndex(m => m.id === memberId);
+            }
+            
+            if (memberIndex !== -1) {
+                members[memberIndex].profilePhoto = processedPhoto;
+                LibraryStore.save(LibraryStore.KEYS.members, members);
+                console.log('✅ Saved to member record:', members[memberIndex].id);
+            }
+            
+            alert('✅ Photo saved successfully! Go to dashboard to see it.');
+        }
+        
+        function goToDashboard() {
+            window.location.href = 'dashboard/student.html';
+        }
+    </script>
+</body>
+</html>
