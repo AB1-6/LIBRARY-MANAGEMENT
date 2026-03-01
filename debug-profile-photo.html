@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Profile Photo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        pre {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        img {
+            max-width: 200px;
+            max-height: 200px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Profile Photo Debug Tool</h1>
+
+    <div class="section">
+        <h2>Current User Info</h2>
+        <p><strong>Email:</strong> <span id="userEmail">-</span></p>
+        <p><strong>Member ID:</strong> <span id="memberId">-</span></p>
+    </div>
+
+    <div class="section">
+        <h2>User Record (from users)</h2>
+        <pre id="userRecord">Loading...</pre>
+    </div>
+
+    <div class="section">
+        <h2>Member Record (from members)</h2>
+        <pre id="memberRecord">Loading...</pre>
+    </div>
+
+    <div class="section">
+        <h2>Profile Photo Status</h2>
+        <p><strong>User has profilePhoto:</strong> <span id="userHasPhoto">-</span></p>
+        <p><strong>Member has profilePhoto:</strong> <span id="memberHasPhoto">-</span></p>
+        <div id="photoPreview"></div>
+    </div>
+
+    <div class="section">
+        <h2>Actions</h2>
+        <button onclick="refreshDebug()">🔄 Refresh Data</button>
+        <button onclick="clearPhoto()">🗑️ Clear All Photos</button>
+        <button onclick="window.location.href='dashboard/student.html'">← Back to Dashboard</button>
+    </div>
+
+    <script src="assets/js/library-store.js"></script>
+    <script>
+        function loadDebugInfo() {
+            const userEmail = localStorage.getItem('userEmail');
+            const memberId = localStorage.getItem('userMemberId');
+            
+            document.getElementById('userEmail').textContent = userEmail || 'Not logged in';
+            document.getElementById('memberId').textContent = memberId || 'Not set';
+
+            if (!userEmail) {
+                alert('Please login first!');
+                setTimeout(() => window.location.href = 'login.html', 2000);
+                return;
+            }
+
+            // Load users
+            const users = LibraryStore.load(LibraryStore.KEYS.users, []);
+            const currentUser = users.find(u => u.email === userEmail);
+            
+            if (currentUser) {
+                document.getElementById('userRecord').textContent = JSON.stringify({
+                    id: currentUser.id,
+                    email: currentUser.email,
+                    firstName: currentUser.firstName,
+                    lastName: currentUser.lastName,
+                    role: currentUser.role,
+                    memberId: currentUser.memberId,
+                    profilePhoto: currentUser.profilePhoto ? 
+                        '(base64 data - ' + currentUser.profilePhoto.substring(0, 50) + '...)' : 
+                        'NOT SET'
+                }, null, 2);
+                
+                document.getElementById('userHasPhoto').textContent = currentUser.profilePhoto ? '✅ YES' : '❌ NO';
+                
+                if (currentUser.profilePhoto) {
+                    document.getElementById('photoPreview').innerHTML = 
+                        '<h3>User Photo Preview:</h3><img src="' + currentUser.profilePhoto + '" alt="User Photo">';
+                }
+            } else {
+                document.getElementById('userRecord').textContent = '❌ User not found in users array!';
+            }
+
+            // Load members
+            const members = LibraryStore.load(LibraryStore.KEYS.members, []);
+            const currentMember = members.find(m => m.email === userEmail || m.id === memberId);
+            
+            if (currentMember) {
+                document.getElementById('memberRecord').textContent = JSON.stringify({
+                    id: currentMember.id,
+                    name: currentMember.name,
+                    email: currentMember.email,
+                    phone: currentMember.phone,
+                    profilePhoto: currentMember.profilePhoto ? 
+                        '(base64 data - ' + currentMember.profilePhoto.substring(0, 50) + '...)' : 
+                        'NOT SET'
+                }, null, 2);
+                
+                document.getElementById('memberHasPhoto').textContent = currentMember.profilePhoto ? '✅ YES' : '❌ NO';
+                
+                if (currentMember.profilePhoto && !currentUser.profilePhoto) {
+                    document.getElementById('photoPreview').innerHTML = 
+                        '<h3>Member Photo Preview:</h3><img src="' + currentMember.profilePhoto + '" alt="Member Photo">';
+                }
+            } else {
+                document.getElementById('memberRecord').textContent = '❌ Member not found in members array!';
+                document.getElementById('memberHasPhoto').textContent = '❌ NO';
+            }
+        }
+
+        function refreshDebug() {
+            loadDebugInfo();
+        }
+
+        function clearPhoto() {
+            if (!confirm('Clear all profile photos from user and member records?')) return;
+            
+            const userEmail = localStorage.getItem('userEmail');
+            const users = LibraryStore.load(LibraryStore.KEYS.users, []);
+            const members = LibraryStore.load(LibraryStore.KEYS.members, []);
+            
+            // Clear from user
+            const userIndex = users.findIndex(u => u.email === userEmail);
+            if (userIndex !== -1) {
+                users[userIndex].profilePhoto = '';
+                LibraryStore.save(LibraryStore.KEYS.users, users);
+            }
+            
+            // Clear from member
+            const memberIndex = members.findIndex(m => m.email === userEmail);
+            if (memberIndex !== -1) {
+                members[memberIndex].profilePhoto = '';
+                LibraryStore.save(LibraryStore.KEYS.members, members);
+            }
+            
+            alert('Profile photos cleared!');
+            loadDebugInfo();
+        }
+
+        // Load on page load
+        loadDebugInfo();
+    </script>
+</body>
+</html>

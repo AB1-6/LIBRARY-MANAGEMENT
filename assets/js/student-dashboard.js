@@ -998,13 +998,23 @@
 
     function loadStudentProfile() {
         const userEmail = localStorage.getItem('userEmail');
-        if (!userEmail) return;
+        console.log('📸 Loading student profile for:', userEmail);
+        
+        if (!userEmail) {
+            console.warn('❌ No user email found');
+            return;
+        }
 
         const users = getUsers();
         const currentUser = users.find(u => u.email === userEmail);
-        if (!currentUser) return;
+        if (!currentUser) {
+            console.warn('❌ Current user not found');
+            return;
+        }
 
         const member = getCurrentMember();
+        console.log('👤 Current user:', currentUser.email, 'Has photo:', !!currentUser.profilePhoto);
+        console.log('👥 Current member:', member ? member.id : 'none', 'Has photo:', member ? !!member.profilePhoto : false);
 
         // Display profile information
         const profileIdDisplay = document.getElementById('profileIdDisplay');
@@ -1025,15 +1035,23 @@
             // Check both user and member records for profile photo
             let profilePhoto = currentUser.profilePhoto || (member && member.profilePhoto) || '';
             
+            console.log('📷 Profile photo found:', !!profilePhoto);
+            if (profilePhoto) {
+                console.log('✅ Displaying profile photo (length:', profilePhoto.length, ')');
+            }
+            
             if (profilePhoto) {
                 currentPhotoContainer.innerHTML = '<img src="' + profilePhoto + '" alt="Profile Photo" style="width: 100%; height: 100%; object-fit: cover;">';
                 const removeBtn = document.getElementById('removeProfilePhotoBtn');
                 if (removeBtn) removeBtn.style.display = 'inline-flex';
             } else {
+                console.log('ℹ️ No profile photo found, showing placeholder');
                 currentPhotoContainer.innerHTML = '<span style="font-size: 80px; color: #999;">👤</span>';
                 const removeBtn = document.getElementById('removeProfilePhotoBtn');
                 if (removeBtn) removeBtn.style.display = 'none';
             }
+        } else {
+            console.warn('❌ currentProfilePhoto container not found!');
         }
     }
     
@@ -1067,16 +1085,30 @@
                         const users = getUsers();
                         const userIndex = users.findIndex(u => u.email === userEmail);
 
+                        console.log('💾 Saving profile photo for:', userEmail);
+                        console.log('📊 Photo data length:', dataUrl.length);
+
                         if (userIndex !== -1) {
                             users[userIndex].profilePhoto = dataUrl;
                             saveUsers(users);
+                            console.log('✅ Saved to user record');
 
-                            // Also update member profile if exists
+                            // Also update member profile - check by both email and memberId
                             const members = getMembers();
-                            const memberIndex = members.findIndex(m => m.email === userEmail);
+                            const memberId = localStorage.getItem('userMemberId');
+                            let memberIndex = members.findIndex(m => m.email === userEmail);
+                            
+                            // If not found by email, try by memberId
+                            if (memberIndex === -1 && memberId) {
+                                memberIndex = members.findIndex(m => m.id === memberId);
+                            }
+                            
                             if (memberIndex !== -1) {
                                 members[memberIndex].profilePhoto = dataUrl;
                                 saveMembers(members);
+                                console.log('✅ Saved to member record:', members[memberIndex].id);
+                            } else {
+                                console.warn('⚠️ Member record not found for photo update');
                             }
 
                             showMessage('Success', 'Profile photo updated successfully!');
@@ -1085,6 +1117,8 @@
                             photoInput.value = '';
                             previewContainer.style.display = 'none';
                             saveBtn.style.display = 'none';
+                        } else {
+                            console.error('❌ User not found!');
                         }
                     };
                 }
@@ -1103,16 +1137,27 @@
                         const users = getUsers();
                         const userIndex = users.findIndex(u => u.email === userEmail);
 
+                        console.log('🗑️ Removing profile photo for:', userEmail);
+
                         if (userIndex !== -1) {
                             users[userIndex].profilePhoto = '';
                             saveUsers(users);
+                            console.log('✅ Removed from user record');
 
-                            // Also update member profile if exists
+                            // Also update member profile - check by both email and memberId
                             const members = getMembers();
-                            const memberIndex = members.findIndex(m => m.email === userEmail);
+                            const memberId = localStorage.getItem('userMemberId');
+                            let memberIndex = members.findIndex(m => m.email === userEmail);
+                            
+                            // If not found by email, try by memberId
+                            if (memberIndex === -1 && memberId) {
+                                memberIndex = members.findIndex(m => m.id === memberId);
+                            }
+                            
                             if (memberIndex !== -1) {
                                 members[memberIndex].profilePhoto = '';
                                 saveMembers(members);
+                                console.log('✅ Removed from member record:', members[memberIndex].id);
                             }
 
                             showMessage('Success', 'Profile photo removed successfully!');
