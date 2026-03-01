@@ -222,6 +222,7 @@
     </div>
     </div>
 
+    <script src="assets/js/image-helper.js"></script>
     <script src="assets/js/auth.js?v=20260226h"></script>
     <script>
         // Splash Screen Handler for Register Page
@@ -261,7 +262,7 @@
             }
         }
 
-        // Handle photo preview
+        // Handle photo preview with ImageHelper
         const photoInput = document.getElementById('profilePhoto');
         const photoPreview = document.getElementById('photoPreview');
         const photoPreviewImg = document.getElementById('photoPreviewImg');
@@ -270,12 +271,31 @@
             photoInput.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        photoPreviewImg.src = e.target.result;
-                        photoPreview.style.display = 'block';
-                    };
-                    reader.readAsDataURL(file);
+                    console.log('📸 Photo selected for preview:', file.name);
+                    
+                    // Use ImageHelper if available for better compression
+                    if (window.ImageHelper && window.ImageHelper.validateAndRead) {
+                        ImageHelper.validateAndRead(
+                            file,
+                            function(compressedBase64) {
+                                photoPreviewImg.src = compressedBase64;
+                                photoPreview.style.display = 'block';
+                                console.log('✅ Photo preview loaded (compressed)');
+                            },
+                            function(error) {
+                                alert('Photo error: ' + error);
+                                console.error('❌ Photo validation error:', error);
+                            }
+                        );
+                    } else {
+                        // Fallback to basic FileReader
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            photoPreviewImg.src = e.target.result;
+                            photoPreview.style.display = 'block';
+                        };
+                        reader.readAsDataURL(file);
+                    }
                 }
             });
         }

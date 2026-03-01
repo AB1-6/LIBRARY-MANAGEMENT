@@ -294,24 +294,43 @@ function setupRegisterForm() {
         let newMemberId = '';
         let profilePhotoBase64 = '';
 
-        // Handle profile photo if uploaded
+        // Handle profile photo if uploaded - use ImageHelper for consistency
         if (photoInput && photoInput.files && photoInput.files[0]) {
             const file = photoInput.files[0];
-            console.log('📸 Photo file selected:', file.name, 'Size:', file.size, 'bytes');
-            const reader = new FileReader();
+            console.log('📸 Photo file selected:', file.name, 'Size:', (file.size / 1024).toFixed(2), 'KB');
             
-            // Create a promise to handle async file reading
-            const photoPromise = new Promise((resolve) => {
-                reader.onload = function(e) {
-                    profilePhotoBase64 = e.target.result;
-                    console.log('✅ Photo converted to base64, length:', profilePhotoBase64.length);
-                    resolve();
-                };
-                reader.readAsDataURL(file);
-            });
-            
-            // Wait for photo to be processed
-            await photoPromise;
+            // Use ImageHelper if available for compression, otherwise fallback to FileReader
+            if (window.ImageHelper && window.ImageHelper.validateAndRead) {
+                const photoPromise = new Promise((resolve, reject) => {
+                    ImageHelper.validateAndRead(
+                        file,
+                        function(compressedBase64) {
+                            profilePhotoBase64 = compressedBase64;
+                            console.log('✅ Photo compressed via ImageHelper, final size:', (compressedBase64.length / 1024).toFixed(2), 'KB');
+                            resolve();
+                        },
+                        function(error) {
+                            console.error('❌ ImageHelper error:', error);
+                            // Continue without photo
+                            resolve();
+                        }
+                    );
+                });
+                await photoPromise;
+            } else {
+                // Fallback to basic FileReader
+                console.log('⚠️ ImageHelper not available, using FileReader fallback');
+                const reader = new FileReader();
+                const photoPromise = new Promise((resolve) => {
+                    reader.onload = function(e) {
+                        profilePhotoBase64 = e.target.result;
+                        console.log('✅ Photo converted to base64, length:', (profilePhotoBase64.length / 1024).toFixed(2), 'KB');
+                        resolve();
+                    };
+                    reader.readAsDataURL(file);
+                });
+                await photoPromise;
+            }
         } else {
             console.log('ℹ️ No photo selected during registration');
         }
