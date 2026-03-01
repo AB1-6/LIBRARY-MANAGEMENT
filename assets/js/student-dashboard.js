@@ -609,6 +609,24 @@
                 userNameElement.textContent = 'Student';
             }
         }
+        
+        // Update header profile avatar
+        const profileAvatar = document.querySelector('.profile-avatar');
+        if (profileAvatar && userEmail) {
+            const users = getUsers();
+            const user = users.find(u => u.email === userEmail);
+            if (user && user.profilePhoto) {
+                profileAvatar.src = user.profilePhoto;
+            } else {
+                // Check member record as well
+                const member = getCurrentMember();
+                if (member && member.profilePhoto) {
+                    profileAvatar.src = member.profilePhoto;
+                } else {
+                    profileAvatar.src = '../assets/images/logo.png';
+                }
+            }
+        }
     }
 
     window.searchBooks = function () {
@@ -1057,6 +1075,7 @@
 
                             showMessage('Success', 'Profile photo updated successfully!');
                             loadStudentProfile();
+                            updateUserDisplay(); // Update header avatar immediately
                             photoInput.value = '';
                             previewContainer.style.display = 'none';
                             saveBtn.style.display = 'none';
@@ -1092,6 +1111,7 @@
 
                             showMessage('Success', 'Profile photo removed successfully!');
                             loadStudentProfile();
+                            updateUserDisplay(); // Update header avatar immediately
                         }
                     }, 'Remove');
                 }

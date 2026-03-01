@@ -803,6 +803,18 @@
                 userNameElement.textContent = 'Admin';
             }
         }
+        
+        // Update header profile avatar
+        const profileAvatar = document.querySelector('.profile-avatar');
+        if (profileAvatar && userEmail) {
+            const users = getUsers();
+            const user = users.find(u => u.email === userEmail);
+            if (user && user.profilePhoto) {
+                profileAvatar.src = user.profilePhoto;
+            } else {
+                profileAvatar.src = '../assets/images/logo.png';
+            }
+        }
     }
 
     // Expose functions for inline handlers
