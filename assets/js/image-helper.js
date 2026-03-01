@@ -134,6 +134,36 @@ const ImageHelper = {
             .catch(error => {
                 if (onError) onError(error.message);
             });
+    },
+
+    // Validate and read image file (alias for compatibility)
+    validateAndRead: function(file, onSuccess, onError) {
+        if (!file || !file.type.startsWith('image/')) {
+            if (onError) onError('Invalid file type. Please upload an image.');
+            return;
+        }
+
+        // Check file size (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            if (onError) onError('File too large. Maximum size is 2MB.');
+            return;
+        }
+
+        console.log('📷 Processing image file:', file.name, 'Size:', (file.size / 1024).toFixed(2) + 'KB');
+        
+        this.fileToBase64(file)
+            .then(base64 => {
+                console.log('✅ Image converted to base64');
+                return this.compressImage(base64);
+            })
+            .then(compressed => {
+                console.log('✅ Image compressed, final size:', (compressed.length / 1024).toFixed(2) + 'KB');
+                if (onSuccess) onSuccess(compressed);
+            })
+            .catch(error => {
+                console.error('❌ Image processing error:', error);
+                if (onError) onError(error.message || 'Failed to process image');
+            });
     }
 };
 
