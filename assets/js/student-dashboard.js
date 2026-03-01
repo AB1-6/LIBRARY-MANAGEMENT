@@ -1022,8 +1022,11 @@
         // Display current profile photo if exists
         const currentPhotoContainer = document.getElementById('currentProfilePhoto');
         if (currentPhotoContainer) {
-            if (currentUser.profilePhoto) {
-                currentPhotoContainer.innerHTML = '<img src="' + currentUser.profilePhoto + '" alt="Profile Photo" style="width: 100%; height: 100%; object-fit: cover;">';
+            // Check both user and member records for profile photo
+            let profilePhoto = currentUser.profilePhoto || (member && member.profilePhoto) || '';
+            
+            if (profilePhoto) {
+                currentPhotoContainer.innerHTML = '<img src="' + profilePhoto + '" alt="Profile Photo" style="width: 100%; height: 100%; object-fit: cover;">';
                 const removeBtn = document.getElementById('removeProfilePhotoBtn');
                 if (removeBtn) removeBtn.style.display = 'inline-flex';
             } else {
@@ -1033,6 +1036,9 @@
             }
         }
     }
+    
+    // Expose loadStudentProfile to window so it can be called from HTML
+    window.loadStudentProfile = loadStudentProfile;
 
     function setupStudentProfilePhotoUpload() {
         const photoInput = document.getElementById('newProfilePhoto');

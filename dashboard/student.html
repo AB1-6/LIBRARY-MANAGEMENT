@@ -500,6 +500,11 @@
                     if(sectionToShow) {
                         sectionToShow.style.display = 'block';
                     }
+                    
+                    // Load profile when profile section is opened
+                    if (sectionName === 'profile' && typeof loadStudentProfile === 'function') {
+                        loadStudentProfile();
+                    }
                 });
             });
             
