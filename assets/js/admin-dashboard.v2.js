@@ -417,6 +417,179 @@
         }
     }
 
+    // Book Search and Filter Functions
+    let currentBookFilters = {
+        searchQuery: '',
+        category: '',
+        availability: ''
+    };
+
+    function filterBooks() {
+        const books = getBooks();
+        const { searchQuery, category, availability } = currentBookFilters;
+        
+        let filteredBooks = books;
+        
+        // Apply search query filter
+        if (searchQuery && searchQuery.trim() !== '') {
+            const query = searchQuery.toLowerCase().trim();
+            filteredBooks = filteredBooks.filter(book => {
+                return book.title.toLowerCase().includes(query) ||
+                       book.author.toLowerCase().includes(query) ||
+                       book.id.toLowerCase().includes(query);
+            });
+        }
+        
+        // Apply category filter
+        if (category && category !== '') {
+            filteredBooks = filteredBooks.filter(book => book.category === category);
+        }
+        
+        // Apply availability filter
+        if (availability && availability !== '') {
+            if (availability === 'available') {
+                filteredBooks = filteredBooks.filter(book => book.availableCopies > 0);
+            } else if (availability === 'issued') {
+                filteredBooks = filteredBooks.filter(book => book.availableCopies === 0);
+            }
+        }
+        
+        // Render filtered books
+        renderFilteredBooks(filteredBooks);
+        updateFilterStatus(filteredBooks.length, books.length);
+    }
+
+    function renderFilteredBooks(books) {
+        const tbody = document.getElementById('booksTableBody');
+        if (!tbody) {
+            return;
+        }
+        tbody.innerHTML = '';
+
+        if (books.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = '<td colspan="7" style="text-align: center; padding: 20px; opacity: 0.7;">No books found matching your criteria</td>';
+            tbody.appendChild(row);
+            
+            // Update gallery with empty results
+            if (window.BookGallery) {
+                BookGallery.init('section-books', []);
+            }
+            return;
+        }
+
+        books.forEach((book) => {
+            let coverImage = (book.coverImage && book.coverImage.trim() !== '') ? book.coverImage : null;
+            if (!coverImage && window.ImageHelper) {
+                coverImage = ImageHelper.getPlaceholder();
+            }
+            const coverHtml = coverImage ? '<img src="' + coverImage + '" style="width: 40px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;" alt="' + book.title + '" onerror="this.src=ImageHelper.getPlaceholder()">' : '';
+            
+            const row = document.createElement('tr');
+            row.innerHTML =
+                '<td>' + book.id + '</td>' +
+                '<td style="display: flex; align-items: center; gap: 10px;">' + coverHtml + '<span>' + book.title + '</span></td>' +
+                '<td>' + book.author + '</td>' +
+                '<td>' + book.category + '</td>' +
+                '<td>' + book.totalCopies + '</td>' +
+                '<td>' + book.availableCopies + '</td>' +
+                '<td>' +
+                '<button class="btn-icon" onclick="editBook(\'' + book.id + '\')">Edit</button>' +
+                '<button class="btn-icon" onclick="deleteBook(\'' + book.id + '\')">Delete</button>' +
+                '<button class="btn-icon" onclick="fetchSingleBookCover(\'' + book.id + '\')" title="Fetch cover from Google Books">🖼️</button>' +
+                '</td>';
+            tbody.appendChild(row);
+        });
+        
+        // Update gallery view with filtered books
+        if (window.BookGallery) {
+            BookGallery.init('section-books', books);
+        }
+    }
+
+    function updateFilterStatus(filteredCount, totalCount) {
+        const statusEl = document.getElementById('bookFilterStatus');
+        if (!statusEl) return;
+        
+        const { searchQuery, category, availability } = currentBookFilters;
+        const hasFilters = searchQuery || category || availability;
+        
+        if (!hasFilters) {
+            statusEl.innerHTML = `Showing all <strong>${totalCount}</strong> books`;
+        } else {
+            statusEl.innerHTML = `Showing <strong>${filteredCount}</strong> of <strong>${totalCount}</strong> books`;
+        }
+    }
+
+    function populateCategoryFilter() {
+        const categorySelect = document.getElementById('categoryFilter');
+        if (!categorySelect) return;
+        
+        const categories = getCategories();
+        const books = getBooks();
+        
+        // Get unique categories from books
+        const bookCategories = [...new Set(books.map(book => book.category))].filter(Boolean);
+        
+        // Clear and repopulate
+        categorySelect.innerHTML = '<option value="">All Categories</option>';
+        
+        bookCategories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = cat;
+            categorySelect.appendChild(option);
+        });
+    }
+
+    function initBookSearch() {
+        const searchInput = document.getElementById('bookSearchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const availabilityFilter = document.getElementById('availabilityFilter');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                currentBookFilters.searchQuery = e.target.value;
+                filterBooks();
+            });
+        }
+        
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', (e) => {
+                currentBookFilters.category = e.target.value;
+                filterBooks();
+            });
+        }
+        
+        if (availabilityFilter) {
+            availabilityFilter.addEventListener('change', (e) => {
+                currentBookFilters.availability = e.target.value;
+                filterBooks();
+            });
+        }
+        
+        // Populate category dropdown
+        populateCategoryFilter();
+    }
+
+    window.clearBookFilters = function() {
+        currentBookFilters = {
+            searchQuery: '',
+            category: '',
+            availability: ''
+        };
+        
+        const searchInput = document.getElementById('bookSearchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const availabilityFilter = document.getElementById('availabilityFilter');
+        
+        if (searchInput) searchInput.value = '';
+        if (categoryFilter) categoryFilter.value = '';
+        if (availabilityFilter) availabilityFilter.value = '';
+        
+        renderBooksTable();
+    };
+
     function renderLibrariansTable() {
         const tbody = document.getElementById('librariansTableBody');
         if (!tbody) {
@@ -779,6 +952,9 @@
         renderIssuesTables();
         renderUsersTable();
         renderReports();
+        
+        // Update category filter dropdown with latest categories
+        populateCategoryFilter();
     }
 
     function updateUserDisplay() {
@@ -1576,6 +1752,9 @@
         await LibraryStore.hydrateFromApi();
         
         refreshAll();
+        
+        // Initialize book search and filters
+        initBookSearch();
         
         // Start auto-refresh for real-time updates
         startAutoRefresh();
