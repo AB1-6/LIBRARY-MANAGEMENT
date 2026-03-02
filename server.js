@@ -462,7 +462,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.post('/api/auth/register', async (req, res) => {
-  const { firstName, lastName, email, password, studentId } = req.body || {};
+  const { firstName, lastName, email, password, studentId, profilePhoto } = req.body || {};
   if (!firstName || !lastName || !email || !password) {
     res.status(400).json({ error: 'All fields are required.' });
     return;
@@ -502,7 +502,9 @@ app.post('/api/auth/register', async (req, res) => {
       name: `${trimmedFirstName} ${trimmedLastName}`,
       email: trimmedEmail,
       phone: '',
-      type: 'Student'
+      type: 'Student',
+      profilePhoto: profilePhoto || '',
+      createdDate: new Date().toISOString()
     };
 
     const newUser = {
@@ -513,6 +515,7 @@ app.post('/api/auth/register', async (req, res) => {
       firstName: trimmedFirstName,
       lastName: trimmedLastName,
       memberId: newMember.id,
+      profilePhoto: profilePhoto || '',
       createdDate: new Date().toISOString()
     };
 

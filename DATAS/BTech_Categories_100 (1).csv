@@ -1,0 +1,101 @@
+Category_ID,Category_Name
+1,Programming in C
+2,Programming in C++
+3,Java Programming
+4,Python Programming
+5,Data Structures
+6,Algorithms
+7,Design and Analysis of Algorithms
+8,Operating Systems
+9,Database Management Systems
+10,Computer Networks
+11,Software Engineering
+12,Computer Organization
+13,Digital Electronics
+14,Microprocessors
+15,Microcontrollers
+16,Compiler Design
+17,Theory of Computation
+18,Artificial Intelligence
+19,Machine Learning
+20,Data Science
+21,Cyber Security
+22,Cloud Computing
+23,Web Development
+24,Mobile App Development
+25,Distributed Systems
+26,Internet of Things
+27,Blockchain Technology
+28,Big Data Analytics
+29,Computer Graphics
+30,Image Processing
+31,Natural Language Processing
+32,Embedded Systems
+33,Robotics
+34,Information Technology
+35,Power Systems
+36,Electrical Machines
+37,Control Systems
+38,Power Electronics
+39,Electrical Circuits
+40,Renewable Energy Systems
+41,High Voltage Engineering
+42,Electronics Engineering
+43,Analog Electronics
+44,Digital Signal Processing
+45,Communication Systems
+46,VLSI Design
+47,Microwave Engineering
+48,Antenna Theory
+49,Mechanical Engineering
+50,Engineering Mechanics
+51,Strength of Materials
+52,Fluid Mechanics
+53,Thermodynamics
+54,Heat Transfer
+55,Manufacturing Technology
+56,Production Engineering
+57,Industrial Engineering
+58,Automobile Engineering
+59,Mechatronics
+60,Civil Engineering
+61,Structural Analysis
+62,Geotechnical Engineering
+63,Environmental Engineering
+64,Transportation Engineering
+65,Construction Management
+66,Engineering Mathematics I
+67,Engineering Mathematics II
+68,Engineering Physics
+69,Engineering Chemistry
+70,Engineering Graphics
+71,Engineering Drawing
+72,Numerical Methods
+73,Probability and Statistics
+74,Linear Algebra
+75,Discrete Mathematics
+76,Business Mathematics
+77,Engineering Economics
+78,Management Studies
+79,Project Management
+80,Entrepreneurship Development
+81,Technical Communication
+82,Professional Ethics
+83,Research Methodology
+84,Aptitude and Reasoning
+85,GATE Preparation
+86,Competitive Exams
+87,Internship Training
+88,Mini Project Reports
+89,Main Project Reports
+90,Laboratory Manuals
+91,Workshop Practice
+92,CAD/CAM
+93,Simulation and Modeling
+94,Human Computer Interaction
+95,Bioinformatics
+96,Agricultural Engineering
+97,Marine Engineering
+98,Aerospace Engineering
+99,Nanotechnology
+100,General Reference (Engineering)

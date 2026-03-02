@@ -23,13 +23,13 @@ async function loginWithApi(email, password, role) {
     });
 }
 
-async function registerWithApi(firstName, lastName, email, password, studentId) {
+async function registerWithApi(firstName, lastName, email, password, studentId, profilePhoto) {
     return requestJson('/api/auth/register', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ firstName, lastName, email, password, studentId })
+        body: JSON.stringify({ firstName, lastName, email, password, studentId, profilePhoto })
     });
 }
 
@@ -336,7 +336,7 @@ function setupRegisterForm() {
         }
 
         try {
-            const payload = await registerWithApi(firstName, lastName, email, password, '');
+            const payload = await registerWithApi(firstName, lastName, email, password, '', profilePhotoBase64);
             newMemberId = payload.memberId || '';
             
             // Show the assigned student ID in the input field

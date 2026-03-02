@@ -1,0 +1,101 @@
+Book_ID,Book_Name,Category_ID
+1,Programming in C - Textbook,1
+2,Programming in C++ - Textbook,2
+3,Java Programming - Textbook,3
+4,Python Programming - Textbook,4
+5,Data Structures - Textbook,5
+6,Algorithms - Textbook,6
+7,Design and Analysis of Algorithms - Textbook,7
+8,Operating Systems - Textbook,8
+9,Database Management Systems - Textbook,9
+10,Computer Networks - Textbook,10
+11,Software Engineering - Textbook,11
+12,Computer Organization - Textbook,12
+13,Digital Electronics - Textbook,13
+14,Microprocessors - Textbook,14
+15,Microcontrollers - Textbook,15
+16,Compiler Design - Textbook,16
+17,Theory of Computation - Textbook,17
+18,Artificial Intelligence - Textbook,18
+19,Machine Learning - Textbook,19
+20,Data Science - Textbook,20
+21,Cyber Security - Textbook,21
+22,Cloud Computing - Textbook,22
+23,Web Development - Textbook,23
+24,Mobile App Development - Textbook,24
+25,Distributed Systems - Textbook,25
+26,Internet of Things - Textbook,26
+27,Blockchain Technology - Textbook,27
+28,Big Data Analytics - Textbook,28
+29,Computer Graphics - Textbook,29
+30,Image Processing - Textbook,30
+31,Natural Language Processing - Textbook,31
+32,Embedded Systems - Textbook,32
+33,Robotics - Textbook,33
+34,Information Technology - Textbook,34
+35,Power Systems - Textbook,35
+36,Electrical Machines - Textbook,36
+37,Control Systems - Textbook,37
+38,Power Electronics - Textbook,38
+39,Electrical Circuits - Textbook,39
+40,Renewable Energy Systems - Textbook,40
+41,High Voltage Engineering - Textbook,41
+42,Electronics Engineering - Textbook,42
+43,Analog Electronics - Textbook,43
+44,Digital Signal Processing - Textbook,44
+45,Communication Systems - Textbook,45
+46,VLSI Design - Textbook,46
+47,Microwave Engineering - Textbook,47
+48,Antenna Theory - Textbook,48
+49,Mechanical Engineering - Textbook,49
+50,Engineering Mechanics - Textbook,50
+51,Strength of Materials - Textbook,51
+52,Fluid Mechanics - Textbook,52
+53,Thermodynamics - Textbook,53
+54,Heat Transfer - Textbook,54
+55,Manufacturing Technology - Textbook,55
+56,Production Engineering - Textbook,56
+57,Industrial Engineering - Textbook,57
+58,Automobile Engineering - Textbook,58
+59,Mechatronics - Textbook,59
+60,Civil Engineering - Textbook,60
+61,Structural Analysis - Textbook,61
+62,Geotechnical Engineering - Textbook,62
+63,Environmental Engineering - Textbook,63
+64,Transportation Engineering - Textbook,64
+65,Construction Management - Textbook,65
+66,Engineering Mathematics I - Textbook,66
+67,Engineering Mathematics II - Textbook,67
+68,Engineering Physics - Textbook,68
+69,Engineering Chemistry - Textbook,69
+70,Engineering Graphics - Textbook,70
+71,Engineering Drawing - Textbook,71
+72,Numerical Methods - Textbook,72
+73,Probability and Statistics - Textbook,73
+74,Linear Algebra - Textbook,74
+75,Discrete Mathematics - Textbook,75
+76,Business Mathematics - Textbook,76
+77,Engineering Economics - Textbook,77
+78,Management Studies - Textbook,78
+79,Project Management - Textbook,79
+80,Entrepreneurship Development - Textbook,80
+81,Technical Communication - Textbook,81
+82,Professional Ethics - Textbook,82
+83,Research Methodology - Textbook,83
+84,Aptitude and Reasoning - Textbook,84
+85,GATE Preparation - Textbook,85
+86,Competitive Exams - Textbook,86
+87,Internship Training - Textbook,87
+88,Mini Project Reports - Textbook,88
+89,Main Project Reports - Textbook,89
+90,Laboratory Manuals - Textbook,90
+91,Workshop Practice - Textbook,91
+92,CAD/CAM - Textbook,92
+93,Simulation and Modeling - Textbook,93
+94,Human Computer Interaction - Textbook,94
+95,Bioinformatics - Textbook,95
+96,Agricultural Engineering - Textbook,96
+97,Marine Engineering - Textbook,97
+98,Aerospace Engineering - Textbook,98
+99,Nanotechnology - Textbook,99
+100,General Reference (Engineering) - Textbook,100
