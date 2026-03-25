@@ -29,8 +29,8 @@ function initializeSplashScreen() {
 
 // Check if user is logged in
 function checkAuthStatus() {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    let userRole = localStorage.getItem('userRole');
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
     const userEmail = localStorage.getItem('userEmail');
     const path = window.location.pathname.toLowerCase();
     const requiredRoleByPath = {
@@ -40,27 +40,13 @@ function checkAuthStatus() {
     };
     const expectedRole = Object.keys(requiredRoleByPath).find((key) => path.endsWith(key));
 
-    // Self-heal stale role from canonical user record when possible
-    if (isLoggedIn === 'true' && userEmail) {
-        try {
-            const users = JSON.parse(localStorage.getItem('lib_users') || '[]');
-            const matched = users.find((u) => (u.email || '').trim().toLowerCase() === userEmail.trim().toLowerCase());
-            if (matched && matched.role && matched.role !== userRole) {
-                userRole = matched.role;
-                localStorage.setItem('userRole', userRole);
-            }
-        } catch (err) {
-            // Keep existing role if parsing fails
-        }
-    }
-    
     // If not logged in and trying to access dashboard, redirect to login
     if (!isLoggedIn && window.location.pathname.includes('dashboard')) {
         window.location.href = '../index.html';
     }
 
     // If logged in but role doesn't match the current dashboard, redirect to the proper dashboard
-    if (isLoggedIn === 'true' && expectedRole && userRole !== requiredRoleByPath[expectedRole]) {
+    if (isLoggedIn && expectedRole && userRole !== requiredRoleByPath[expectedRole]) {
         const dashboardByRole = {
             admin: '../dashboard/admin.html',
             librarian: '../dashboard/faculty.html',
@@ -70,7 +56,7 @@ function checkAuthStatus() {
     }
     
     return {
-        isLoggedIn: isLoggedIn === 'true',
+        isLoggedIn: isLoggedIn,
         userRole: userRole
     };
 }

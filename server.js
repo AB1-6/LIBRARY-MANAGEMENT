@@ -465,11 +465,12 @@ app.post('/api/auth/login', async (req, res) => {
   // Trim email and password to avoid whitespace issues
   const trimmedEmail = email.trim();
   const trimmedPassword = password.trim();
+  const normalizedEmail = trimmedEmail.toLowerCase();
 
   try {
     const users = await readTable('users');
     const members = await readTable('members');
-    const user = users.find((entry) => entry.email.trim() === trimmedEmail && entry.password.trim() === trimmedPassword);
+    const user = users.find((entry) => (entry.email || '').trim().toLowerCase() === normalizedEmail && (entry.password || '').trim() === trimmedPassword);
 
     if (!user) {
       res.status(401).json({ error: 'Invalid email or password.' });
@@ -477,7 +478,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const effectiveRole = user.role || role || 'student';
-    const member = user.memberId ? members.find((m) => m.id === user.memberId) : members.find((m) => m.email.trim() === trimmedEmail);
+    const member = user.memberId ? members.find((m) => m.id === user.memberId) : members.find((m) => (m.email || '').trim().toLowerCase() === normalizedEmail);
 
     res.json({
       id: user.id,
@@ -504,12 +505,13 @@ app.post('/api/auth/register', async (req, res) => {
   const trimmedLastName = lastName.trim();
   const trimmedEmail = email.trim();
   const trimmedPassword = password.trim();
+  const normalizedEmail = trimmedEmail.toLowerCase();
 
   try {
     const users = await readTable('users');
     const members = await readTable('members');
 
-    const existing = users.find((entry) => entry.email.trim() === trimmedEmail);
+    const existing = users.find((entry) => (entry.email || '').trim().toLowerCase() === normalizedEmail);
     if (existing) {
       res.status(409).json({ error: 'Email already exists.' });
       return;
@@ -531,7 +533,7 @@ app.post('/api/auth/register', async (req, res) => {
     const newMember = {
       id: autoStudentId,
       name: `${trimmedFirstName} ${trimmedLastName}`,
-      email: trimmedEmail,
+      email: normalizedEmail,
       phone: '',
       type: 'Student',
       profilePhoto: profilePhoto || '',
@@ -540,7 +542,7 @@ app.post('/api/auth/register', async (req, res) => {
 
     const newUser = {
       id: nextId('U', users),
-      email: trimmedEmail,
+      email: normalizedEmail,
       password: trimmedPassword,
       role: 'student',
       firstName: trimmedFirstName,

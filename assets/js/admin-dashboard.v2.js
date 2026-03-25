@@ -807,10 +807,10 @@
             
             if (cells.length === 0) continue;
             
-            // Search in ID, Name, Email columns (indices 0, 1, 2)
-            const id = cells[0].textContent || '';
-            const name = cells[1].textContent || '';
-            const email = cells[2].textContent || '';
+            // Search in ID, Name, Email columns (indices 1, 2, 3)
+            const id = cells[1].textContent || '';
+            const name = cells[2].textContent || '';
+            const email = cells[3].textContent || '';
             
             const matchFound = 
                 id.toLowerCase().includes(searchTerm) ||

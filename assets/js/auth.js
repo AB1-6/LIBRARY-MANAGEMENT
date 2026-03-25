@@ -73,12 +73,14 @@ function setupLoginForm() {
     loginForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const normalizedEmail = (email || '').trim().toLowerCase();
+            const normalizedPassword = (password || '').trim();
         const remember = document.querySelector('input[name="remember"]');
 
         // Basic validation
-        if (!email || !password) {
+            if (!normalizedEmail || !normalizedPassword) {
             alert('Please fill in all fields');
             return;
         }
@@ -91,16 +93,16 @@ function setupLoginForm() {
         let role = urlParams.get('role') || 'student';
 
         // Check for default admin credentials
-        if (email === DEFAULT_ADMIN_EMAIL && password === DEFAULT_ADMIN_PASSWORD) {
+            if (normalizedEmail === DEFAULT_ADMIN_EMAIL.toLowerCase() && normalizedPassword === DEFAULT_ADMIN_PASSWORD) {
             role = 'admin';
-            localStorage.setItem('userEmail', email);
+                localStorage.setItem('userEmail', DEFAULT_ADMIN_EMAIL.toLowerCase());
             localStorage.setItem('userRole', 'admin');
             localStorage.setItem('isLoggedIn', 'true');
             
             // Try to get actual admin name from users data
             const usersRaw = localStorage.getItem('lib_users');
             const users = usersRaw ? JSON.parse(usersRaw) : [];
-            const adminUser = users.find(u => u.email === email && u.role === 'admin');
+                const adminUser = users.find(u => (u.email || '').trim().toLowerCase() === DEFAULT_ADMIN_EMAIL.toLowerCase() && u.role === 'admin');
             
             if (adminUser && (adminUser.firstName || adminUser.lastName)) {
                 const fullName = [adminUser.firstName || '', adminUser.lastName || ''].join(' ').trim();
@@ -123,10 +125,11 @@ function setupLoginForm() {
         }
 
         let finalRole = role;
+        let payload = null;
         let memberId = '';
 
         try {
-            const payload = await loginWithApi(email, password, role);
+            payload = await loginWithApi(normalizedEmail, normalizedPassword, role);
             finalRole = payload.role || role;
             memberId = payload.memberId || '';
             if (payload.firstName || payload.lastName) {
@@ -160,19 +163,19 @@ function setupLoginForm() {
             console.log('Total users in localStorage:', users.length);
             
             // Trim email and password to avoid whitespace issues
-            const trimmedEmail = email.trim();
-            const trimmedPassword = password.trim();
+            const trimmedEmail = normalizedEmail;
+            const trimmedPassword = normalizedPassword;
             
             const matchedUser = users.find((user) => 
-                user.email.trim() === trimmedEmail && 
-                user.password === trimmedPassword
+                    (user.email || '').trim().toLowerCase() === trimmedEmail && 
+                    (user.password || '').trim() === trimmedPassword
             );
 
             if (!matchedUser) {
                 console.log('User not found in lib_users, checking userData fallback');
                 const storedUserRaw = localStorage.getItem('userData');
                 const storedUser = storedUserRaw ? JSON.parse(storedUserRaw) : null;
-                if (!storedUser || storedUser.email.trim() !== trimmedEmail || storedUser.password !== trimmedPassword) {
+                    if (!storedUser || (storedUser.email || '').trim().toLowerCase() !== trimmedEmail || (storedUser.password || '').trim() !== trimmedPassword) {
                     console.error('Login failed: No matching user found');
                     alert('Invalid email or password. Please check your credentials and try again.');
                     return;
@@ -204,7 +207,7 @@ function setupLoginForm() {
         const usersRaw = localStorage.getItem('lib_users');
         if (usersRaw) {
             const users = JSON.parse(usersRaw);
-            const userIndex = users.findIndex((user) => user.email === email);
+            const userIndex = users.findIndex((user) => (user.email || '').trim().toLowerCase() === normalizedEmail);
             if (userIndex !== -1) {
                 users[userIndex].lastLogin = new Date().toISOString();
                 if (!users[userIndex].firstName && !users[userIndex].lastName) {
@@ -222,7 +225,10 @@ function setupLoginForm() {
             }
         }
 
-        localStorage.setItem('userEmail', email);
+            const canonicalEmail = (payload && payload.email)
+                ? String(payload.email).trim().toLowerCase()
+                : normalizedEmail;
+            localStorage.setItem('userEmail', canonicalEmail);
         localStorage.setItem('userRole', finalRole);
         localStorage.setItem('isLoggedIn', 'true');
         if (memberId) {
@@ -266,6 +272,8 @@ function setupRegisterForm() {
         const lastName = document.getElementById('lastName').value;
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
+        const normalizedEmail = (email || '').trim().toLowerCase();
+        const normalizedPassword = (password || '').trim();
         const confirmPassword = document.getElementById('confirmPassword').value;
         const terms = document.querySelector('input[name="terms"]').checked;
         const photoInput = document.getElementById('profilePhoto');
@@ -275,17 +283,17 @@ function setupRegisterForm() {
         const role = 'student';
 
         // Validation
-        if (!firstName || !lastName || !email || !password || !confirmPassword) {
+            if (!firstName || !lastName || !normalizedEmail || !normalizedPassword || !confirmPassword) {
             alert('Please fill in all fields');
             return;
         }
 
-        if (password !== confirmPassword) {
+            if (normalizedPassword !== confirmPassword.trim()) {
             alert('Passwords do not match');
             return;
         }
 
-        if (password.length < 8) {
+        if (normalizedPassword.length < 8) {
             alert('Password must be at least 8 characters long');
             return;
         }
@@ -300,7 +308,7 @@ function setupRegisterForm() {
         const existingUsers = usersRaw ? JSON.parse(usersRaw) : [];
 
         if (isLocalFallbackAllowed()) {
-            const emailExists = existingUsers.some(u => u.email.toLowerCase() === email.toLowerCase());
+            const emailExists = existingUsers.some(u => (u.email || '').toLowerCase() === normalizedEmail);
             if (emailExists) {
                 alert('This email is already registered. Please login instead.');
                 setTimeout(() => {
@@ -355,7 +363,7 @@ function setupRegisterForm() {
         }
 
         try {
-            const payload = await registerWithApi(firstName, lastName, email, password, '', profilePhotoBase64);
+                const payload = await registerWithApi(firstName, lastName, normalizedEmail, normalizedPassword, '', profilePhotoBase64);
             newMemberId = payload.memberId || '';
             
             // Show the assigned student ID in the input field
@@ -405,7 +413,7 @@ function setupRegisterForm() {
                 const newMember = {
                     id: newMemberId,
                     name: firstName + ' ' + lastName,
-                    email: email,
+                    email: normalizedEmail,
                     phone: '',
                     type: 'Student',
                     profilePhoto: profilePhotoBase64,
@@ -419,8 +427,8 @@ function setupRegisterForm() {
             // Add new user
             const newUser = {
                 id: 'U' + String(users.length + 1).padStart(3, '0'),
-                email: email,
-                password: password,
+                email: normalizedEmail,
+                password: normalizedPassword,
                 role: role,
                 firstName: firstName,
                 lastName: lastName,
@@ -438,8 +446,8 @@ function setupRegisterForm() {
             const userData = {
                 firstName: firstName,
                 lastName: lastName,
-                email: email,
-                password: password,
+                email: normalizedEmail,
+                password: normalizedPassword,
                 role: role,
                 registeredDate: new Date().toISOString()
             };
@@ -451,7 +459,7 @@ function setupRegisterForm() {
         // Registration should not overwrite the currently logged-in session
         // Only clear if the newly registered email matches the currently logged-in user
         const currentUserEmail = localStorage.getItem('userEmail');
-        if (currentUserEmail && currentUserEmail.toLowerCase() === email.toLowerCase()) {
+            if (currentUserEmail && currentUserEmail.toLowerCase() === normalizedEmail.toLowerCase()) {
             // Self-registration: clear old session and require re-login
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('userEmail');

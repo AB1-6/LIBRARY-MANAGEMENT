@@ -1,5 +1,9 @@
 // Librarian dashboard functionality using localStorage
 (function () {
+    function normalizeEmail(value) {
+        return String(value || '').trim().toLowerCase();
+    }
+
     function getBooks() {
         return LibraryStore.load(LibraryStore.KEYS.books, []);
     }
@@ -36,7 +40,8 @@
         const email = localStorage.getItem('userEmail');
         if (!email) return null;
         const users = getUsers();
-        return users.find((u) => u.email === email && u.role === 'librarian') || null;
+        const normalizedEmail = normalizeEmail(email);
+        return users.find((u) => normalizeEmail(u.email) === normalizedEmail && u.role === 'librarian') || null;
     }
 
     function formatDate(value) {
@@ -318,6 +323,34 @@
         });
     }
 
+    function renderUsersTable(filter) {
+        const tbody = document.getElementById('librarianUsersBody');
+        if (!tbody) return;
+
+        const searchTerm = String(filter || '').toLowerCase().trim();
+        const users = getUsers().filter((user) => {
+            if (!searchTerm) return true;
+            const id = String(user.id || '').toLowerCase();
+            const name = `${user.firstName || ''} ${user.lastName || ''}`.trim().toLowerCase();
+            const email = String(user.email || '').toLowerCase();
+            const role = String(user.role || '').toLowerCase();
+            return id.includes(searchTerm) || name.includes(searchTerm) || email.includes(searchTerm) || role.includes(searchTerm);
+        });
+
+        tbody.innerHTML = '';
+        users.forEach((user) => {
+            const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || '-';
+            const row = document.createElement('tr');
+            row.innerHTML =
+                '<td>' + (user.id || '-') + '</td>' +
+                '<td>' + fullName + '</td>' +
+                '<td>' + (user.email || '-') + '</td>' +
+                '<td>' + String(user.role || '-').toUpperCase() + '</td>' +
+                '<td>' + (user.lastLogin ? formatDate(user.lastLogin) : '-') + '</td>';
+            tbody.appendChild(row);
+        });
+    }
+
     function renderReports() {
         const issuedBody = document.getElementById('librarianIssuedReport');
         const overdueBody = document.getElementById('librarianOverdueReport');
@@ -364,6 +397,7 @@
         updateStats();
         renderBooksTable();
         renderMembersTable();
+        renderUsersTable();
         renderIssuesTable();
         renderRequestsTable();
         renderDueTodayTable();
@@ -386,7 +420,8 @@
             } else if (userEmail) {
                 // Fallback to email if no name is set
                 const users = getUsers();
-                const user = users.find(u => u.email === userEmail);
+                const normalizedEmail = normalizeEmail(userEmail);
+                const user = users.find(u => normalizeEmail(u.email) === normalizedEmail);
                 if (user && (user.firstName || user.lastName)) {
                     const displayName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
                     userNameElement.textContent = displayName || userEmail;
@@ -418,6 +453,11 @@
     window.searchMembers = function () {
         const input = document.getElementById('memberSearch');
         renderMembersTable(input ? input.value : '');
+    };
+
+    window.searchLibrarianUsers = function () {
+        const input = document.getElementById('librarianUserSearch');
+        renderUsersTable(input ? input.value : '');
     };
 
     window.viewMemberDetails = function (memberId) {
@@ -1248,7 +1288,8 @@
                 
                 const userEmail = localStorage.getItem('userEmail');
                 const users = getUsers();
-                const userIndex = users.findIndex(u => u.email === userEmail && u.role === 'librarian');
+                const normalizedEmail = normalizeEmail(userEmail);
+                const userIndex = users.findIndex(u => normalizeEmail(u.email) === normalizedEmail && u.role === 'librarian');
                 
                 if (userIndex !== -1) {
                     users[userIndex].profilePhoto = newPhotoData;
@@ -1273,7 +1314,8 @@
                 
                 const userEmail = localStorage.getItem('userEmail');
                 const users = getUsers();
-                const userIndex = users.findIndex(u => u.email === userEmail && u.role === 'librarian');
+                const normalizedEmail = normalizeEmail(userEmail);
+                const userIndex = users.findIndex(u => normalizeEmail(u.email) === normalizedEmail && u.role === 'librarian');
                 
                 if (userIndex !== -1) {
                     users[userIndex].profilePhoto = '';
