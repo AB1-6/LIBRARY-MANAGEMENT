@@ -22,6 +22,8 @@ const QRCodeHelper = {
         container.innerHTML = '<p style="color: #666;">Generating QR code...</p>';
 
         // Create QR data object
+        const memberPhoto = String(member.profilePhoto || '').trim();
+        const includePhotoInQr = memberPhoto && !memberPhoto.startsWith('data:') && memberPhoto.length <= 500;
         const qrData = {
             id: member.id,
             name: member.name || `${member.firstName} ${member.lastName}`.trim(),
@@ -29,6 +31,10 @@ const QRCodeHelper = {
             memberSince: member.memberSince || member.createdDate || new Date().toISOString(),
             type: 'student'
         };
+
+        if (includePhotoInQr) {
+            qrData.profilePhoto = memberPhoto;
+        }
 
         const qrString = JSON.stringify(qrData);
 
