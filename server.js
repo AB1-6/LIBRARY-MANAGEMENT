@@ -190,7 +190,30 @@ function createSupabaseStore() {
   };
 }
 
-const store = isSupabaseEnabled ? createSupabaseStore() : createSqliteStore();
+function createMemoryStore() {
+  const data = new Map();
+
+  return {
+    async init() {
+      return true;
+    },
+    async count(resource) {
+      const items = data.get(resource) || [];
+      return items.length;
+    },
+    async replace(resource, items) {
+      const normalized = Array.isArray(items) ? items.map((item) => ({ ...item })) : [];
+      data.set(resource, normalized);
+    },
+    async read(resource) {
+      const items = data.get(resource) || [];
+      return items.map((item) => ({ ...item }));
+    }
+  };
+}
+
+let store = isSupabaseEnabled ? createSupabaseStore() : createSqliteStore();
+let storeMode = isSupabaseEnabled ? 'supabase' : 'sqlite';
 
 const tables = {
   books: 'books',
@@ -327,8 +350,15 @@ async function ensureStartup() {
         console.log('✓ Server initialized successfully');
       } catch (error) {
         console.warn('STARTUP WARNING:', error.message || error);
-        console.log('⚠ Server will continue in fallback mode (localStorage/memory)');
-        // Don't throw - allow server to continue without Supabase
+        console.log('⚠ Primary store unavailable, switching to in-memory fallback store');
+
+        store = createMemoryStore();
+        storeMode = 'memory';
+
+        await store.init();
+        await ensureSeeded();
+
+        console.log('✓ Server initialized with in-memory fallback store');
       }
     })();
   }
@@ -337,13 +367,13 @@ async function ensureStartup() {
 
 app.get('/api/debug', async (req, res) => {
   try {
-    // Test store init
-    await store.init();
+    await ensureStartup();
     res.json({ 
       hasSupabaseUrl: Boolean(process.env.SUPABASE_URL),
       hasSupabaseKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
       isSupabaseEnabled,
       storeInitSuccess: true,
+      storeMode,
       nodeEnv: process.env.NODE_ENV
     });
   } catch (error) {
@@ -352,6 +382,7 @@ app.get('/api/debug', async (req, res) => {
       hasSupabaseKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
       isSupabaseEnabled,
       storeInitSuccess: false,
+      storeMode,
       error: error.message,
       nodeEnv: process.env.NODE_ENV
     });
