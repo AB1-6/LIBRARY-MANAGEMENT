@@ -368,28 +368,349 @@
         // Create print window
         const printWindow = window.open('', '_blank');
         
-        let html = '<html><head><title>Member Cards</title>';
-        html += '<style>';
-        html += 'body { font-family: Arial, sans-serif; }';
-        html += '.member-card { width: 85mm; height: 54mm; border: 1px solid #ddd; padding: 10px; margin: 10px; page-break-after: always; display: inline-block; }';
-        html += '.member-card h3 { margin: 0 0 10px 0; }';
-        html += '.member-card p { margin: 5px 0; font-size: 14px; }';
-        html += '.member-card .qr-code { margin-top: 10px; }';
-        html += '@media print { .member-card { margin: 0; } }';
-        html += '</style></head><body>';
+        let html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Member Cards</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .cards-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            padding: 20px;
+        }
+
+        .member-card {
+            width: 350px;
+            height: auto;
+            background: linear-gradient(135deg, #A47148 0%, #8B5E3C 100%);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+            page-break-inside: avoid;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .member-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .member-card::after {
+            content: '';
+            position: absolute;
+            bottom: -50px;
+            left: -50px;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 25px;
+            width: 100%;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .card-subtitle {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+        .profile-section {
+            text-align: center;
+            margin-bottom: 25px;
+            width: 100%;
+        }
+
+        .profile-image-container {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 15px;
+            border: 4px solid #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #8B5E3C, #A47148);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: #fff;
+        }
+
+        .member-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .member-status {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.15);
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .details-section {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-size: 13px;
+            color: #fff;
+            font-weight: 600;
+            text-align: right;
+            flex: 1;
+            margin-left: 10px;
+        }
+
+        .qr-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .qr-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 8px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .qr-code {
+            width: 100%;
+            max-width: 120px;
+            height: auto;
+            background: #fff;
+            padding: 8px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Print Optimization */
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+
+            .cards-container {
+                gap: 0;
+                padding: 0;
+            }
+
+            .member-card {
+                width: 8.5in;
+                height: auto;
+                box-shadow: none;
+                background: linear-gradient(135deg, #A47148 0%, #8B5E3C 100%);
+                margin: 0;
+                page-break-after: always;
+                border-radius: 0;
+            }
+
+            .member-card::before,
+            .member-card::after {
+                display: none;
+            }
+
+            @page {
+                margin: 0;
+                size: 8.5in auto;
+            }
+        }
+
+        /* Responsiveness */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .member-card {
+                width: 100%;
+                max-width: 350px;
+            }
+
+            .card-title {
+                font-size: 16px;
+            }
+
+            .member-name {
+                font-size: 18px;
+            }
+
+            .detail-label {
+                font-size: 10px;
+            }
+
+            .detail-value {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cards-container">`;
 
         selectedMembers.forEach(member => {
-            html += '<div class="member-card">';
-            html += '<h3>Library Member Card</h3>';
-            html += '<p><strong>Name:</strong> ' + member.name + '</p>';
-            html += '<p><strong>ID:</strong> ' + member.id + '</p>';
-            html += '<p><strong>Email:</strong> ' + member.email + '</p>';
-            html += '<p><strong>Type:</strong> ' + (member.type || 'Student') + '</p>';
-            html += '<div class="qr-code" id="qr-' + member.id + '"></div>';
-            html += '</div>';
+            const memberType = member.type || 'Student';
+            const initials = member.name.split(' ').map(n => n.charAt(0)).join('').toUpperCase();
+            const profileImg = member.profilePhoto ? `<img src="${member.profilePhoto}" alt="${member.name}">` : 
+                               `<div class="profile-placeholder">${initials}</div>`;
+
+            html += `
+        <div class="member-card">
+            <div class="card-content">
+                <div class="card-header">
+                    <div class="card-title">LIBRARY MEMBER CARD</div>
+                    <div class="card-subtitle">Library Management System</div>
+                </div>
+
+                <div class="profile-section">
+                    <div class="profile-image-container">
+                        ${profileImg}
+                    </div>
+                    <div class="member-name">${member.name || 'N/A'}</div>
+                    <div class="member-status">${memberType}</div>
+                </div>
+
+                <div class="details-section">
+                    <div class="detail-row">
+                        <span class="detail-label">Member ID</span>
+                        <span class="detail-value">${member.id || 'N/A'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Email</span>
+                        <span class="detail-value">${member.email || 'N/A'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Phone</span>
+                        <span class="detail-value">${member.phone || 'N/A'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Joined</span>
+                        <span class="detail-value">${member.joinDate ? new Date(member.joinDate).toLocaleDateString() : 'N/A'}</span>
+                    </div>
+                </div>
+
+                <div class="qr-section">
+                    <div class="qr-label">Member Identification</div>
+                    <div class="qr-code" id="qr-${member.id}"></div>
+                </div>
+            </div>
+        </div>`;
         });
 
-        html += '</body></html>';
+        html += `
+    </div>
+</body>
+</html>`;
         
         printWindow.document.write(html);
         printWindow.document.close();
@@ -397,11 +718,19 @@
         // Generate QR codes after window loads
         printWindow.onload = function() {
             selectedMembers.forEach(member => {
-                if (window.QRCodeHelper) {
-                    // Generate QR code for each member
-                    const container = printWindow.document.getElementById('qr-' + member.id);
-                    if (container) {
-                        // Add QR code generation here if QRCode library is available
+                const container = printWindow.document.getElementById('qr-' + member.id);
+                if (container && window.QRCode) {
+                    try {
+                        new window.QRCode(container, {
+                            text: member.id,
+                            width: 100,
+                            height: 100,
+                            correctLevel: window.QRCode.CorrectLevel.H,
+                            colorDark: "#8B5E3C",
+                            colorLight: "#ffffff"
+                        });
+                    } catch (e) {
+                        container.innerHTML = '<div style="font-size: 10px; color: #666;">QR Code</div>';
                     }
                 }
             });
