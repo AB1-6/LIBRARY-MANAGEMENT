@@ -64,8 +64,13 @@ function checkAuthStatus() {
 // Load user information
 function loadUserInfo() {
     const userEmail = localStorage.getItem('userEmail');
-    const userName = localStorage.getItem('userName');
+    let userName = localStorage.getItem('userName');
     const userRole = localStorage.getItem('userRole');
+
+    if (String(userRole || '').toLowerCase() === 'admin' && (userName === 'Admin User' || userName === 'Admin')) {
+        userName = 'AB';
+        localStorage.setItem('userName', 'AB');
+    }
     
     // Display user name if element exists
     const userNameElement = document.getElementById('userName');

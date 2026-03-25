@@ -975,7 +975,13 @@
                     localStorage.setItem('userName', finalName);
                 }
             } else if (userName) {
-                userNameElement.textContent = userName;
+                const normalizedRole = String(userRole || '').toLowerCase();
+                if (normalizedRole === 'admin' && (userName === 'Admin User' || userName === 'Admin')) {
+                    userNameElement.textContent = 'AB';
+                    localStorage.setItem('userName', 'AB');
+                } else {
+                    userNameElement.textContent = userName;
+                }
             } else if (userEmail) {
                 userNameElement.textContent = userEmail;
             } else {
