@@ -32,6 +32,13 @@
         return LibraryStore.load(LibraryStore.KEYS.users, []);
     }
 
+    function getCurrentUser() {
+        const email = localStorage.getItem('userEmail');
+        if (!email) return null;
+        const users = getUsers();
+        return users.find((u) => u.email === email && (u.role === 'student' || !u.role)) || null;
+    }
+
     function saveUsers(users) {
         LibraryStore.save(LibraryStore.KEYS.users, users);
     }
@@ -613,8 +620,7 @@
         // Update header profile avatar
         const profileAvatar = document.querySelector('.profile-avatar');
         if (profileAvatar && userEmail) {
-            const users = getUsers();
-            const user = users.find(u => u.email === userEmail);
+            const user = getCurrentUser();
             if (user && user.profilePhoto) {
                 profileAvatar.src = user.profilePhoto;
             } else {
@@ -1005,8 +1011,7 @@
             return;
         }
 
-        const users = getUsers();
-        const currentUser = users.find(u => u.email === userEmail);
+        const currentUser = getCurrentUser();
         if (!currentUser) {
             console.warn('❌ Current user not found');
             return;
@@ -1083,7 +1088,7 @@
                     saveBtn.onclick = function() {
                         const userEmail = localStorage.getItem('userEmail');
                         const users = getUsers();
-                        const userIndex = users.findIndex(u => u.email === userEmail);
+                        const userIndex = users.findIndex(u => u.email === userEmail && (u.role === 'student' || !u.role));
 
                         console.log('💾 Saving profile photo for:', userEmail);
                         console.log('📊 Photo data length:', dataUrl.length);

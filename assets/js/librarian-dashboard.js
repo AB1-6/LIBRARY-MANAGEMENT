@@ -32,6 +32,13 @@
         return LibraryStore.load(LibraryStore.KEYS.users, []);
     }
 
+    function getCurrentUser() {
+        const email = localStorage.getItem('userEmail');
+        if (!email) return null;
+        const users = getUsers();
+        return users.find((u) => u.email === email && u.role === 'librarian') || null;
+    }
+
     function formatDate(value) {
         if (!value) return '-';
         const date = new Date(value);
@@ -394,8 +401,7 @@
         // Update header profile avatar
         const profileAvatar = document.querySelector('.profile-avatar');
         if (profileAvatar && userEmail) {
-            const users = getUsers();
-            const user = users.find(u => u.email === userEmail);
+            const user = getCurrentUser();
             if (user && user.profilePhoto) {
                 profileAvatar.src = user.profilePhoto;
             } else {
@@ -1190,8 +1196,7 @@
         const userEmail = localStorage.getItem('userEmail');
         if (!userEmail) return;
         
-        const users = getUsers();
-        const currentUser = users.find(u => u.email === userEmail);
+        const currentUser = getCurrentUser();
         
         if (!currentUser) return;
         
@@ -1243,19 +1248,11 @@
                 
                 const userEmail = localStorage.getItem('userEmail');
                 const users = getUsers();
-                const userIndex = users.findIndex(u => u.email === userEmail);
+                const userIndex = users.findIndex(u => u.email === userEmail && u.role === 'librarian');
                 
                 if (userIndex !== -1) {
                     users[userIndex].profilePhoto = newPhotoData;
                     LibraryStore.save(LibraryStore.KEYS.users, users);
-                    
-                    // Also update member record if exists
-                    const members = getMembers();
-                    const memberIndex = members.findIndex(m => m.email === userEmail);
-                    if (memberIndex !== -1) {
-                        members[memberIndex].profilePhoto = newPhotoData;
-                        LibraryStore.save(LibraryStore.KEYS.members, members);
-                    }
                     
                     alert('✅ Profile photo updated successfully!');
                     loadProfile();
@@ -1276,19 +1273,11 @@
                 
                 const userEmail = localStorage.getItem('userEmail');
                 const users = getUsers();
-                const userIndex = users.findIndex(u => u.email === userEmail);
+                const userIndex = users.findIndex(u => u.email === userEmail && u.role === 'librarian');
                 
                 if (userIndex !== -1) {
                     users[userIndex].profilePhoto = '';
                     LibraryStore.save(LibraryStore.KEYS.users, users);
-                    
-                    // Also update member record if exists
-                    const members = getMembers();
-                    const memberIndex = members.findIndex(m => m.email === userEmail);
-                    if (memberIndex !== -1) {
-                        members[memberIndex].profilePhoto = '';
-                        LibraryStore.save(LibraryStore.KEYS.members, members);
-                    }
                     
                     alert('✅ Profile photo removed successfully!');
                     loadProfile();

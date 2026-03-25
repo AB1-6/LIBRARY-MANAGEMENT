@@ -31,10 +31,27 @@ function initializeSplashScreen() {
 function checkAuthStatus() {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userRole = localStorage.getItem('userRole');
+    const path = window.location.pathname.toLowerCase();
+    const requiredRoleByPath = {
+        '/dashboard/admin.html': 'admin',
+        '/dashboard/faculty.html': 'librarian',
+        '/dashboard/student.html': 'student'
+    };
+    const expectedRole = Object.keys(requiredRoleByPath).find((key) => path.endsWith(key));
     
     // If not logged in and trying to access dashboard, redirect to login
     if (!isLoggedIn && window.location.pathname.includes('dashboard')) {
         window.location.href = '../index.html';
+    }
+
+    // If logged in but role doesn't match the current dashboard, redirect to the proper dashboard
+    if (isLoggedIn === 'true' && expectedRole && userRole !== requiredRoleByPath[expectedRole]) {
+        const dashboardByRole = {
+            admin: '../dashboard/admin.html',
+            librarian: '../dashboard/faculty.html',
+            student: '../dashboard/student.html'
+        };
+        window.location.href = dashboardByRole[userRole] || '../index.html';
     }
     
     return {
