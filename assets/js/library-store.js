@@ -1,6 +1,6 @@
 // Shared localStorage helpers for dashboard data
 (function () {
-    const DATA_VERSION = '4.1.0-auth-consistency-2026';
+    const DATA_VERSION = '4.1.1-authoritative-sync-2026';
     const VERSION_KEY = 'lib_data_version';
     
     // FORCE CLEAR ALL OLD DATA - aggressive cache clearing
@@ -193,9 +193,9 @@
 
             setArrayResource(KEYS.books, snapshot.books);
             setArrayResource(KEYS.categories, snapshot.categories);
-            setArrayResource(KEYS.members, snapshot.members, { keepExistingOnEmpty: true });
+            setArrayResource(KEYS.members, snapshot.members);
             setArrayResource(KEYS.issues, snapshot.issues);
-            setArrayResource(KEYS.users, snapshot.users, { keepExistingOnEmpty: true });
+            setArrayResource(KEYS.users, snapshot.users);
             setArrayResource(KEYS.requests, snapshot.requests);
             // Initialize new storage with empty arrays if not in snapshot
             if (snapshot.wishlist) {
