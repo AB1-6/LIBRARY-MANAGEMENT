@@ -30,7 +30,8 @@ function initializeSplashScreen() {
 // Check if user is logged in
 function checkAuthStatus() {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
-    const userRole = localStorage.getItem('userRole');
+    let userRole = localStorage.getItem('userRole');
+    const userEmail = localStorage.getItem('userEmail');
     const path = window.location.pathname.toLowerCase();
     const requiredRoleByPath = {
         '/dashboard/admin.html': 'admin',
@@ -38,6 +39,20 @@ function checkAuthStatus() {
         '/dashboard/student.html': 'student'
     };
     const expectedRole = Object.keys(requiredRoleByPath).find((key) => path.endsWith(key));
+
+    // Self-heal stale role from canonical user record when possible
+    if (isLoggedIn === 'true' && userEmail) {
+        try {
+            const users = JSON.parse(localStorage.getItem('lib_users') || '[]');
+            const matched = users.find((u) => (u.email || '').trim().toLowerCase() === userEmail.trim().toLowerCase());
+            if (matched && matched.role && matched.role !== userRole) {
+                userRole = matched.role;
+                localStorage.setItem('userRole', userRole);
+            }
+        } catch (err) {
+            // Keep existing role if parsing fails
+        }
+    }
     
     // If not logged in and trying to access dashboard, redirect to login
     if (!isLoggedIn && window.location.pathname.includes('dashboard')) {

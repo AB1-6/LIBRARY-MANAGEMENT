@@ -227,6 +227,8 @@ function setupLoginForm() {
         localStorage.setItem('isLoggedIn', 'true');
         if (memberId) {
             localStorage.setItem('userMemberId', memberId);
+        } else {
+            localStorage.removeItem('userMemberId');
         }
 
         if (remember && remember.checked) {
@@ -446,11 +448,12 @@ function setupRegisterForm() {
             console.log('User registered successfully in localStorage');
         }
 
-        localStorage.setItem('userEmail', email);
-        localStorage.setItem('userRole', role);
-        if (newMemberId) {
-            localStorage.setItem('userMemberId', newMemberId);
-        }
+        // Registration should not overwrite the currently logged-in session
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userMemberId');
 
         // Show success message
         alert('Registration successful! You are registered as a Student. Redirecting to login...');
