@@ -27,7 +27,8 @@ const QRCodeHelper = {
             name: member.name || `${member.firstName} ${member.lastName}`.trim(),
             email: member.email,
             memberSince: member.memberSince || member.createdDate || new Date().toISOString(),
-            type: 'student'
+            type: 'student',
+            profilePhoto: member.profilePhoto || ''
         };
 
         const qrString = JSON.stringify(qrData);

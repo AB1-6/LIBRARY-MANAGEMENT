@@ -320,6 +320,10 @@
         if (!memberPhoto && member && member.profilePhoto) {
             memberPhoto = member.profilePhoto;
         }
+
+        if (!memberPhoto && memberData && memberData.profilePhoto) {
+            memberPhoto = memberData.profilePhoto;
+        }
         
         // Debug logging
         console.log('Member Data:', memberData);

@@ -277,7 +277,7 @@ function nextId(prefix, items) {
   return `${prefix}${String(max + 1).padStart(3, '0')}`;
 }
 
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }));
 app.use(express.static(__dirname));
 
 let startupPromise = null;
