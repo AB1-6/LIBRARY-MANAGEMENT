@@ -193,26 +193,120 @@
     // QR-based checkout (scan member QR, then book QR/barcode)
     let pendingCheckout = null;
 
+    function getRecordTimestamp(record) {
+        const rawValue = record && (record.updatedDate || record.createdDate || record.memberSince);
+        if (!rawValue) return 0;
+        const timestamp = new Date(rawValue).getTime();
+        return Number.isNaN(timestamp) ? 0 : timestamp;
+    }
+
+    function normalize(value) {
+        return String(value || '').trim().toLowerCase();
+    }
+
+    function pickMostRecent(records) {
+        if (!Array.isArray(records) || records.length === 0) return null;
+        return records
+            .map((record, index) => ({
+                record,
+                index,
+                timestamp: getRecordTimestamp(record)
+            }))
+            .sort((first, second) => {
+                if (second.timestamp !== first.timestamp) {
+                    return second.timestamp - first.timestamp;
+                }
+                return second.index - first.index;
+            })[0].record;
+    }
+
+    function resolveMemberAndUser(memberData, members, users) {
+        const qrMemberId = String(memberData.id || '').trim();
+        const qrEmail = normalize(memberData.email);
+
+        let memberCandidates = members.filter((member) => String(member.id || '').trim() === qrMemberId);
+        if (qrEmail && memberCandidates.length > 0) {
+            const emailMatches = memberCandidates.filter((member) => normalize(member.email) === qrEmail);
+            if (emailMatches.length > 0) {
+                memberCandidates = emailMatches;
+            }
+        }
+
+        if (memberCandidates.length === 0 && qrEmail) {
+            memberCandidates = members.filter((member) => normalize(member.email) === qrEmail);
+        }
+
+        const resolvedMember = pickMostRecent(memberCandidates);
+
+        let resolvedUser = null;
+        if (resolvedMember) {
+            const memberId = String(resolvedMember.id || '').trim();
+            const memberEmail = normalize(resolvedMember.email);
+            const userCandidates = users.filter((user) => {
+                const userMemberId = String(user.memberId || '').trim();
+                return userMemberId === memberId && (!user.role || user.role === 'student');
+            });
+
+            let filteredUserCandidates = userCandidates;
+            if (qrEmail) {
+                const qrEmailUsers = filteredUserCandidates.filter((user) => normalize(user.email) === qrEmail);
+                if (qrEmailUsers.length > 0) {
+                    filteredUserCandidates = qrEmailUsers;
+                }
+            } else if (memberEmail) {
+                const memberEmailUsers = filteredUserCandidates.filter((user) => normalize(user.email) === memberEmail);
+                if (memberEmailUsers.length > 0) {
+                    filteredUserCandidates = memberEmailUsers;
+                }
+            }
+
+            resolvedUser = pickMostRecent(filteredUserCandidates);
+        }
+
+        if (!resolvedUser && qrEmail) {
+            const emailUsers = users.filter((user) => normalize(user.email) === qrEmail && (!user.role || user.role === 'student'));
+            resolvedUser = pickMostRecent(emailUsers);
+        }
+
+        return {
+            member: resolvedMember,
+            user: resolvedUser
+        };
+    }
+
     // Display membership card modal
     function displayMembershipCard(memberData) {
         const users = LibraryStore.load(LibraryStore.KEYS.users, []);
         const members = LibraryStore.load(LibraryStore.KEYS.members, []);
-        
-        // Find member details
-        const member = members.find(m => m.id === memberData.id);
-        const user = users.find(u => u.memberId === memberData.id);
-        
-        const memberName = memberData.name || (member ? member.name : 'Unknown');
-        const memberEmail = member ? member.email : (user ? user.email : 'N/A');
+
+        const resolved = resolveMemberAndUser(memberData, members, users);
+        const member = resolved.member;
+        const user = resolved.user;
+
+        const scannedEmail = normalize(memberData.email);
+        const memberName = (member && member.name) || memberData.name || (user ? [user.firstName || '', user.lastName || ''].join(' ').trim() : '') || 'Unknown';
+        const memberEmail = memberData.email || (member && member.email) || (user && user.email) || 'N/A';
         const memberSince = member ? new Date(member.memberSince || member.createdDate).toLocaleDateString() : 'N/A';
         const memberRole = memberData.type || (user ? user.role : 'student');
         
         // Get profile photo - check both member and user records
         let memberPhoto = '';
         if (member && member.profilePhoto) {
+            const memberEmail = normalize(member.email);
+            if (!scannedEmail || !memberEmail || memberEmail === scannedEmail) {
+                memberPhoto = member.profilePhoto;
+            }
+        }
+
+        if (!memberPhoto && user && user.profilePhoto) {
+            const userEmail = normalize(user.email);
+            if (!scannedEmail || (userEmail && userEmail === scannedEmail)) {
+                memberPhoto = user.profilePhoto;
+            }
+        }
+
+        if (!memberPhoto && member && member.profilePhoto) {
             memberPhoto = member.profilePhoto;
-        } else if (user && user.profilePhoto) {
-            memberPhoto = user.profilePhoto;
         }
         
         // Debug logging
