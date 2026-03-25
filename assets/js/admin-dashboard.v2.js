@@ -960,21 +960,24 @@
     function updateUserDisplay() {
         const userName = localStorage.getItem('userName');
         const userEmail = localStorage.getItem('userEmail');
+        const userRole = localStorage.getItem('userRole');
         const userNameElement = document.getElementById('userName');
+        const users = getUsers();
+        const currentUser = users.find((u) => u.email === userEmail && (!userRole || u.role === userRole)) ||
+            users.find((u) => u.email === userEmail);
         
         if (userNameElement) {
-            if (userName) {
+            if (currentUser && (currentUser.firstName || currentUser.lastName)) {
+                const displayName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim();
+                const finalName = displayName || userEmail || 'Admin';
+                userNameElement.textContent = finalName;
+                if (finalName && finalName !== userName) {
+                    localStorage.setItem('userName', finalName);
+                }
+            } else if (userName) {
                 userNameElement.textContent = userName;
             } else if (userEmail) {
-                // Fallback to email if no name is set
-                const users = getUsers();
-                const user = users.find(u => u.email === userEmail);
-                if (user && (user.firstName || user.lastName)) {
-                    const displayName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
-                    userNameElement.textContent = displayName || userEmail;
-                } else {
-                    userNameElement.textContent = userEmail;
-                }
+                userNameElement.textContent = userEmail;
             } else {
                 userNameElement.textContent = 'Admin';
             }
@@ -983,10 +986,8 @@
         // Update header profile avatar
         const profileAvatar = document.querySelector('.profile-avatar');
         if (profileAvatar && userEmail) {
-            const users = getUsers();
-            const user = users.find(u => u.email === userEmail);
-            if (user && user.profilePhoto) {
-                profileAvatar.src = user.profilePhoto;
+            if (currentUser && currentUser.profilePhoto) {
+                profileAvatar.src = currentUser.profilePhoto;
             } else {
                 profileAvatar.src = '../assets/images/logo.png';
             }
