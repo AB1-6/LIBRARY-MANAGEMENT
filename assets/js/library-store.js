@@ -162,8 +162,8 @@
                     email: 'anlinpunneli@gmail.com',
                     password: 'Anlin20#69',
                     role: 'admin',
-                    firstName: 'Admin',
-                    lastName: 'User',
+                    firstName: 'AB',
+                    lastName: '',
                     createdDate: new Date().toISOString()
                 }
             ]);

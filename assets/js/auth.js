@@ -53,8 +53,8 @@ function ensureDefaultUsers() {
             email: DEFAULT_ADMIN_EMAIL,
             password: DEFAULT_ADMIN_PASSWORD,
             role: 'admin',
-            firstName: 'Admin',
-            lastName: 'User',
+            firstName: 'AB',
+            lastName: '',
             createdDate: new Date().toISOString()
         });
     }
@@ -109,10 +109,10 @@ function setupLoginForm() {
                 if (fullName) {
                     localStorage.setItem('userName', fullName);
                 } else {
-                    localStorage.setItem('userName', 'Admin');
+                    localStorage.setItem('userName', 'AB');
                 }
             } else {
-                localStorage.setItem('userName', 'Admin');
+                localStorage.setItem('userName', 'AB');
             }
 
             if (remember && remember.checked) {
@@ -213,7 +213,7 @@ function setupLoginForm() {
                 if (!users[userIndex].firstName && !users[userIndex].lastName) {
                     // Try to get name from localStorage if available
                     const userName = localStorage.getItem('userName');
-                    if (userName && userName !== 'Admin User') {
+                    if (userName && userName !== 'AB') {
                         const nameParts = userName.trim().split(' ');
                         if (nameParts.length >= 2) {
                             users[userIndex].firstName = nameParts[0];

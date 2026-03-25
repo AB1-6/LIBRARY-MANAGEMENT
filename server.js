@@ -242,8 +242,8 @@ const seedData = {
       email: 'anlinpunneli@gmail.com',
       password: 'Anlin20#69',
       role: 'admin',
-      firstName: 'Admin',
-      lastName: 'User',
+      firstName: 'AB',
+      lastName: '',
       memberId: '',
       createdDate: new Date().toISOString()
     }

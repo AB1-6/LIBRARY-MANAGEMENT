@@ -969,7 +969,7 @@
         if (userNameElement) {
             if (currentUser && (currentUser.firstName || currentUser.lastName)) {
                 const displayName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim();
-                const finalName = displayName || userEmail || 'Admin';
+                const finalName = displayName || userEmail || 'AB';
                 userNameElement.textContent = finalName;
                 if (finalName && finalName !== userName) {
                     localStorage.setItem('userName', finalName);
@@ -979,7 +979,7 @@
             } else if (userEmail) {
                 userNameElement.textContent = userEmail;
             } else {
-                userNameElement.textContent = 'Admin';
+                userNameElement.textContent = 'AB';
             }
         }
         
