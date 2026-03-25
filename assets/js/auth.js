@@ -449,19 +449,33 @@ function setupRegisterForm() {
         }
 
         // Registration should not overwrite the currently logged-in session
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userEmail');
-        localStorage.removeItem('userRole');
-        localStorage.removeItem('userName');
-        localStorage.removeItem('userMemberId');
+        // Only clear if the newly registered email matches the currently logged-in user
+        const currentUserEmail = localStorage.getItem('userEmail');
+        if (currentUserEmail && currentUserEmail.toLowerCase() === email.toLowerCase()) {
+            // Self-registration: clear old session and require re-login
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userMemberId');
+            
+            // Show success message
+            alert('Registration successful! You are registered as a Student. Redirecting to login...');
 
-        // Show success message
-        alert('Registration successful! You are registered as a Student. Redirecting to login...');
+            // Redirect to login
+            setTimeout(() => {
+                window.location.href = `login.html?role=${role}`;
+            }, 1500);
+        } else {
+            // Different person registering: DO NOT clear the admin's session
+            // Just show success and redirect to login page (they will see login form)
+            alert('Registration successful! Please log in with your new account.');
 
-        // Redirect to login
-        setTimeout(() => {
-            window.location.href = `login.html?role=${role}`;
-        }, 1500);
+            // Redirect to login WITHOUT clearing any session variables
+            setTimeout(() => {
+                window.location.href = `login.html?role=${role}`;
+            }, 1500);
+        }
     });
 }
 
