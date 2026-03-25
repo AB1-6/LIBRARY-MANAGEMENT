@@ -248,15 +248,15 @@
             });
 
             let filteredUserCandidates = userCandidates;
-            if (qrEmail) {
-                const qrEmailUsers = filteredUserCandidates.filter((user) => normalize(user.email) === qrEmail);
-                if (qrEmailUsers.length > 0) {
-                    filteredUserCandidates = qrEmailUsers;
-                }
-            } else if (memberEmail) {
+            if (memberEmail) {
                 const memberEmailUsers = filteredUserCandidates.filter((user) => normalize(user.email) === memberEmail);
                 if (memberEmailUsers.length > 0) {
                     filteredUserCandidates = memberEmailUsers;
+                }
+            } else if (qrEmail) {
+                const qrEmailUsers = filteredUserCandidates.filter((user) => normalize(user.email) === qrEmail);
+                if (qrEmailUsers.length > 0) {
+                    filteredUserCandidates = qrEmailUsers;
                 }
             }
 
@@ -284,8 +284,9 @@
         const user = resolved.user;
 
         const scannedEmail = normalize(memberData.email);
+        const resolvedMemberEmail = normalize(member && member.email);
         const memberName = (member && member.name) || memberData.name || (user ? [user.firstName || '', user.lastName || ''].join(' ').trim() : '') || 'Unknown';
-        const memberEmail = memberData.email || (member && member.email) || (user && user.email) || 'N/A';
+        const memberEmail = (member && member.email) || (user && user.email) || memberData.email || 'N/A';
         const memberSince = member ? new Date(member.memberSince || member.createdDate).toLocaleDateString() : 'N/A';
         const memberRole = memberData.type || (user ? user.role : 'student');
         
@@ -293,15 +294,26 @@
         let memberPhoto = '';
         if (member && member.profilePhoto) {
             const memberEmail = normalize(member.email);
-            if (!scannedEmail || !memberEmail || memberEmail === scannedEmail) {
+            if (!scannedEmail || !memberEmail || memberEmail === scannedEmail || memberEmail === resolvedMemberEmail) {
                 memberPhoto = member.profilePhoto;
             }
         }
 
         if (!memberPhoto && user && user.profilePhoto) {
             const userEmail = normalize(user.email);
-            if (!scannedEmail || (userEmail && userEmail === scannedEmail)) {
+            if (!resolvedMemberEmail || userEmail === resolvedMemberEmail || (!scannedEmail || userEmail === scannedEmail)) {
                 memberPhoto = user.profilePhoto;
+            }
+        }
+
+        if (!memberPhoto && member) {
+            const sameMemberUsers = users.filter((entry) => {
+                const entryMemberId = String(entry.memberId || '').trim();
+                return entryMemberId === String(member.id || '').trim() && (!entry.role || entry.role === 'student') && !!entry.profilePhoto;
+            });
+            const fallbackUser = pickMostRecent(sameMemberUsers);
+            if (fallbackUser && fallbackUser.profilePhoto) {
+                memberPhoto = fallbackUser.profilePhoto;
             }
         }
 
