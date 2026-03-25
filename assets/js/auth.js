@@ -33,7 +33,16 @@ async function registerWithApi(firstName, lastName, email, password, studentId, 
     });
 }
 
+function isLocalFallbackAllowed() {
+    const host = (window.location.hostname || '').toLowerCase();
+    return host === 'localhost' || host === '127.0.0.1';
+}
+
 function ensureDefaultUsers() {
+    if (!isLocalFallbackAllowed()) {
+        return;
+    }
+
     const usersRaw = localStorage.getItem('lib_users');
     const users = usersRaw ? JSON.parse(usersRaw) : [];
     const hasAdmin = users.some((user) => user.email === DEFAULT_ADMIN_EMAIL);
@@ -138,6 +147,12 @@ function setupLoginForm() {
                 window.LibraryStore.hydrateFromApi();
             }
         } catch (apiError) {
+            if (!isLocalFallbackAllowed()) {
+                console.error('Login API failed:', apiError);
+                alert('Login service is temporarily unavailable. Please try again in a moment.');
+                return;
+            }
+
             console.log('API login failed, checking localStorage');
             const usersRaw = localStorage.getItem('lib_users');
             const users = usersRaw ? JSON.parse(usersRaw) : [];
@@ -281,14 +296,16 @@ function setupRegisterForm() {
         // Check for duplicate email first
         const usersRaw = localStorage.getItem('lib_users');
         const existingUsers = usersRaw ? JSON.parse(usersRaw) : [];
-        
-        const emailExists = existingUsers.some(u => u.email.toLowerCase() === email.toLowerCase());
-        if (emailExists) {
-            alert('This email is already registered. Please login instead.');
-            setTimeout(() => {
-                window.location.href = `login.html?role=${role}`;
-            }, 500);
-            return;
+
+        if (isLocalFallbackAllowed()) {
+            const emailExists = existingUsers.some(u => u.email.toLowerCase() === email.toLowerCase());
+            if (emailExists) {
+                alert('This email is already registered. Please login instead.');
+                setTimeout(() => {
+                    window.location.href = `login.html?role=${role}`;
+                }, 500);
+                return;
+            }
         }
 
         let newMemberId = '';
@@ -349,6 +366,12 @@ function setupRegisterForm() {
                 window.LibraryStore.hydrateFromApi();
             }
         } catch (apiError) {
+            if (!isLocalFallbackAllowed()) {
+                console.error('Registration API failed:', apiError);
+                alert('Registration service is temporarily unavailable. Please try again shortly.');
+                return;
+            }
+
             console.log('API registration failed, using localStorage fallback');
             
             const membersRaw = localStorage.getItem('lib_members');

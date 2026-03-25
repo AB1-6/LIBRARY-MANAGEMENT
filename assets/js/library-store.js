@@ -1,6 +1,6 @@
 // Shared localStorage helpers for dashboard data
 (function () {
-    const DATA_VERSION = '4.0.0-clean-slate-2026';
+    const DATA_VERSION = '4.1.0-auth-consistency-2026';
     const VERSION_KEY = 'lib_data_version';
     
     // FORCE CLEAR ALL OLD DATA - aggressive cache clearing
@@ -9,7 +9,7 @@
         console.log('🧹 CLEARING ALL OLD CACHED DATA...');
         
         // Save login info and chat history
-        const keysToKeep = ['isLoggedIn', 'userEmail', 'userRole', 'userName', 'rememberMe', 'userMemberId', 'lib_users', 'userData', 'lib_chat', 'lib_reviews', 'lib_borrowed_books_history', 'lib_fines', 'lib_notifications', 'lib_notification_preferences'];
+        const keysToKeep = ['isLoggedIn', 'userEmail', 'userRole', 'userName', 'rememberMe', 'userMemberId', 'lib_chat', 'lib_reviews', 'lib_borrowed_books_history', 'lib_fines', 'lib_notifications', 'lib_notification_preferences'];
         const tempData = {};
         keysToKeep.forEach(key => {
             const val = localStorage.getItem(key);
@@ -177,12 +177,26 @@
     async function hydrateFromApi() {
         try {
             const snapshot = await fetchJson('/api/init');
-            if (snapshot.books) localStorage.setItem(KEYS.books, JSON.stringify(snapshot.books));
-            if (snapshot.categories) localStorage.setItem(KEYS.categories, JSON.stringify(snapshot.categories));
-            if (snapshot.members) localStorage.setItem(KEYS.members, JSON.stringify(snapshot.members));
-            if (snapshot.issues) localStorage.setItem(KEYS.issues, JSON.stringify(snapshot.issues));
-            if (snapshot.users) localStorage.setItem(KEYS.users, JSON.stringify(snapshot.users));
-            if (snapshot.requests) localStorage.setItem(KEYS.requests, JSON.stringify(snapshot.requests));
+            const setArrayResource = function (key, value, options) {
+                if (!Array.isArray(value)) {
+                    return;
+                }
+
+                const current = load(key, []);
+                const keepExistingOnEmpty = options && options.keepExistingOnEmpty;
+                if (keepExistingOnEmpty && value.length === 0 && Array.isArray(current) && current.length > 0) {
+                    return;
+                }
+
+                localStorage.setItem(key, JSON.stringify(value));
+            };
+
+            setArrayResource(KEYS.books, snapshot.books);
+            setArrayResource(KEYS.categories, snapshot.categories);
+            setArrayResource(KEYS.members, snapshot.members, { keepExistingOnEmpty: true });
+            setArrayResource(KEYS.issues, snapshot.issues);
+            setArrayResource(KEYS.users, snapshot.users, { keepExistingOnEmpty: true });
+            setArrayResource(KEYS.requests, snapshot.requests);
             // Initialize new storage with empty arrays if not in snapshot
             if (snapshot.wishlist) {
                 localStorage.setItem(KEYS.wishlist, JSON.stringify(snapshot.wishlist));
