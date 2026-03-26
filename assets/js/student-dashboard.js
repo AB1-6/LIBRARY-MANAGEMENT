@@ -1469,6 +1469,10 @@
         console.log('✅ Data loaded successfully');
         
         refreshAll();
+
+        if (window.NotificationHelper) {
+            NotificationHelper.startAutoCheck();
+        }
         
         // Start auto-refresh for real-time updates
         startAutoRefresh();

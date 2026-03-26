@@ -488,7 +488,7 @@
                     return false;
                 }
                 const issues = getIssues();
-                issues.push({
+                const newIssue = {
                     id: LibraryStore.nextId('I', issues),
                     bookId: values.issueBookId,
                     memberId: values.issueMemberId,
@@ -496,10 +496,14 @@
                     dueDate: values.issueDueDate,
                     returnDate: '',
                     status: 'active'
-                });
+                };
+                issues.push(newIssue);
                 book.availableCopies -= 1;
                 saveBooks(books);
                 saveIssues(issues);
+                if (window.NotificationHelper) {
+                    NotificationHelper.processIssueCreated(newIssue);
+                }
                 refreshAll();
             }
         });
@@ -549,6 +553,10 @@
         }
         
         saveIssues(issues);
+
+        if (window.NotificationHelper) {
+            NotificationHelper.processIssueReturned(issue);
+        }
         
         if (fine > 0) {
             showMessage('Book Returned', 'Book returned successfully. Fine: $' + fine + ' (' + daysOverdue + ' days overdue)');
@@ -678,6 +686,10 @@
 
         issues.push(newIssue);
         saveIssues(issues);
+
+        if (window.NotificationHelper) {
+            NotificationHelper.processIssueCreated(newIssue);
+        }
 
         // Decrease available copies
         book.availableCopies -= 1;
@@ -1342,6 +1354,10 @@
         
         // Start auto-refresh for real-time updates
         startAutoRefresh();
+
+        if (window.NotificationHelper) {
+            NotificationHelper.startAutoCheck();
+        }
         
         // Initialize chat support for librarian
         if (window.ChatUI) {

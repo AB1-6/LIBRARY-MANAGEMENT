@@ -4,6 +4,197 @@
 
     const NOTIFICATIONS_KEY = 'lib_notifications';
     const NOTIFICATION_PREFS_KEY = 'lib_notification_preferences';
+    const FINES_KEY = 'lib_fines';
+    let autoCheckStarted = false;
+
+    function getTodayStart() {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        return now;
+    }
+
+    function hasRecentNotification(userId, type, matcher, withinMs) {
+        const notifications = getAllNotifications();
+        const now = Date.now();
+        return notifications.some(n => {
+            if (n.userId !== userId || n.type !== type) {
+                return false;
+            }
+            const createdAt = new Date(n.createdAt).getTime();
+            if (isNaN(createdAt) || now - createdAt > withinMs) {
+                return false;
+            }
+            return typeof matcher === 'function' ? matcher(n) : true;
+        });
+    }
+
+    function upsertOutstandingFine(issue, amount) {
+        if (!issue || !issue.id || amount <= 0) {
+            return;
+        }
+
+        const fines = LibraryStore.load(FINES_KEY, []);
+        let fineRecord = fines.find(f => f.issueId === issue.id && f.status === 'outstanding');
+        if (fineRecord) {
+            fineRecord.amount = amount;
+            fineRecord.updatedDate = new Date().toISOString();
+        } else {
+            fineRecord = {
+                id: 'OF' + Date.now() + Math.random().toString(36).slice(2, 6),
+                issueId: issue.id,
+                memberId: issue.memberId,
+                bookId: issue.bookId,
+                amount: amount,
+                status: 'outstanding',
+                createdDate: new Date().toISOString(),
+                updatedDate: new Date().toISOString()
+            };
+            fines.push(fineRecord);
+        }
+
+        LibraryStore.save(FINES_KEY, fines);
+    }
+
+    function clearOutstandingFine(issueId) {
+        if (!issueId) return;
+        const fines = LibraryStore.load(FINES_KEY, []);
+        const updated = fines.filter(f => !(f.issueId === issueId && f.status === 'outstanding'));
+        if (updated.length !== fines.length) {
+            LibraryStore.save(FINES_KEY, updated);
+        }
+    }
+
+    function checkDueSoonForIssue(issue, today) {
+        if (!issue || issue.status === 'returned') {
+            return;
+        }
+
+        const prefs = getNotificationPreferences(issue.memberId);
+        if (!prefs.dueDateReminder) {
+            return;
+        }
+
+        const books = LibraryStore.load(LibraryStore.KEYS.books, []);
+        const dueDate = new Date(issue.dueDate);
+        const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+
+        if (daysUntilDue !== prefs.reminderDaysBefore) {
+            return;
+        }
+
+        const alreadySent = hasRecentNotification(
+            issue.memberId,
+            'due_soon',
+            n => n.data && n.data.issueId === issue.id,
+            24 * 60 * 60 * 1000
+        );
+        if (alreadySent) {
+            return;
+        }
+
+        const book = books.find(b => b.id === issue.bookId);
+        const bookTitle = book ? book.title : 'Unknown Book';
+        createNotification(
+            issue.memberId,
+            'due_soon',
+            'Book Due Soon',
+            `"${bookTitle}" is due in ${daysUntilDue} days (${dueDate.toLocaleDateString()})`,
+            { issueId: issue.id, bookId: issue.bookId }
+        );
+    }
+
+    function checkOverdueForIssue(issue, today) {
+        if (!issue || issue.status === 'returned') {
+            return;
+        }
+
+        const prefs = getNotificationPreferences(issue.memberId);
+        if (!prefs.overdueReminder) {
+            return;
+        }
+
+        const books = LibraryStore.load(LibraryStore.KEYS.books, []);
+        const dueDate = new Date(issue.dueDate);
+        const daysOverdue = Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24));
+
+        if (daysOverdue <= 0) {
+            return;
+        }
+
+        const fine = Math.max(0, daysOverdue * 1);
+        upsertOutstandingFine(issue, fine);
+
+        const alreadySent = hasRecentNotification(
+            issue.memberId,
+            'overdue',
+            n => n.data && n.data.issueId === issue.id,
+            24 * 60 * 60 * 1000
+        );
+        if (alreadySent) {
+            return;
+        }
+
+        const book = books.find(b => b.id === issue.bookId);
+        const bookTitle = book ? book.title : 'Unknown Book';
+
+        createNotification(
+            issue.memberId,
+            'overdue',
+            'Book Overdue!',
+            `"${bookTitle}" is ${daysOverdue} days overdue. Fine: $${fine}. Please return it immediately.`,
+            { issueId: issue.id, bookId: issue.bookId, fine: fine }
+        );
+    }
+
+    function notifyNextWaitlistMember(bookId) {
+        if (!bookId) {
+            return { success: false, message: 'Book ID required' };
+        }
+
+        const books = LibraryStore.load(LibraryStore.KEYS.books, []);
+        const book = books.find(b => b.id === bookId);
+        if (!book || Number(book.availableCopies || 0) <= 0) {
+            return { success: false, message: 'Book not available' };
+        }
+
+        const waitlist = LibraryStore.load(LibraryStore.KEYS.waitlist, []);
+        const candidates = waitlist
+            .filter(w => w.bookId === bookId && w.status === 'waiting')
+            .sort((a, b) => {
+                const posDiff = Number(a.position || 9999) - Number(b.position || 9999);
+                if (posDiff !== 0) return posDiff;
+                return new Date(a.requestDate || 0) - new Date(b.requestDate || 0);
+            });
+
+        if (candidates.length === 0) {
+            return { success: false, message: 'No waiting members' };
+        }
+
+        const next = candidates[0];
+        const duplicate = hasRecentNotification(
+            next.memberId,
+            'wishlist_available',
+            n => n.data && n.data.bookId === bookId,
+            24 * 60 * 60 * 1000
+        );
+
+        if (!duplicate) {
+            createNotification(
+                next.memberId,
+                'wishlist_available',
+                'Book Available for You',
+                `"${book.title}" is now available. You are next in waitlist. Please request it soon.`,
+                { bookId: bookId, waitlistId: next.id }
+            );
+        }
+
+        next.status = 'notified';
+        next.notifiedDate = new Date().toISOString();
+        next.notificationExpiryDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        LibraryStore.save(LibraryStore.KEYS.waitlist, waitlist);
+
+        return { success: true, memberId: next.memberId, waitlistId: next.id };
+    }
 
     // Get all notifications
     function getAllNotifications() {
@@ -175,110 +366,72 @@
     // Check for due date reminders
     function checkDueDateReminders() {
         const issues = LibraryStore.load(LibraryStore.KEYS.issues, []);
-        const books = LibraryStore.load(LibraryStore.KEYS.books, []);
-        const members = LibraryStore.load(LibraryStore.KEYS.members, []);
-        const today = new Date();
+        const today = getTodayStart();
         
         issues.forEach(issue => {
-            if (issue.status !== 'returned') {
-                const member = members.find(m => m.id === issue.memberId);
-                if (!member) return;
-
-                const prefs = getNotificationPreferences(issue.memberId);
-                if (!prefs.dueDateReminder) return;
-
-                const dueDate = new Date(issue.dueDate);
-                const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
-
-                // Check if we should send reminder
-                if (daysUntilDue === prefs.reminderDaysBefore) {
-                    const book = books.find(b => b.id === issue.bookId);
-                    const bookTitle = book ? book.title : 'Unknown Book';
-
-                    createNotification(
-                        issue.memberId,
-                        'due_soon',
-                        'Book Due Soon',
-                        `"${bookTitle}" is due in ${daysUntilDue} days (${dueDate.toLocaleDateString()})`,
-                        { issueId: issue.id, bookId: issue.bookId }
-                    );
-                }
-            }
+            checkDueSoonForIssue(issue, today);
         });
     }
 
     // Check for overdue books
     function checkOverdueBooks() {
         const issues = LibraryStore.load(LibraryStore.KEYS.issues, []);
-        const books = LibraryStore.load(LibraryStore.KEYS.books, []);
-        const members = LibraryStore.load(LibraryStore.KEYS.members, []);
-        const today = new Date();
+        const today = getTodayStart();
         
         issues.forEach(issue => {
-            if (issue.status !== 'returned') {
-                const member = members.find(m => m.id === issue.memberId);
-                if (!member) return;
-
-                const prefs = getNotificationPreferences(issue.memberId);
-                if (!prefs.overdueReminder) return;
-
-                const dueDate = new Date(issue.dueDate);
-                const daysOverdue = Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24));
-
-                // Send overdue notification every 7 days
-                if (daysOverdue > 0 && daysOverdue % 7 === 0) {
-                    const book = books.find(b => b.id === issue.bookId);
-                    const bookTitle = book ? book.title : 'Unknown Book';
-                    const fine = daysOverdue * 1; // $1 per day
-
-                    createNotification(
-                        issue.memberId,
-                        'overdue',
-                        'Book Overdue!',
-                        `"${bookTitle}" is ${daysOverdue} days overdue. Fine: $${fine}. Please return it immediately.`,
-                        { issueId: issue.id, bookId: issue.bookId, fine: fine }
-                    );
-                }
-            }
+            checkOverdueForIssue(issue, today);
         });
     }
 
     // Check wishlist availability
     function checkWishlistAvailability() {
-        if (!window.WishlistHelper) return;
-
-        const members = LibraryStore.load(LibraryStore.KEYS.members, []);
         const books = LibraryStore.load(LibraryStore.KEYS.books, []);
 
-        members.forEach(member => {
-            const prefs = getNotificationPreferences(member.id);
-            if (!prefs.wishlistAlert) return;
-
-            const wishlist = WishlistHelper.getWishlist(member.id);
-            
-            wishlist.forEach(item => {
-                const book = books.find(b => b.id === item.bookId);
-                if (book && book.availableCopies > 0) {
-                    // Check if we already sent notification for this
-                    const existingNotif = getUserNotifications(member.id, 100)
-                        .find(n => 
-                            n.type === 'wishlist_available' && 
-                            n.data.bookId === book.id &&
-                            new Date(n.createdAt) > new Date(Date.now() - 24 * 60 * 60 * 1000) // Within last 24 hours
-                        );
-
-                    if (!existingNotif) {
-                        createNotification(
-                            member.id,
-                            'wishlist_available',
-                            'Wishlist Book Available!',
-                            `"${book.title}" from your wishlist is now available for borrowing.`,
-                            { bookId: book.id, wishlistItemId: item.id }
-                        );
-                    }
-                }
-            });
+        books.forEach(book => {
+            if (Number(book.availableCopies || 0) > 0) {
+                notifyNextWaitlistMember(book.id);
+            }
         });
+    }
+
+    function processIssueCreated(issue) {
+        if (!issue) return;
+        const today = getTodayStart();
+        checkDueSoonForIssue(issue, today);
+        checkOverdueForIssue(issue, today);
+    }
+
+    function processIssueReturned(issue) {
+        if (!issue) return;
+
+        clearOutstandingFine(issue.id);
+
+        const books = LibraryStore.load(LibraryStore.KEYS.books, []);
+        const book = books.find(b => b.id === issue.bookId);
+        const title = book ? book.title : 'Book';
+
+        const duplicateReturnNotification = hasRecentNotification(
+            issue.memberId,
+            'returned',
+            n => n.data && n.data.issueId === issue.id,
+            24 * 60 * 60 * 1000
+        );
+
+        if (!duplicateReturnNotification) {
+            createNotification(
+                issue.memberId,
+                'returned',
+                'Return Confirmed',
+                `"${title}" return has been recorded successfully.`,
+                { issueId: issue.id, bookId: issue.bookId }
+            );
+        }
+
+        notifyNextWaitlistMember(issue.bookId);
+    }
+
+    function processBookAvailability(bookId) {
+        notifyNextWaitlistMember(bookId);
     }
 
     // Send fine reminders
@@ -320,6 +473,11 @@
 
     // Start automatic checking (every hour)
     function startAutoCheck() {
+        if (autoCheckStarted) {
+            return;
+        }
+        autoCheckStarted = true;
+
         // Run immediately
         runAllChecks();
         
@@ -395,6 +553,10 @@
         checkFineReminders: checkFineReminders,
         runAllChecks: runAllChecks,
         startAutoCheck: startAutoCheck,
+        processIssueCreated: processIssueCreated,
+        processIssueReturned: processIssueReturned,
+        processBookAvailability: processBookAvailability,
+        notifyNextWaitlistMember: notifyNextWaitlistMember,
         renderNotificationsPanel: renderNotificationsPanel
     };
 
